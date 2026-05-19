@@ -7,9 +7,15 @@ dest_folder = Path("output")
 #fields=[]
 df = hydrometry.get_all_stations()
 df.to_csv(dest_folder / 'stations.csv')
+station_geojson = df.to_json(default=str)
+with open(dest_folder / 'stations.geojson', 'w') as file:
+    file.write(station_geojson)
 
 df = hydrometry.get_all_sites()
 df.to_csv(dest_folder / 'sites.csv')
+sites_geojson = df.to_json(default=str)
+with open(dest_folder / 'sites.geojson', 'w') as file:
+    file.write(sites_geojson)
 
 # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
 bounding_box_grossiere = [2.307129,42.749916,7.734375,47.279318]
@@ -21,9 +27,9 @@ bounding_box_lyon = [4.130859,45.431642,5.559082,46.136066]
 date_debut_observation = "2026-01-01"
 date_fin_observation = "2026-01-31"
 
-dg = hydrometry.get_observations(date_debut_obs_elab=date_debut_observation,date_fin_obs_elab=date_fin_observation)
+#dg = hydrometry.get_observations(date_debut_obs_elab=date_debut_observation,date_fin_obs_elab=date_fin_observation)
 
 # Quelle que soit la bounding box choisie, le programme va quand même query absolument toutes les sources de données...
 # Ce qui résulte en une extraction durant 2h...
 
-dg.to_csv(dest_folder / 'observations-janvier-france.csv')
+#dg.to_csv(dest_folder / 'observations-janvier-france.csv')

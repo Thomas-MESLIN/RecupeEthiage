@@ -3,8 +3,10 @@ from pathlib import Path
 import os
 
 # Passage par le proxy de la DREAL (permet d'accéder à internet depuis le réseau interne)
-proxy_http = "http://proxy.monreseau.fr:8080"
-proxy_https = "https://proxy.monreseau.fr:8080"
+#proxy_http = "http://proxy.monreseau.fr:8080"
+#proxy_https = "https://proxy.monreseau.fr:8080"
+proxy_http = ""
+proxy_https = ""
 
 os.environ["HTTP_PROXY"] = proxy_http
 os.environ["HTTPS_PROXY"] = proxy_https
