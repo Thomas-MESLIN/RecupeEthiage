@@ -42,6 +42,93 @@ def get_df_stations_hubeau_filtre_code_sandre(code_sandre: str) -> pd.DataFrame:
     ]
     return df_stations_hubeau_filtre_code_sandre
 
+def cleaned_hydroportail_data(annee_mois_a_filtrer: str, sandre_code: str) -> pd.DataFrame:
+    """"""
+    # Récupération df hydroportail
+    nom_fichier_hydroportail = f"{annee_mois_a_filtrer}-{sandre_code}-only-validated-qmm.csv"
+    if sandre_code == "":
+        nom_fichier_hydroportail = f"{annee_mois_a_filtrer}-only-validated-qmm.csv"
+
+    chemin_fichier_hydroportail = output_folder / "exports_hydroportail" / nom_fichier_hydroportail
+
+    df_hydroportail_enregistrement = pd.read_csv(chemin_fichier_hydroportail)
+
+    # Récupérations nom colonne contenant les données de débits.
+    nom_colonne_donnee_hydroportail = ""
+    possibilite_nom_colonne_donnee_debit = ["Débit (m³/s)", "value"]
+    is_nom_colonne_trouve = False
+    for nom_colonne in possibilite_nom_colonne_donnee_debit:
+        if nom_colonne in df_hydroportail_enregistrement.columns:
+            is_nom_colonne_trouve = True
+            nom_colonne_donnee_hydroportail = nom_colonne
+
+    if not is_nom_colonne_trouve:
+        print("Le nom de la colonne n'a pas été trouvé pour le fichier hydroportail !")
+        print(f"nom possible : {possibilite_nom_colonne_donnee_debit}, fichier : {nom_fichier_hydroportail}")
+        exit(1)
+
+    # TODO REDUIRE
+    # Récupérations nom colonne contenant les code des entités.
+    nom_colonne_entite_hydroportail = ""
+    possibilite_nom_colonne_donnee_entite = ["Code de l'entité", "code"]
+    is_nom_colonne_trouve = False
+    for nom_colonne in possibilite_nom_colonne_donnee_entite:
+        if nom_colonne in df_hydroportail_enregistrement.columns:
+            is_nom_colonne_trouve = True
+            nom_colonne_entite_hydroportail = nom_colonne
+
+    if not is_nom_colonne_trouve:
+        print("Le nom de la colonne n'a pas été trouvé pour le fichier hydroportail !")
+        print(f"nom possible : {possibilite_nom_colonne_donnee_entite}, fichier : {nom_fichier_hydroportail}")
+        exit(1)
+
+    # REMPLISSAGE DES TROUS
+    # Avant de filtrer sur la donnée, on veut faire en sorte que :
+    # - Si il y a une donnée à la station, on la considère comme référence
+    # - Si il n'y a pas de donnée à la station, on prend la donnée du site
+    # - Si il n'y a pas de donnée à la station ou au site, on élimine l'enregistrement.
+
+    for idx in range(len(df_hydroportail_enregistrement)):
+        df_res = df_hydroportail_enregistrement.loc[idx,[nom_colonne_entite_hydroportail,nom_colonne_donnee_hydroportail]]
+
+        code_entite = str(df_res[nom_colonne_entite_hydroportail])
+        donne_entite = df_res[nom_colonne_donnee_hydroportail]
+
+        # On ne regarde que les entites qui sont des stations
+        if len(code_entite) <= 8 or not pd.isna(donne_entite):
+            continue
+
+        #print(f"On continue la recherche avec {code_entite}-{donne_entite}")
+
+        # On ne choisi que les stations.
+        if len(code_entite) == 10:
+            code_station_correspondant = code_entite[0:8] # Prend les 8 premier caractère
+            # On récupère les noms des stations correspondant
+            df_res_query = df_hydroportail_enregistrement[df_hydroportail_enregistrement[nom_colonne_entite_hydroportail] == code_station_correspondant]
+            if len(df_res_query) == 0:
+                print("Pas de site correspondante")
+                continue
+            elif len(df_res_query) >= 2:
+                print(f"Plusieurs site correspondantes trouvée ?!! {code_entite}")
+                exit(1)
+            else:
+                #print("Site correspondante trouvée")
+                donnee_site = df_res_query[nom_colonne_donnee_hydroportail].iloc[0]
+                # On remplace la donnée inexistante par une donnée existante.
+                df_hydroportail_enregistrement.at[idx, nom_colonne_donnee_hydroportail] = donnee_site
+    # A partir de ce moment la, les trous qui pouvaient être remplis ont été remplis
+    df_hydroportail_enregistrement.to_csv(Path(f"output/test/res-completion-{sandre_code}-{annee_mois_filtre}.csv"))
+
+    # On veut a présent retirer les entity de type site.
+    # TODO cover other file entry
+    df_hydroportail_station = df_hydroportail_enregistrement[df_hydroportail_enregistrement["entityType"] == "station"]
+    df_hydroportail_station.to_csv(Path(f"output/test/res-only-completed-station-{sandre_code}-{annee_mois_filtre}.csv"))
+    #df_hydroportail_enregistrement_with_data = df_hydroportail_enregistrement[
+    #    not np.isnan(df_hydroportail_enregistrement[nom_colonne_donnee_hydroportail])
+    #    or abs(df_hydroportail_enregistrement[nom_colonne_donnee_hydroportail]) < 0.00001
+    #]
+
+    return df_hydroportail_station
 
 def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_filtrer: str) -> dict:
     """
@@ -64,23 +151,21 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
     # On prend le premier jour du mois
     date_a_filtrer = annee_mois_a_filtrer + "-01"
 
-    #print("annee mois correspondant :" + annee_mois_a_filtrer)
+    df_hydroportail_enregistrement = cleaned_hydroportail_data(annee_mois_a_filtrer, sandre_code)
 
-    # Récupération df hydroportail
-    nom_fichier_hydroportail = f"{annee_mois_a_filtrer}-{sandre_code}-only-validated-qmm.csv"
-    if sandre_code == "":
-        nom_fichier_hydroportail = f"{annee_mois_a_filtrer}-only-validated-qmm.csv"
-
-    fichier_hydroportail = output_folder / "exports_hydroportail" / nom_fichier_hydroportail
-
-    df_hydroportail_enregistrement = pd.read_csv(fichier_hydroportail)
     # Récupérations des enregistrement hydroportail sans données
     try:
         colonne_donnee_hydroportail = "Débit (m³/s)"
-        df_hydroportail_enregistrement_no_data = df_hydroportail_enregistrement[np.isnan(df_hydroportail_enregistrement[colonne_donnee_hydroportail])]
+        df_hydroportail_enregistrement_no_data = df_hydroportail_enregistrement[
+            np.isnan(df_hydroportail_enregistrement[colonne_donnee_hydroportail])
+            | abs(df_hydroportail_enregistrement[colonne_donnee_hydroportail]) < 0.00001
+        ]
     except KeyError:
         colonne_donnee_hydroportail = "value"
-        df_hydroportail_enregistrement_no_data = df_hydroportail_enregistrement[np.isnan(df_hydroportail_enregistrement[colonne_donnee_hydroportail])]
+        df_hydroportail_enregistrement_no_data = df_hydroportail_enregistrement[
+            np.isnan(df_hydroportail_enregistrement[colonne_donnee_hydroportail])
+            | abs(df_hydroportail_enregistrement[colonne_donnee_hydroportail]) < 0.00001
+        ]
 
     # Récupération des enregistrements Hub'eau
     df_hubeau_record = get_df_hubeau_period_qmm(date_a_filtrer)
@@ -111,7 +196,7 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
     df_hubeau_no_data.to_csv(ficher_sortie_extrait_sandre_hubeau_no_data, index=False)
 
     # Récupération de l'ensemble des code de site correspondant à chaque dataFrame
-    colonne_code_hubeau = "code_site"
+    colonne_code_hubeau = "code_station"
     codes_hubeau_enregistrements = set(df_hubeau_record[colonne_code_hubeau].dropna())
     codes_hubeau_stations = set(df_stations_hubeau[colonne_code_hubeau].dropna())
     codes_hubeau_enregistrements_no_data = set(df_hubeau_no_data[colonne_code_hubeau].dropna())
@@ -158,7 +243,7 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
     dict_diff = {
         "code_sandre": sandre_code,
         "annee_mois": annee_mois_a_filtrer,
-        "station_hubeau_absente": len(set_station_non_presente_enregistrement_hubeau),
+        "station_hubeau_dans_liste_sandre_absente_des_observations": len(set_station_non_presente_enregistrement_hubeau),
         "station_uniquement_hubeau": len(uniquement_dans_hubeau),
         "station_uniquement_hubeau_et_no_data": len(uniquement_dans_hubeau_et_no_data),
         "total_station_hubeau": len(set_code_hubeau_date_correcte_code_filtre),
@@ -180,7 +265,6 @@ for annee in range(1999,2021):
     if annee == 2002:
         break
     for mois in range(1,13):
-        code_sandre = "BSH101"
         mois_str = str(mois)
         if mois < 10:
             mois = "0" + str(mois)
@@ -193,10 +277,11 @@ for annee in range(1999,2021):
         elt = find_difference_hubeau_hydroportail_filtre("BSH101", annee_mois_filtre)
         total.append(elt)
         print("\n\n\n---------------------------\n\n\n")
-        elt = find_difference_hubeau_hydroportail_filtre("", annee_mois_filtre)
-        total.append(elt)
-        print("\n\n\n---------------------------\n\n\n")
-
+        #elt = find_difference_hubeau_hydroportail_filtre("", annee_mois_filtre)
+        #total.append(elt)
+        #print("\n\n\n---------------------------\n\n\n")
+        #break
+    #break
 
 file_name = "diff_hydro_hubeau.csv"
 path_output_file = output_folder / "res-validation" / file_name

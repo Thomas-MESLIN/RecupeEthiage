@@ -10,7 +10,7 @@ df["annee_mois"] = pd.to_datetime(df["annee_mois"], format="%Y-%m")
 
 # Colonnes numériques à tracer
 colonnes_a_plot = [
-    "station_hubeau_absente",
+    "station_hubeau_dans_liste_sandre_absente_des_observations",
     "station_uniquement_hubeau",
     "station_uniquement_hubeau_et_no_data",
     "total_station_hubeau",
