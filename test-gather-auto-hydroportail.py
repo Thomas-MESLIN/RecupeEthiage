@@ -1,3 +1,5 @@
+from time import sleep
+
 import requests
 import pandas as pd
 from pathlib import Path
@@ -99,8 +101,10 @@ def download_hydro(sandre_code:str,start_date:str):
     # ==========================================
     # EXPORT
     # ==========================================
-
-    output_file = output_folder / f"{start_at[:7]}-{rdds}-only-validated-qmm.csv"
+    if rdds != "":
+        output_file = output_folder / f"{start_at[:7]}-{rdds}-only-validated-qmm.csv"
+    else:
+        output_file = output_folder / f"{start_at[:7]}-only-validated-qmm.csv"
 
     df.to_csv(
         output_file,
@@ -111,10 +115,22 @@ def download_hydro(sandre_code:str,start_date:str):
     print(df.head())
     print(f"\nCSV sauvegardé : {output_file}")
 
+for annee in range(1999,2021):
+    for mois in range(1,13):
+        code_sandre = "BSH101"
+        mois_str = str(mois)
+        if mois < 10:
+            mois = "0" + str(mois)
 
-rdds = "BSH101"
-start_at = "2001-01-01T00:00:00Z"
-download_hydro(rdds,start_at)
-rdds = "BSH001"
-start_at = "2001-01-01T00:00:00Z"
-download_hydro(rdds,start_at)
+        annee_mois = f"{annee}-{mois}-01T00:00:00Z"
+        download_hydro(code_sandre,annee_mois)
+        sleep(1)
+        code_sandre = "BSH001"
+        download_hydro(code_sandre, annee_mois)
+        sleep(1)
+        # On télécharge toutes les stations de France
+        code_sandre = ""
+        download_hydro(code_sandre, annee_mois)
+        print(f"{annee}-{mois}-Téléchargé")
+        sleep(1)
+        exit(0)
