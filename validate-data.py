@@ -71,9 +71,16 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
     if sandre_code == "":
         nom_fichier_hydroportail = f"{annee_mois_a_filtrer}-only-validated-qmm.csv"
 
-    fichier_hydroportail = output_folder / "hydroportail" / nom_fichier_hydroportail
+    fichier_hydroportail = output_folder / "exports_hydroportail" / nom_fichier_hydroportail
 
     df_hydroportail_enregistrement = pd.read_csv(fichier_hydroportail)
+    # Récupérations des enregistrement hydroportail sans données
+    try:
+        colonne_donnee_hydroportail = "Débit (m³/s)"
+        df_hydroportail_enregistrement_no_data = df_hydroportail_enregistrement[np.isnan(df_hydroportail_enregistrement[colonne_donnee_hydroportail])]
+    except KeyError:
+        colonne_donnee_hydroportail = "value"
+        df_hydroportail_enregistrement_no_data = df_hydroportail_enregistrement[np.isnan(df_hydroportail_enregistrement[colonne_donnee_hydroportail])]
 
     # Récupération des enregistrements Hub'eau
     df_hubeau_record = get_df_hubeau_period_qmm(date_a_filtrer)
@@ -109,8 +116,14 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
     codes_hubeau_stations = set(df_stations_hubeau[colonne_code_hubeau].dropna())
     codes_hubeau_enregistrements_no_data = set(df_hubeau_no_data[colonne_code_hubeau].dropna())
 
-    colonne_code_hydroportail = "Code de l'entité"
-    codes_hydroportail = set(df_hydroportail_enregistrement[colonne_code_hydroportail].dropna())
+    try:
+        colonne_code_hydroportail = "Code de l'entité"
+        set_codes_hydroportail = set(df_hydroportail_enregistrement[colonne_code_hydroportail].dropna())
+        set_codes_hydroportail_no_data = set(df_hydroportail_enregistrement_no_data[colonne_code_hydroportail].dropna())
+    except KeyError:
+        colonne_code_hydroportail = "code"
+        set_codes_hydroportail = set(df_hydroportail_enregistrement[colonne_code_hydroportail].dropna())
+        set_codes_hydroportail_no_data = set(df_hydroportail_enregistrement_no_data[colonne_code_hydroportail].dropna())
 
     # On fais l'intersection de ces deux ensemble
     # code_hubeau_date_correcte_code_filtre = codes_hubeau.intersection(codes_stations_BSH001)
@@ -127,26 +140,31 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
     print(len(set_station_non_presente_enregistrement_hubeau))
 
     # On fais les différences
-    uniquement_dans_hubeau = set_code_hubeau_date_correcte_code_filtre - codes_hydroportail
+    uniquement_dans_hubeau = set_code_hubeau_date_correcte_code_filtre - set_codes_hydroportail
     print(f"\nCodes présents dans hubeau 'observations-QmM-france-1991-2020.csv' mais absents du fichier hydroportail :")
     print(uniquement_dans_hubeau)
     print(str(len(uniquement_dans_hubeau)) + "/" + str(len(set_code_hubeau_date_correcte_code_filtre)))
     uniquement_dans_hubeau_et_no_data = uniquement_dans_hubeau.intersection(set_code_hubeau_date_correcte_code_filtre_no_data)
     print(f"Parmis les stations présente uniquement dans Hubeau, il y a {len(uniquement_dans_hubeau_et_no_data)} stations qui n'ont pas de donées.")
 
-    uniquement_dans_hydro = codes_hydroportail - set_code_hubeau_date_correcte_code_filtre
+    uniquement_dans_hydro = set_codes_hydroportail - set_code_hubeau_date_correcte_code_filtre
     # Station présente dans Hydroportail
     print(f"\nCodes présents dans le fichier hydroportail mais absents de hubeau 'observations-QmM-france-1991-2020.csv' :")
     print(uniquement_dans_hydro)
-    print(str(len(uniquement_dans_hydro)) + "/" + str(len(codes_hydroportail)))
+    print(str(len(uniquement_dans_hydro)) + "/" + str(len(set_codes_hydroportail)))
+    uniquement_dans_hydro_et_no_data = uniquement_dans_hydro.intersection(set_codes_hydroportail_no_data)
+    print(f"Parmis les stations présente uniquement dans Hydroportail, il y a {len(uniquement_dans_hydro_et_no_data)} stations qui n'ont pas de données.")
+
     dict_diff = {
         "code_sandre": sandre_code,
         "annee_mois": annee_mois_a_filtrer,
         "station_hubeau_absente": len(set_station_non_presente_enregistrement_hubeau),
         "station_uniquement_hubeau": len(uniquement_dans_hubeau),
-        "station_total_hubeau": len(set_code_hubeau_date_correcte_code_filtre),
+        "station_uniquement_hubeau_et_no_data": len(uniquement_dans_hubeau_et_no_data),
+        "total_station_hubeau": len(set_code_hubeau_date_correcte_code_filtre),
         "station_uniquement_hydroportail": len(uniquement_dans_hydro),
-        "station_total_hydroportail": len(codes_hydroportail),
+        "station_uniquement_hydroportail_et_no_data": len(uniquement_dans_hydro_et_no_data),
+        "total_station_hydroportail": len(set_codes_hydroportail),
     }
     return dict_diff
 
@@ -156,18 +174,26 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
 # Date à filtrer (format YYYY-MM-DD)
 #date_a_filtrer = "2001-01-01"
 
-annee_mois_filtre = "2001-01"
-
 total = []
-elt = find_difference_hubeau_hydroportail_filtre("BSH001", annee_mois_filtre)
-total.append(elt)
-print("\n\n\n---------------------------\n\n\n")
-elt = find_difference_hubeau_hydroportail_filtre("BSH101", annee_mois_filtre)
-total.append(elt)
-print("\n\n\n---------------------------\n\n\n")
-elt = find_difference_hubeau_hydroportail_filtre("", annee_mois_filtre)
-total.append(elt)
-print("\n\n\n---------------------------\n\n\n")
+
+for annee in range(1999,2021):
+    for mois in range(1,13):
+        code_sandre = "BSH101"
+        mois_str = str(mois)
+        if mois < 10:
+            mois = "0" + str(mois)
+
+        annee_mois_filtre = f"{annee}-{mois}"
+
+        elt = find_difference_hubeau_hydroportail_filtre("BSH001", annee_mois_filtre)
+        total.append(elt)
+        print("\n\n\n---------------------------\n\n\n")
+        elt = find_difference_hubeau_hydroportail_filtre("BSH101", annee_mois_filtre)
+        total.append(elt)
+        print("\n\n\n---------------------------\n\n\n")
+        elt = find_difference_hubeau_hydroportail_filtre("", annee_mois_filtre)
+        total.append(elt)
+        print("\n\n\n---------------------------\n\n\n")
 
 file_name = "diff_hydro_hubeau.csv"
 path_output_file = output_folder / "res-validation" / file_name

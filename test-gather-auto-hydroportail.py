@@ -9,10 +9,26 @@ from pathlib import Path
 # ==========================================
 
 def download_hydro(sandre_code:str,start_date:str):
+    """
+    Télécharge l'exctration hydroportail correspondant au mois et à l'année de la start_date et en utilisant le code sandre dans la requête hydroportail.
+    :param sandre_code: Code sandre filtré par la requete hydroportail
+    :param start_date: Mois et année au format "AAAA-MM-01T00:00:00Z"
+    """
     rdds = sandre_code
     start_at = start_date
-    output_folder = Path("output/exports_hydro")
+    output_folder = Path("output/exports_hydroportail")
+    if rdds != "":
+        output_file = output_folder / f"{start_at[:7]}-{rdds}-only-validated-qmm.csv"
+    else:
+        output_file = output_folder / f"{start_at[:7]}-only-validated-qmm.csv"
 
+    telechargement_requis = True
+    if output_file.exists():
+        telechargement_requis = False
+
+    if not telechargement_requis:
+        print(f"Déjà téléchargé : {output_file}")
+        return
     # ==========================================
     # URL API
     # ==========================================
@@ -63,6 +79,7 @@ def download_hydro(sandre_code:str,start_date:str):
         params=params,
         headers=headers,
     )
+    sleep(1)
 
     print(response.status_code)
     print(response.url)
@@ -101,10 +118,6 @@ def download_hydro(sandre_code:str,start_date:str):
     # ==========================================
     # EXPORT
     # ==========================================
-    if rdds != "":
-        output_file = output_folder / f"{start_at[:7]}-{rdds}-only-validated-qmm.csv"
-    else:
-        output_file = output_folder / f"{start_at[:7]}-only-validated-qmm.csv"
 
     df.to_csv(
         output_file,
@@ -117,20 +130,17 @@ def download_hydro(sandre_code:str,start_date:str):
 
 for annee in range(1999,2021):
     for mois in range(1,13):
-        code_sandre = "BSH101"
         mois_str = str(mois)
         if mois < 10:
             mois = "0" + str(mois)
 
         annee_mois = f"{annee}-{mois}-01T00:00:00Z"
+
+        code_sandre = "BSH101"
         download_hydro(code_sandre,annee_mois)
-        sleep(1)
         code_sandre = "BSH001"
         download_hydro(code_sandre, annee_mois)
-        sleep(1)
         # On télécharge toutes les stations de France
         code_sandre = ""
         download_hydro(code_sandre, annee_mois)
-        print(f"{annee}-{mois}-Téléchargé")
-        sleep(1)
-        exit(0)
+        print(f"Tous les fichiers de {annee}-{mois} ont été téléchargés")
