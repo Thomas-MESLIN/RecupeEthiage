@@ -177,6 +177,8 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
 total = []
 
 for annee in range(1999,2021):
+    if annee == 2002:
+        break
     for mois in range(1,13):
         code_sandre = "BSH101"
         mois_str = str(mois)
@@ -195,6 +197,7 @@ for annee in range(1999,2021):
         total.append(elt)
         print("\n\n\n---------------------------\n\n\n")
 
+
 file_name = "diff_hydro_hubeau.csv"
 path_output_file = output_folder / "res-validation" / file_name
 
@@ -207,5 +210,8 @@ df_resultats.to_csv(
     index=False,
     encoding="utf-8"
 )
+print(df_resultats.columns)
+print(df_resultats.head())
+print(df_resultats.tail())
 
 print(f"CSV écrit : {path_output_file}")

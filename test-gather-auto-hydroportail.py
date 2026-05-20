@@ -79,7 +79,9 @@ def download_hydro(sandre_code:str,start_date:str):
         params=params,
         headers=headers,
     )
-    sleep(1)
+
+    # Wait to not exceed the time limit of the API.
+    sleep(4)
 
     print(response.status_code)
     print(response.url)
