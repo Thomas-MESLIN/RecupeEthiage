@@ -11,13 +11,9 @@ df["annee_mois"] = pd.to_datetime(df["annee_mois"], format="%Y-%m")
 # Colonnes numériques à tracer
 colonnes_a_plot = [
     "station_hubeau_dans_liste_sandre_absente_des_observations",
-    "station_uniquement_hubeau",
     "station_uniquement_hubeau_with_data",
-    "station_uniquement_hubeau_et_no_data",
     "total_station_hubeau",
-    "station_uniquement_hydroportail",
     "station_uniquement_hydroportail_with_data",
-    "station_uniquement_hydroportail_et_no_data",
     "total_station_hydroportail",
 ]
 
@@ -47,5 +43,34 @@ for col in colonnes_a_plot:
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.axis( (xmin, xmax, 0, ymax) )
+    plt.show()
 
+for code, group in df.groupby("code_sandre"):
+    plt.figure(figsize=(12, 5))
+    group = group.sort_values("annee_mois")
+
+    plt.plot(
+        group["annee_mois"],
+        group["station_uniquement_hubeau_with_data"],
+        marker="o",
+        label="station_uniquement_hubeau_with_data"
+    )
+    plt.plot(
+        group["annee_mois"],
+        group["station_uniquement_hydroportail_with_data"],
+        marker="o",
+        label="station_uniquement_hydroportail_with_data"
+    )
+
+    plt.title("Stations uniquement dans Hubeau ou hydroportail, contenant de la donnée, par mois, de la liste " + str(code))
+    plt.xlabel("Date du relevé (QmM - mensuel)")
+    plt.ylabel("Nombre de stations")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.axis( (xmin, xmax, 0, ymax) )
     plt.show()
