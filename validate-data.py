@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import csv
 from pathlib import Path
 
 output_folder = Path("output")
@@ -77,7 +76,6 @@ def cleaned_hydroportail_data(annee_mois_a_filtrer: str, sandre_code: str) -> pd
         print(f"nom possible : {possibilite_nom_colonne_donnee_debit}, fichier : {nom_fichier_hydroportail}")
         exit(1)
 
-    # TODO REDUIRE
     # Récupérations nom colonne contenant les code des entités.
     nom_colonne_entite_hydroportail = "Code de l'entité"
     if "code" in df_hydroportail_enregistrement.columns:
@@ -396,3 +394,5 @@ for cle in list_total_station_unique:
 
 dataframe_dico = pd.DataFrame(np.array(total_list), columns=['hubeau_BSH101', 'hydroportailBSH101', 'hubeau_BSH001', 'hydroportailBSH001'], index=list_total_station_unique)
 dataframe_dico.to_csv(Path("output/res-validation/res_station_unique.csv"))
+
+# TODO A séparer en 2 scripts (script nettoyage, script Validation des données initiales, script établissement de stats)

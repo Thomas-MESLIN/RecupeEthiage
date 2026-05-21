@@ -1,2 +1,4 @@
 cl-hubeau~=0.12.0
 pathlib
+numpy
+pandas
