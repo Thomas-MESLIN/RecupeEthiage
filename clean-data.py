@@ -5,13 +5,14 @@ from tqdm import tqdm
 output_folder = Path("output")
 
 fichier_hubeau = output_folder / "observations-QmM-france-1991-2020.csv"
-colonne_date = "date_obs_elab"
+colonne_date_hubeau = "date_obs_elab"
+colonne_code_station_hubeau = "code_station"
 
 # === LECTURE DES CSV ===
 df_hubeau = pd.read_csv(fichier_hubeau)
 
 
-def get_df_hubeau_period_qmm(date_a_filtrer: str) -> pd.DataFrame:
+def clean_hubeau_data(date_a_filtrer: str, code_sandre: str) -> pd.DataFrame:
     """
     Va chercher le fichier des observations qmm dans les fichiers téléchargé.
     Charge les données et prendre uniquement les données correspondantes à la date en paramètre
@@ -20,20 +21,10 @@ def get_df_hubeau_period_qmm(date_a_filtrer: str) -> pd.DataFrame:
     """
 
     # Filtrage pour avoir uniquement les enregistrements aux bonnes dates
-    df_hubeau_filtre_date = df_hubeau[df_hubeau[colonne_date] == date_a_filtrer]
+    df_hubeau_filtre_date = df_hubeau[df_hubeau[colonne_date_hubeau] == date_a_filtrer]
 
-    return df_hubeau_filtre_date
-
-
-def get_df_stations_hubeau_filtre_code_sandre(code_sandre: str) -> pd.DataFrame:
-    """
-    Renvoie un dataFrame correspondant à toutes les stations Hubeau filtré par leur code sandre
-    :param code_sandre: Un code Sandre correspondant aux listes de stations Hydrométriques
-    :return: Renvoie un pd.DataFrame correspondant à toutes les stations Hubeau appartennant à la liste du même code_sandre
-    """
+    # Ouverture et lecture du fichier des stations hubeau.
     fichier_station_hubeau = output_folder / "stations.csv"
-
-    # Lecture des stations hubeau
     df_stations_hubeau = pd.read_csv(fichier_station_hubeau)
 
     # Filtrage pour avoir uniquement les stations du code SANDRE correspondant
@@ -41,7 +32,14 @@ def get_df_stations_hubeau_filtre_code_sandre(code_sandre: str) -> pd.DataFrame:
     df_stations_hubeau_filtre_code_sandre = df_stations_hubeau[
         df_stations_hubeau[colonne_code_sandre].astype(str).str.contains(code_sandre, na=False)
     ]
-    return df_stations_hubeau_filtre_code_sandre
+
+    df_stations_hubeau_code_sandre = df_hubeau_filtre_date[
+        df_hubeau_filtre_date[colonne_code_station_hubeau].isin(
+            df_stations_hubeau_filtre_code_sandre[colonne_code_station_hubeau]
+        )
+    ]
+
+    return df_stations_hubeau_code_sandre
 
 # TODO Créer fonction pour nettoryer les doublons de hubeau et s'assurer qu'il n'y a pas de trou.
 
@@ -134,11 +132,18 @@ with tqdm(total=total_iterations, desc="Progression dates") as pbar:
             annee_mois_filtre = f"{annee}-{mois}"
 
             sandre_code = "BSH001"
-            df_hydroportail_clean = clean_hydroportail_data(annee_mois_filtre,sandre_code)
 
+            # Clean hydroportail data
+            df_hydroportail_clean = clean_hydroportail_data(annee_mois_filtre,sandre_code)
             chemin_fichier_clean_hydroportail = Path(f"output/hydroportail/cleaned_data/clean-QmM-{sandre_code}-{annee_mois_filtre}.csv")
             df_hydroportail_clean.to_csv(chemin_fichier_clean_hydroportail, index=False)
+
+            # Clean Hubeau data
+            df_hubeau_clean = clean_hubeau_data(annee_mois_filtre,sandre_code)
+            chemin_fichier_clean_hubeau = Path(f"output/hubeau/cleaned_data/clean-QmM-{sandre_code}-{annee_mois_filtre}.csv")
+            df_hubeau_clean.to_csv(chemin_fichier_clean_hubeau, index=False)
 
             pbar.update(1)
             break
         break
+#TODO Cest nul !!
