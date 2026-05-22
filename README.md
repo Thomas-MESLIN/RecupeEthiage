@@ -16,13 +16,13 @@ Ce script sert à récupérer l'historique des données du débit moyen mensuel.
 Ces données vont permettre à terme de calculer l'hydraulicité d'une station.
 
 ### clean-data.py
-Ce script lis les données téléchargés de hydroportail dans export-data et observations-QmM-france-1991-2020.csv.
+Ce script lis les données téléchargés de hydroportail dans export-data  et de hubeau dans observations-QmM-france-1991-2020.csv.
 
-Il met ensuite les données nettoyées de Hydroportail et Hubeau dans les fichiers correspondant dans 
+Il met ensuite les données nettoyées de Hydroportail et Hubeau dans les fichiers correspondants :
  - output/hubeau/cleaned_data
  - output/hydroportail/cleaned_data
 
-Les données nettoyés ont les doublons en moins, les données vides en moins.
+Les données nettoyées ont les doublons en moins, les données vides en moins et essayent d'être complété quand d'autres enregistrements existent.
 
 ## Documentation Source
 ### API Hub'eau
