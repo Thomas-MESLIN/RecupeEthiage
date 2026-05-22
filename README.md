@@ -23,6 +23,22 @@ Il met ensuite les données nettoyées de Hydroportail et Hubeau dans les fichie
  - output/hydroportail/cleaned_data
 
 Les données nettoyées ont les doublons en moins, les données vides en moins et essayent d'être complété quand d'autres enregistrements existent.
+## Nettoyer et exporter les différences de données
+Pour nettoyer les données de A à Z.
+```bash
+# Télécharger les listes de stations Hub'eau
+get-all-station-hydrometry.py
+# Télécharger l'historique de 1991 à 2020
+recuperation-QmM-1991-2020.py
+# Récupérer les données hydroportail (bancal)
+test-gather-auto-hydroportail.py
+# Nettoyer les données de hydroportail et Hub'eau
+clean-data.py
+# Analyser les données de sortie et faire des petites stats dessus
+validate-clean-data.py
+# Faire des petits graphiques choupi
+plot_res_validation_clean.py
+```
 
 ## Documentation Source
 ### API Hub'eau

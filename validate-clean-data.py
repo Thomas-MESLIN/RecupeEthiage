@@ -121,11 +121,11 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
 #date_a_filtrer = "2001-01-01"
 
 total = []
-total_iterations = (2007 - 1999) * 12
+total_iterations = (2015 - 1991) * 12
 
 with tqdm(total=total_iterations, desc="Progression dates") as pbar:
-    for annee in range(1999,2021):
-        if annee == 2007:
+    for annee in range(1991,2021):
+        if annee == 2014:
             break
         for mois in range(1,13):
             mois_str = str(mois)

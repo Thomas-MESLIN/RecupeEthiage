@@ -130,7 +130,7 @@ def download_hydro(sandre_code:str,start_date:str):
     print(df.head())
     print(f"\nCSV sauvegardé : {output_file}")
 
-for annee in range(1999,2021):
+for annee in range(1991,2021):
     for mois in range(1,13):
         mois_str = str(mois)
         if mois < 10:
