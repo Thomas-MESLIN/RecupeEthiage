@@ -123,8 +123,9 @@ def clean_hydroportail_data(annee_mois_a_filtrer: str, sandre_code: str) -> pd.D
 # Code Sandre
 #sandre_code = "BSH001"
 
-# Date à filtrer (format YYYY-MM-DD)
-#date_a_filtrer = "2001-01-01"
+sandre_code = input("Rentrez un code sandre à filtrer (BSH001 par défaut) : ")
+if sandre_code == "":
+    sandre_code = "BSH001"
 
 total = []
 total_iterations = (2007 - 1999) * 12
@@ -140,8 +141,6 @@ with tqdm(total=total_iterations, desc="Progression dates") as pbar:
 
             annee_mois_filtre = f"{annee}-{mois}"
             annee_mois_jour_filtre = f"{annee}-{mois}-01"
-
-            sandre_code = "BSH001"
 
             # Clean hydroportail data
             df_hydroportail_clean = clean_hydroportail_data(annee_mois_filtre,sandre_code)
