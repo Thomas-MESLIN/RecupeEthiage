@@ -397,3 +397,5 @@ dataframe_dico = pd.DataFrame(np.array(total_list), columns=['hubeau_BSH101', 'h
 dataframe_dico.to_csv(Path("output/res-validation/res_station_unique.csv"))
 
 # TODO A séparer en 2 scripts (script nettoyage, script Validation des données initiales, script établissement de stats)
+
+# TODO try to inspect the duplicates.

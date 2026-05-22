@@ -15,7 +15,8 @@ df_hubeau = pd.read_csv(fichier_hubeau)
 def clean_hubeau_data(date_a_filtrer: str, code_sandre: str) -> pd.DataFrame:
     """
     Va chercher le fichier des observations qmm dans les fichiers téléchargé.
-    Charge les données et prendre uniquement les données correspondantes à la date en paramètre
+    Charge les données et prendre uniquement les données correspondantes à la date en paramètre.
+    On nettoie les rangs dupliqué et ceux qui n'ont pas de données.
     :param date_a_filtrer: La date qui servira de filtre au format YYYY-MM-DD
     :return: Renvoie un pd.DataFrame représentant le QmM sur de la date YYYY-MM-DD via l'API Hubeau
     """
@@ -33,15 +34,24 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str) -> pd.DataFrame:
         df_stations_hubeau[colonne_code_sandre].astype(str).str.contains(code_sandre, na=False)
     ]
 
+    # Garder uniquement les données qui correspondent au code Sandre.
     df_stations_hubeau_code_sandre = df_hubeau_filtre_date[
+        # On garde les colonnes où les données apparaissent dans les station-filtré
         df_hubeau_filtre_date[colonne_code_station_hubeau].isin(
             df_stations_hubeau_filtre_code_sandre[colonne_code_station_hubeau]
         )
     ]
 
-    return df_stations_hubeau_code_sandre
+    colonne_donnee_hubeau = "resultat_obs_elab"
+    # On supprime les stations où il n'y a pas de données.
+    df_stations_hubeau_code_sandre_with_data = df_stations_hubeau_code_sandre[
+        ~(pd.isna(df_stations_hubeau_code_sandre[colonne_donnee_hubeau]))
+    ]
 
-# TODO Créer fonction pour nettoryer les doublons de hubeau et s'assurer qu'il n'y a pas de trou.
+    # On supprime les doublons du DataFrame
+    df_code_sandre_with_data_no_duplicate = df_stations_hubeau_code_sandre_with_data.drop_duplicates(subset=["code_station"])
+
+    return df_code_sandre_with_data_no_duplicate
 
 def clean_hydroportail_data(annee_mois_a_filtrer: str, sandre_code: str) -> pd.DataFrame:
     """
@@ -82,12 +92,11 @@ def clean_hydroportail_data(annee_mois_a_filtrer: str, sandre_code: str) -> pd.D
             continue
 
         #print(f"On continue la recherche avec {code_entite}-{donne_entite}")
-
         # On ne choisi que les stations.
         if len(code_entite) == 10:
             code_station_correspondant = code_entite[0:8] # Prend les 8 premier caractère
             # On récupère les noms des stations correspondant
-            df_res_query = df_hydroportail_enregistrement[df_hydroportail_enregistrement[nom_colonne_entite_hydroportail] == code_station_correspondant]
+            df_res_query = df_hydroportail_enregistrement[df_hydroportail_enregistrement[nom_colonne_code_hydroportail] == code_station_correspondant]
             if len(df_res_query) == 0:
                 print("Pas de site correspondante")
                 continue
@@ -130,6 +139,7 @@ with tqdm(total=total_iterations, desc="Progression dates") as pbar:
                 mois = "0" + str(mois)
 
             annee_mois_filtre = f"{annee}-{mois}"
+            annee_mois_jour_filtre = f"{annee}-{mois}-01"
 
             sandre_code = "BSH001"
 
@@ -139,11 +149,8 @@ with tqdm(total=total_iterations, desc="Progression dates") as pbar:
             df_hydroportail_clean.to_csv(chemin_fichier_clean_hydroportail, index=False)
 
             # Clean Hubeau data
-            df_hubeau_clean = clean_hubeau_data(annee_mois_filtre,sandre_code)
+            df_hubeau_clean = clean_hubeau_data(annee_mois_jour_filtre,sandre_code)
             chemin_fichier_clean_hubeau = Path(f"output/hubeau/cleaned_data/clean-QmM-{sandre_code}-{annee_mois_filtre}.csv")
             df_hubeau_clean.to_csv(chemin_fichier_clean_hubeau, index=False)
 
             pbar.update(1)
-            break
-        break
-#TODO Cest nul !!
