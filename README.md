@@ -38,6 +38,12 @@ clean-historic-data.py
 validate-clean-data.py
 # Faire des petits graphiques choupi
 plot_res_validation_clean.py
+# On veut ensuite nettoyer les données qui ne seraient pas historique
+clean-historic-data.py
+# On calcule ensuite les données avec hydraulicité
+hydraulicite.py
+# On crée ensuite un geojson avec le script
+plot_carte_hydraulicite-test.py
 ```
 
 ## Documentation Source
