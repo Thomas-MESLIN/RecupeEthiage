@@ -1,54 +1,40 @@
 import clean_utils
-from cl_hubeau import hydrometry
 from pathlib import Path
+import pandas as pd
 import os
 
+# On va juste utiliser le mois de janvier 2020
+df_janvier = clean_utils.clean_hubeau_data("2020-01-01","BSH001")
 
-# Passage par le proxy de la DREAL (permet d'accéder à internet depuis le réseau interne)
-#proxy_http = "http://proxy.monreseau.fr:8080"
-#proxy_https = "https://proxy.monreseau.fr:8080"
-proxy_http = ""
-proxy_https = ""
+col_janvier = df_janvier["resultat_obs_elab"]
+print(col_janvier)
 
-os.environ["HTTP_PROXY"] = proxy_http
-os.environ["HTTPS_PROXY"] = proxy_https
-os.environ["http_proxy"] = proxy_http
-os.environ["https_proxy"] = proxy_https
 
-# dossier vers lequel mettre les résultats
-dest_folder = Path("output/downloaded_data")
+data_moyenne_path = Path("output/hubeau/QmM_moyen/QmM_moyennes_1991_2020.csv")
+df_moyenne = pd.read_csv(data_moyenne_path)
 
-# Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
-bounding_box_grossiere = [2.307129,42.749916,7.734375,47.279318]
+df_moyenne_janvier = df_moyenne[df_moyenne["mois"] == 1]
+data_mois_correct = df_moyenne_janvier["QmM_moyenne"]
+print(data_mois_correct)
 
-# TODO ajouter possibilité de selectionner uen date
 
-# Format de date AAAA-MM-JJ
-date_debut_observation = "2026-04-01"
-date_fin_observation = "2026-04-30"
-
-# Données souhaitées parmi (HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ)
-grandeur_hydro = ["QmM"]
-
-# Format des données souhaité, pour n'avoir que les bons champs parmi
-# code_site,code_station,date_obs_elab,resultat_obs_elab,date_prod,code_statut,libelle_statut,code_methode,libelle_methode,code_qualification,libelle_qualification,longitude,latitude,grandeur_hydro_elab
-format_attendu = [
-    "code_site",
-    "code_station",
-    "date_obs_elab",
-    "resultat_obs_elab",
-    "date_prod",
-    "libelle_statut",
-    "libelle_methode",
-    "libelle_qualification",
-]
-
-dataframe_observation = hydrometry.get_observations(
-    date_debut_obs_elab=date_debut_observation,
-    date_fin_obs_elab=date_fin_observation,
-    grandeur_hydro_elab=grandeur_hydro,
-    fields=format_attendu,
+# Fusion sur code_station
+df_final = pd.merge(
+    df_janvier,
+    df_moyenne_janvier,
+    on="code_station",
+    how="inner"   # ou "left" selon ce que tu veux
 )
 
-file_name = f"observations-QmM-france-{date_debut_observation[:8]}.csv"
-dataframe_observation.to_csv(dest_folder / file_name)
+print(df_final)
+print(df_final.columns)
+
+df_final["hydraulicite"] = (
+    df_final["resultat_obs_elab"] /
+    df_final["QmM_moyenne"]
+)
+
+print(df_final)
+print(df_final.columns)
+
+df_final.to_csv(Path("output/hydraulicite/hydraulicite-BSH001-2020-01.csv"), index=False)
