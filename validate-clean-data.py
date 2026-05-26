@@ -56,7 +56,7 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
         - Le nombre de stations qui apparaissent dans Hydroportail mais qui n'apparaissent pas dans Hubeau
     :param sandre_code: Le code de la liste sandre à utiliser, peut-être vide.
     :param annee_mois_a_filtrer: L'année et le mois à filtrer au format AAAA-MM
-    Le script a besoin des données nettoyé par clean-data.py
+    Le script a besoin des données nettoyé par clean-historic-data.py
     :return La liste de stations avec des données uniquement dans hydroportail et la liste de stations avec des données uniquement dans hubeau
     """
     if len(annee_mois_a_filtrer) != 7:
@@ -90,17 +90,17 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
     set_codes_hydroportail = set(df_hydroportail_enregistrement[colonne_code_hydroportail])
 
     # On fais les différences
-    print("\n\nDifférence pour le code sandre : " + sandre_code)
+    # print("\n\nDifférence pour le code sandre : " + sandre_code)
     uniquement_dans_hubeau = set_codes_hubeau - set_codes_hydroportail
-    print(f"\nCodes présents dans hubeau mais absents d'hydroportail :")
-    print(uniquement_dans_hubeau)
-    print(str(len(uniquement_dans_hubeau)) + "/" + str(len(set_codes_hubeau)))
+    # print(f"\nCodes présents dans hubeau mais absents d'hydroportail :")
+    # print(uniquement_dans_hubeau)
+    # print(str(len(uniquement_dans_hubeau)) + "/" + str(len(set_codes_hubeau)))
 
     uniquement_dans_hydro = set_codes_hydroportail - set_codes_hubeau
     # Station présente dans Hydroportail
-    print(f"\nCodes présents dans hydroportail mais absents de hubeau :")
-    print(uniquement_dans_hydro)
-    print(str(len(uniquement_dans_hydro)) + "/" + str(len(set_codes_hydroportail)))
+    # print(f"\nCodes présents dans hydroportail mais absents de hubeau :")
+    # print(uniquement_dans_hydro)
+    # print(str(len(uniquement_dans_hydro)) + "/" + str(len(set_codes_hydroportail)))
 
     dict_diff = {
         "code_sandre": sandre_code,
@@ -121,12 +121,10 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
 #date_a_filtrer = "2001-01-01"
 
 total = []
-total_iterations = (2015 - 1991) * 12
+total_iterations = (2021- 1991) * 12
 
 with tqdm(total=total_iterations, desc="Progression dates") as pbar:
     for annee in range(1991,2021):
-        if annee == 2014:
-            break
         for mois in range(1,13):
             mois_str = str(mois)
             if mois < 10:
@@ -193,13 +191,13 @@ for dico_donnee in total:
                 station_unique_hubeau_BSH101[station_hubeau] = 0
             station_unique_hubeau_BSH101[station_hubeau] += 1
 
-print("\n\n")
+print("\n")
 print("Station uniquement dans le BSH001 avec des données")
 print("Uniquement dans hubeau puis uniquement dans hydroportail")
 print(station_unique_hubeau_BSH001)
 print(station_unique_hydroportail_BSH001)
 
-print("\n\n")
+print("\n")
 print("Station uniquement dans le BSH101 avec des données")
 print("Uniquement dans hubeau puis uniquement dans hydroportail")
 print(station_unique_hubeau_BSH101)
@@ -219,8 +217,9 @@ for cle in list_total_station_unique:
     total_list.append(arr)
 
 dataframe_dico = pd.DataFrame(np.array(total_list), columns=['hubeau_BSH101', 'hydroportailBSH101', 'hubeau_BSH001', 'hydroportailBSH001'], index=list_total_station_unique)
-dataframe_dico.to_csv(Path("output/res-validation/res_station_unique.csv"))
-
+chemin_resultat_difference = "output/res-validation/res_station_unique.csv"
+dataframe_dico.to_csv(Path(chemin_resultat_difference))
+print("\n\nRésultat enregistré dans " + chemin_resultat_difference)
 # TODO A séparer en 2 scripts (script nettoyage, script Validation des données initiales, script établissement de stats)
 
 # TODO try to inspect the duplicates.

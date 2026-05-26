@@ -33,7 +33,7 @@ recuperation-QmM-1991-2020.py
 # Récupérer les données hydroportail (bancal)
 test-gather-auto-hydroportail.py
 # Nettoyer les données de hydroportail et Hub'eau
-clean-data.py
+clean-historic-data.py
 # Analyser les données de sortie et faire des petites stats dessus
 validate-clean-data.py
 # Faire des petits graphiques choupi
