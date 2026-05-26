@@ -3,8 +3,11 @@ from pathlib import Path
 import pandas as pd
 import os
 
+# Ce script sert à récupérer les données nettoyée et les exploiter pour calculer l'hydraulicité.
+# On a besoin pour cela de l'hydraulicité historique.
+
 # On va juste utiliser le mois de janvier 2020
-df_janvier = clean_utils.clean_hubeau_data("2020-01-01","BSH001")
+df_janvier = pd.read_csv("output/hubeau/cleaned_data/clean-QmM-BSH001-2026-02.csv")
 
 col_janvier = df_janvier["resultat_obs_elab"]
 print(col_janvier)
@@ -37,4 +40,5 @@ df_final["hydraulicite"] = (
 print(df_final)
 print(df_final.columns)
 
-df_final.to_csv(Path("output/hydraulicite/hydraulicite-BSH001-2020-01.csv"), index=False)
+df_final.to_csv(Path("output/hydraulicite/hydraulicite-BSH001-2026-02.csv"), index=False)
+

@@ -8,19 +8,24 @@ colonne_date_hubeau = "date_obs_elab"
 colonne_code_station_hubeau = "code_station"
 
 # === LECTURE DES CSV ===
-df_hubeau = pd.read_csv(fichier_hubeau)
+df_hubeau_historique = pd.read_csv(fichier_hubeau)
 
 
-def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, fichier_station_hubeau=output_folder / "stations.csv") -> pd.DataFrame:
+def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=Path(""), fichier_station_hubeau=output_folder / "stations.csv") -> pd.DataFrame:
     """
     Va chercher le fichier des observations qmm dans les fichiers téléchargé.
     Charge les données et prendre uniquement les données correspondantes à la date en paramètre.
     On nettoie les rangs dupliqué et ceux qui n'ont pas de données.
+    :param path_file_to_clean: Fichier vers le csv à nettoyer
     :param code_sandre: Le code sandre correspondant à la liste de station à extraire
     :param fichier_station_hubeau: Le nom du fichier à ouvrir et nettoyer.
     :param date_a_filtrer: La date qui servira de filtre au format YYYY-MM-DD
     :return: Renvoie un pd.DataFrame représentant le QmM sur de la date YYYY-MM-DD via l'API Hubeau
     """
+    df_hubeau = df_hubeau_historique
+    if path_file_to_clean != "":
+        # Delimiteur temportiare
+        df_hubeau = pd.read_csv(path_file_to_clean, delimiter=';')
 
     # Filtrage pour avoir uniquement les enregistrements aux bonnes dates
     df_hubeau_filtre_date = df_hubeau[df_hubeau[colonne_date_hubeau] == date_a_filtrer]
