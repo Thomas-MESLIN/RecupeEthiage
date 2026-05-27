@@ -156,11 +156,6 @@ df_resultats.to_csv(
 )
 print(f"CSV écrit : {path_output_file}")
 
-
-# TODO Compter en fonction de BSH le nombre d'occurence d'absence de chaque station.
-# Est ce que les stations qui n'ont pas de données ne sont jamais la,
-# ou est-ce que les stations qui n'ont pas de données en on le reste du temps.
-# Voir pourquoi certain stations ne sont pas dans Hubeau alors qu'elles sont dans Hydroportail.
 station_unique_hubeau_BSH001 = {}
 date_station_unique_hubeau_BSH001 = {}
 station_unique_hydroportail_BSH001 = {}
@@ -271,7 +266,7 @@ for code_station in list_total_station_unique:
 
 dataframe_dico = pd.DataFrame(
     total_list,
-    columns=[
+    columns=pd.array([
         'nombre_occurence_unique_hubeau_BSH101',
         'intervalle_apparition_station_unique_hubeau_BSH101',
         'nombre_occurence_unique_hydroportailBSH101',
@@ -280,8 +275,8 @@ dataframe_dico = pd.DataFrame(
         'intervalle_apparition_station_unique_hubeau_BSH001',
         'nombre_occurence_unique_hydroportailBSH001',
         'intervalle_apparition_station_unique_hydroportail_BSH001',
-    ],
-    index=list_total_station_unique
+    ]),
+    index=pd.array(list_total_station_unique)
 )
 
 chemin_resultat_difference = "output/res-validation/res_station_unique_hubeau_hydroportail_BSH001_BSH101.csv"
