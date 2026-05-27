@@ -53,8 +53,8 @@ def calcul_hydraulicite(annee_mois: str, code_sandre: str):
     df_final.to_csv(chemin_save, index=False)
     print(f"Fichier sauvegardé dans {chemin_save}.")
 
-calcul_hydraulicite("2026-04","BSH001")
-calcul_hydraulicite("2026-04","BSH101")
+if __name__ == "__main__":
+    calcul_hydraulicite("2026-04","BSH001")
+    calcul_hydraulicite("2026-04","BSH101")
 
-
-calcul_hydraulicite("2026-03","BSH001")
+    calcul_hydraulicite("2026-03","BSH001")

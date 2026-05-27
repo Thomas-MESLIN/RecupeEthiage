@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-
+import clean_historic_data
 # Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
 
 def get_qmm(code_sandre:str, date_mois:str) -> pd.DataFrame:
@@ -15,6 +15,8 @@ def get_qmm(code_sandre:str, date_mois:str) -> pd.DataFrame:
         nom_fichier = f"clean-QmM-{code_sandre}-{date_mois}.csv"
 
     chemin_fichier = Path(f"output/hubeau/cleaned_data/{nom_fichier}")
+    if not chemin_fichier.exists():
+        clean_historic_data.clean_historic_data(code_sandre)
 
     df_hubeau = pd.read_csv(chemin_fichier, )
 
@@ -55,8 +57,6 @@ def get_QmM_moyenne_station_mois_from_df_all(df_all:pd.DataFrame, station_code: 
     QmM_moyenne_station_mois = df_all[
         (df_all["date_obs_elab"].astype(str).str.contains(f"-{mois}-01")) &
         (df_all["code_station"] == station_code)]
-
-    QmM_moyenne_station_mois.to_csv(Path("output/hubeau/QmM_moyen/test.csv"))
 
     QmM_moyenne_station_mois_aggre = QmM_moyenne_station_mois["resultat_obs_elab"].agg('mean')
 

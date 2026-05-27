@@ -1,7 +1,11 @@
 import pandas as pd
+import download_Hubeau_QmM_1991_2020
 from pathlib import Path
 
 fichier_hubeau = Path("output/hubeau/downloaded_data/observations_elaboree/observations-QmM-france-1991-2020.csv")
+if not fichier_hubeau.exists():
+    download_Hubeau_QmM_1991_2020.download_hubeau_1991_2020()
+
 colonne_date_hubeau = "date_obs_elab"
 colonne_code_station_hubeau = "code_station"
 
