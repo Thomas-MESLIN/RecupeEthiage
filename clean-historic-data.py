@@ -8,6 +8,7 @@ from tqdm import tqdm
 sandre_code = input("Rentrez un code sandre à filtrer (BSH001 par défaut) : ")
 if sandre_code == "":
     sandre_code = "BSH001"
+print(f"Code à filtrer : [{sandre_code}]")
 
 total = []
 total_iterations = (2021 - 1991) * 12

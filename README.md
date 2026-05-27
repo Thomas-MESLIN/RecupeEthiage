@@ -27,23 +27,32 @@ Les données nettoyées ont les doublons en moins, les données vides en moins e
 Pour nettoyer les données de A à Z.
 ```bash
 # Télécharger les listes de stations Hub'eau
-get-all-station-hydrometry.py
+get-all-station-sites-hydrometry.py
 # Télécharger l'historique de 1991 à 2020
 recuperation-QmM-1991-2020.py
-# Récupérer les données hydroportail (bancal)
-test-gather-auto-hydroportail.py
 # Nettoyer les données de hydroportail et Hub'eau
 clean-historic-data.py
-# Analyser les données de sortie et faire des petites stats dessus
-validate-clean-data.py
-# Faire des petits graphiques choupi
-plot_res_validation_clean.py
+# On télécharge les données du ou des mois souhaités.
+
 # On veut ensuite nettoyer les données qui ne seraient pas historique
-clean-historic-data.py
+clean-data.py
 # On calcule ensuite les données avec hydraulicité
 hydraulicite.py
 # On crée ensuite un geojson avec le script
 plot_carte_hydraulicite-test.py
+```
+### Analyser les données nettoyées
+```bash
+# Analyser les données de sortie et faire des petites stats dessus
+validate-clean-data.py
+# Faire des petits graphiques choupi
+plot_res_validation_clean.py
+```
+
+## Hydroportail
+```bash
+# Récupérer les données hydroportail (bancal)
+test-gather-auto-hydroportail.py
 ```
 
 ## Documentation Source

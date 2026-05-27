@@ -15,7 +15,6 @@ input_folder = Path("output/hubeau/downloaded_data")
 
 # Dossier de sortie
 output_folder = Path("output/hubeau/cleaned_data")
-output_folder.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
 # RECUPERATION DES FICHIERS

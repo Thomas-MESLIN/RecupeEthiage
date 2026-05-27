@@ -1,20 +1,27 @@
 from cl_hubeau import hydrometry
 from pathlib import Path
+import os
+
+# Permet d'accéder à internet via le réseau interne de la DREAL
+os.environ['http_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+os.environ['HTTP_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+os.environ['https_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+os.environ['HTTPS_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
 
 # dossier vers lequel mettre les résultats
-dest_folder = Path("output")
+dest_folder = Path("output/hubeau/downloaded_data")
 #fields=["resultat_obs_elab", "code_site", "date_obs_elab"]
 #fields=[]
 df = hydrometry.get_all_stations()
-df.to_csv(dest_folder / 'stations.csv')
+df.to_csv(dest_folder/ 'stations' / 'stations.csv')
 station_geojson = df.to_json(default=str)
-with open(dest_folder / 'stations.geojson', 'w') as file:
+with open(dest_folder/ 'stations' / 'stations.geojson', 'w') as file:
     file.write(station_geojson)
 
 df = hydrometry.get_all_sites()
-df.to_csv(dest_folder / 'sites.csv')
+df.to_csv(dest_folder / 'sites' / 'sites.csv')
 sites_geojson = df.to_json(default=str)
-with open(dest_folder / 'sites.geojson', 'w') as file:
+with open(dest_folder / 'sites' / 'sites.geojson', 'w') as file:
     file.write(sites_geojson)
 
 # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes

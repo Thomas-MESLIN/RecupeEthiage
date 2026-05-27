@@ -2,19 +2,14 @@ from cl_hubeau import hydrometry
 from pathlib import Path
 import os
 
-# Passage par le proxy de la DREAL (permet d'accéder à internet depuis le réseau interne)
-#proxy_http = "http://proxy.monreseau.fr:8080"
-#proxy_https = "https://proxy.monreseau.fr:8080"
-proxy_http = ""
-proxy_https = ""
-
-os.environ["HTTP_PROXY"] = proxy_http
-os.environ["HTTPS_PROXY"] = proxy_https
-os.environ["http_proxy"] = proxy_http
-os.environ["https_proxy"] = proxy_https
+# Permet d'accéder à internet via le réseau interne de la DREAL
+os.environ['http_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+os.environ['HTTP_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+os.environ['https_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+os.environ['HTTPS_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
 
 # dossier vers lequel mettre les résultats
-dest_folder = Path("output")
+dest_folder = Path("output/hubeau/downloaded_data/observations_elaboree")
 
 # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
 bounding_box_grossiere = [2.307129,42.749916,7.734375,47.279318]
