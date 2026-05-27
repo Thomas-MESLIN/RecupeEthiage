@@ -2,3 +2,6 @@ cl-hubeau~=0.12.0
 pathlib
 pandas
 tqdm
+calendar
+datetime
+os

@@ -1,0 +1,89 @@
+from cl_hubeau import hydrometry
+from pathlib import Path
+import os
+from datetime import datetime
+import calendar
+
+
+def download_hubeau_france_mois(annee_mois : str, grandeur : str):
+    """
+    Télécharge les observations élaboré via l'api Hubeau dans le dossier output/hubeau/downloaded_data/observations_elaboree.
+    :param annee_mois: L'année et le mois à télécharger au format AAAA-MM
+    :param grandeur: La grandeur à télécharger parmis -> HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ
+    """
+    try:
+        datetime.strptime(annee_mois, "%Y-%M")
+    except ValueError:
+        print("Format de annee_mois invalide")
+        help(download_hubeau_france_mois)
+
+    # Permet d'accéder à internet via le réseau interne de la DREAL
+    os.environ['http_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+    os.environ['HTTP_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+    os.environ['https_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+    os.environ['HTTPS_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+
+    # dossier vers lequel mettre les résultats
+    dest_folder = Path("output/hubeau/downloaded_data/observations_elaboree")
+
+    # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
+    bounding_box_grossiere = [2.307129,42.749916,7.734375,47.279318]
+
+    dernier_jour = calendar.monthrange(int(annee_mois[0:4]), int(annee_mois[5:]))[1]
+
+    date_debut_observation = f"{annee_mois}-01"
+    date_fin_observation = f"{annee_mois}-{dernier_jour}"
+
+    print(f"Période téléchargée : {date_debut_observation}->{date_fin_observation}")
+    print(f"Grandeur téléchargée : {grandeur}")
+
+    # Données souhaitées parmi (HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ)
+    # Vérification de la grandeur souhaitée
+    if grandeur not in ["HIXM", "HIXnJ", "QINM", "QINnJ", "QixM", "QIXnJ", "QmM", "QmnJ"]:
+        print("Grandeur souhaitée invalide.")
+        help(download_hubeau_france_mois)
+        raise NameError
+
+    grandeur_hydro = [grandeur]
+
+    # Format des données souhaité, pour n'avoir que les bons champs parmi
+    # code_site,code_station,date_obs_elab,resultat_obs_elab,date_prod,code_statut,libelle_statut,code_methode,libelle_methode,code_qualification,libelle_qualification,longitude,latitude,grandeur_hydro_elab
+    format_attendu = [
+        "code_site",
+        "code_station",
+        "date_obs_elab",
+        "resultat_obs_elab",
+        "date_prod",
+        "libelle_statut",
+        "libelle_methode",
+        "libelle_qualification",
+    ]
+
+    dataframe_observation = hydrometry.get_observations(
+        date_debut_obs_elab=date_debut_observation,
+        date_fin_obs_elab=date_fin_observation,
+        grandeur_hydro_elab=grandeur_hydro,
+        fields=format_attendu,
+    )
+
+    chemin_fichier = dest_folder / f'observations-{grandeur}-france-{annee_mois_souhaite}.csv'
+    dataframe_observation.to_csv(chemin_fichier)
+    print(f"Fichier téléchargé : {chemin_fichier}")
+
+# Code executé uniquement si on lance ce fichier individuellement, pas si on l'importe à l'aide d'un autre fichier.
+if __name__ == "__main__":
+    date_actuelle = datetime.now().strftime("%Y-%m")
+
+    # Format de date AAAA-MM-JJ
+    annee_mois_souhaite = "-1"
+    while len(annee_mois_souhaite) != 7 and annee_mois_souhaite != "":
+        annee_mois_souhaite = input(
+            f"Quelle année et mois souhaitez vous télécharger ? (AAAA-MM) (par défaut le mois actuel -> {date_actuelle}): ")
+        if len(annee_mois_souhaite) != 7 and annee_mois_souhaite != "":
+            print(f"Attention au format ! exemple {date_actuelle}")
+
+    if len(annee_mois_souhaite) == 0:
+        annee_mois_souhaite = date_actuelle
+
+    download_hubeau_france_mois(annee_mois_souhaite,"QmM")
+    # TODO, télécharger les autre données.
