@@ -62,65 +62,62 @@ def get_QmM_moyenne_station_mois_from_df_all(df_all:pd.DataFrame, station_code: 
 
     return QmM_moyenne_station_mois_aggre
 
-# On récupère et on aggrège toutes les années.
-df_all_BSH001 = get_all_qmm("BSH001")
-print(df_all_BSH001)
+code_sandre_a_aggreger = ["BSH001", "BSH101"]
 
-# On va faire un gros tableau csv qui contient pour chaques stations, pour chaque mois [1-12]. La moyenne du débit moyen mensuel.
-# En essayant de garder le format des csv Hub'eau de préférence.
-# code_station, date_osb_elab, QmM_moyenne
+for code_sandre in code_sandre_a_aggreger:
+    # On récupère et on aggrège toutes les années.
+    df_all_qmm = get_all_qmm(code_sandre)
+    # print(df_all_qmm)
 
-code_station = "W331501001"
-mois_target = "01"
+    # On va faire un gros tableau csv qui contient pour chaques stations, pour chaque mois [1-12]. La moyenne du débit moyen mensuel.
+    # En essayant de garder le format des csv Hub'eau de préférence.
+    # code_station, date_osb_elab, QmM_moyenne
 
-res = get_QmM_moyenne_station_mois_from_df_all(df_all_BSH001, code_station, mois_target)
-print(res)
+    # On prend tous les numéros de stations
+    df_all_stations = df_all_qmm["code_station"].drop_duplicates()
 
-# On prend tous les numéros de stations
-df_all_stations = df_all_BSH001["code_station"].drop_duplicates()
+    # boucle sur chaque station
+    rows = []
+    for station_code in df_all_stations:
 
-# boucle sur chaque station
-rows = []
-for station_code in df_all_stations:
+        # boucle sur les 12 mois
+        for mois in range(1, 13):
 
-    # boucle sur les 12 mois
-    for mois in range(1, 13):
+            mois_str = f"{mois:02d}"
 
-        mois_str = f"{mois:02d}"
+            # calcul moyenne QmM
+            qmm_moyenne = get_QmM_moyenne_station_mois_from_df_all(
+                df_all=df_all_qmm,
+                station_code=station_code,
+                mois=mois_str
+            )
 
-        # calcul moyenne QmM
-        qmm_moyenne = get_QmM_moyenne_station_mois_from_df_all(
-            df_all=df_all_BSH001,
-            station_code=station_code,
-            mois=mois_str
-        )
+            row = {
+                "code_station": station_code,
+                "mois": mois_str,
+                "QmM_moyenne": qmm_moyenne
+            }
 
-        row = {
-            "code_station": station_code,
-            "mois": mois_str,
-            "QmM_moyenne": qmm_moyenne
-        }
+            rows.append(row)
 
-        rows.append(row)
+    # ==========================================
+    # DATAFRAME FINAL
+    # ==========================================
 
-# ==========================================
-# DATAFRAME FINAL
-# ==========================================
+    df_qmm_moyennes = pd.DataFrame(rows)
 
-df_qmm_moyennes = pd.DataFrame(rows)
+    print(df_qmm_moyennes)
 
-print(df_qmm_moyennes)
+    # ==========================================
+    # EXPORT CSV
+    # ==========================================
 
-# ==========================================
-# EXPORT CSV
-# ==========================================
+    output_file = Path(f"../output/hubeau/QmM_moyen/QmM_moyennes_{code_sandre}_1991_2020.csv")
 
-output_file = Path("../output/hubeau/QmM_moyen/QmM_moyennes_1991_2020.csv")
+    df_qmm_moyennes.to_csv(
+        output_file,
+        index=False,
+        encoding="utf-8"
+    )
 
-df_qmm_moyennes.to_csv(
-    output_file,
-    index=False,
-    encoding="utf-8"
-)
-
-print(f"\nCSV sauvegardé : {output_file}")
+    print(f"\nCSV sauvegardé : {output_file}")

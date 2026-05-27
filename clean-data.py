@@ -11,7 +11,7 @@ import clean_utils
 code_sandre_a_nettoyer = ["BSH001", "BSH101"]
 
 # Dossier contenant les fichiers téléchargés
-input_folder = Path("output/hubeau/downloaded_data")
+input_folder = Path("output/hubeau/downloaded_data/observations_elaboree")
 
 # Dossier de sortie
 output_folder = Path("output/hubeau/cleaned_data")

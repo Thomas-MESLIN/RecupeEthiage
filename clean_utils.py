@@ -1,9 +1,7 @@
 import pandas as pd
 from pathlib import Path
 
-output_folder = Path("output")
-
-fichier_hubeau = output_folder / "observations-QmM-france-1991-2020.csv"
+fichier_hubeau = Path("output/hubeau/downloaded_data/observations_elaboree/observations-QmM-france-1991-2020.csv")
 colonne_date_hubeau = "date_obs_elab"
 colonne_code_station_hubeau = "code_station"
 
@@ -11,7 +9,7 @@ colonne_code_station_hubeau = "code_station"
 df_hubeau_historique = pd.read_csv(fichier_hubeau)
 
 
-def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=Path(""), fichier_station_hubeau=output_folder / "stations.csv") -> pd.DataFrame:
+def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=Path(""), fichier_station_hubeau="output/hubeau/downloaded_data/stations/stations.csv") -> pd.DataFrame:
     """
     Va chercher le fichier des observations qmm dans les fichiers téléchargé.
     Charge les données et prendre uniquement les données correspondantes à la date en paramètre.
@@ -25,7 +23,7 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
     df_hubeau = df_hubeau_historique
     if path_file_to_clean != "":
         # Delimiteur temportiare
-        df_hubeau = pd.read_csv(path_file_to_clean, delimiter=';')
+        df_hubeau = pd.read_csv(path_file_to_clean)
 
     # Filtrage pour avoir uniquement les enregistrements aux bonnes dates
     df_hubeau_filtre_date = df_hubeau[df_hubeau[colonne_date_hubeau] == date_a_filtrer]
