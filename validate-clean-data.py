@@ -272,20 +272,20 @@ for code_station in list_total_station_unique:
 dataframe_dico = pd.DataFrame(
     total_list,
     columns=[
-        'code_station_unique_hubeau_BSH101',
+        'nombre_occurence_unique_hubeau_BSH101',
         'intervalle_apparition_station_unique_hubeau_BSH101',
-        'code_station_unique_hydroportailBSH101',
+        'nombre_occurence_unique_hydroportailBSH101',
         'intervalle_apparition_station_unique_hydroportail_BSH101',
-        'code_station_unique_hubeau_BSH001',
+        'nombre_occurence_unique_hubeau_BSH001',
         'intervalle_apparition_station_unique_hubeau_BSH001',
-        'code_station_unique_hydroportailBSH001',
+        'nombre_occurence_unique_hydroportailBSH001',
         'intervalle_apparition_station_unique_hydroportail_BSH001',
     ],
     index=list_total_station_unique
 )
 
-chemin_resultat_difference = "output/res-validation/res_station_unique.csv"
-dataframe_dico.to_csv(Path(chemin_resultat_difference), index_label="code_station")
+chemin_resultat_difference = "output/res-validation/res_station_unique_hubeau_hydroportail_BSH001_BSH101.csv"
+dataframe_dico.to_csv(Path(chemin_resultat_difference), index_label="code_station", sep=';')
 print("\n\nRésultat enregistré dans " + chemin_resultat_difference)
 
 # TODO try to inspect the duplicates.
