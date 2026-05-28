@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 import calcul_hydraulicite_1991_2020
 import clean_data
+import plot_carte_hydraulicite
 # Ce script sert à récupérer les données nettoyée et les exploiter pour calculer l'hydraulicité.
 # On a besoin pour cela de l'hydraulicité historique.
 
@@ -53,8 +54,16 @@ def calcul_hydraulicite(annee_mois: str, code_sandre: str):
     df_final.to_csv(chemin_save, index=False)
     print(f"Fichier sauvegardé dans {chemin_save}.")
 
-if __name__ == "__main__":
-    calcul_hydraulicite("2026-04","BSH001")
-    calcul_hydraulicite("2026-04","BSH101")
+def calcul_et_plot_hydraulicite_mensuel(annee_mois: str, code_sandre: str):
+    """
+    Effectue le calcul d'hydraulicité et le transforme immédiatement en geojson.
+    :param annee_mois: AAAA-MM
+    :param code_sandre: Un code sandre
+    """
+    calcul_hydraulicite(annee_mois,code_sandre)
+    plot_carte_hydraulicite.create_geojson_from_hydraulicite(annee_mois,code_sandre)
 
-    calcul_hydraulicite("2026-03","BSH001")
+if __name__ == "__main__":
+    #calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
+    #calcul_et_plot_hydraulicite_mensuel("2026-04","BSH101")
+    calcul_et_plot_hydraulicite_mensuel("2024-02","BSH001")

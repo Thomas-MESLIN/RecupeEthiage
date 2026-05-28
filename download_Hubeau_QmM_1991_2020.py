@@ -1,6 +1,7 @@
 from cl_hubeau import hydrometry
 from pathlib import Path
 import os
+import init_project
 
 def download_hubeau_1991_2020():
     # Permet d'accéder à internet via le réseau interne de la DREAL

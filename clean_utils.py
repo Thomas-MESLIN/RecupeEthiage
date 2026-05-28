@@ -25,7 +25,7 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
     :return: Renvoie un pd.DataFrame représentant le QmM sur de la date YYYY-MM-DD via l'API Hubeau
     """
     df_hubeau = df_hubeau_historique
-    if path_file_to_clean != "":
+    if path_file_to_clean != Path(""):
         # Delimiteur temportiare
         df_hubeau = pd.read_csv(path_file_to_clean)
 
@@ -74,7 +74,7 @@ def clean_hydroportail_data(annee_mois_a_filtrer: str, sandre_code: str) -> pd.D
     if sandre_code == "":
         nom_fichier_hydroportail = f"{annee_mois_a_filtrer}-only-validated-qmm.csv"
 
-    chemin_fichier_hydroportail = output_folder / "exports_hydroportail" / nom_fichier_hydroportail
+    chemin_fichier_hydroportail = Path("output/hydroportail/downloaded_data") / nom_fichier_hydroportail
 
     df_hydroportail_enregistrement = pd.read_csv(chemin_fichier_hydroportail)
     # Récupérations nom colonne contenant les données de débits.

@@ -1,6 +1,7 @@
 from cl_hubeau import hydrometry
 from pathlib import Path
 import os
+import init_project
 
 # Permet d'accéder à internet via le réseau interne de la DREAL
 os.environ['http_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'

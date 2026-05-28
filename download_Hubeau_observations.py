@@ -3,7 +3,7 @@ from pathlib import Path
 import os
 from datetime import datetime
 import calendar
-
+import init_project
 
 def download_hubeau_france_mois(annee_mois : str, grandeur : str):
     """
@@ -34,8 +34,8 @@ def download_hubeau_france_mois(annee_mois : str, grandeur : str):
     date_debut_observation = f"{annee_mois}-01"
     date_fin_observation = f"{annee_mois}-{dernier_jour}"
 
-    print(f"Période téléchargée : {date_debut_observation}->{date_fin_observation}")
-    print(f"Grandeur téléchargée : {grandeur}")
+    print(f"Téléchargement de la période  : {date_debut_observation}->{date_fin_observation}")
+    print(f"Téléchargement de la grandeur : {grandeur}")
 
     # Données souhaitées parmi (HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ)
     # Vérification de la grandeur souhaitée
