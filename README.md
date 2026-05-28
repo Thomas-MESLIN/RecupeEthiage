@@ -49,11 +49,22 @@ validate-clean-data.py
 plot_res_validation_clean.py
 ```
 
+### Re-télécharger les données déjà récupérées
+Si les données que vous avez téléchargées ne sont plus à jour, vous pouvez supprimer le dossier `output` tout entier.
+
+Les dernière données seront re-téléchargé automatiquement.
 ## Hydroportail
 ```bash
 # Récupérer les données hydroportail (bancal)
 test-gather-auto-hydroportail.py
 ```
+
+## En cas de panne
+Si on est face à une superbe panne, qu'il y a une erreur obscure ou autre, 
+la meilleure solution est de tout remettre à 0.
+
+Vous pouvez alors supprimer tout ce dossier, re-extraire au propre, re-installer un venv et re-lancer votre requête. 
+En priant pour qu'il y ai une mise à jour qui règle le problème. 
 
 ## Documentation Source
 ### API Hub'eau
