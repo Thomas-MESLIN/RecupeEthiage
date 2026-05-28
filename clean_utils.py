@@ -1,33 +1,45 @@
 import pandas as pd
-import download_Hubeau_QmM_1991_2020
+import download_Hubeau_1991_2020
 from pathlib import Path
-
-fichier_hubeau = Path("output/hubeau/downloaded_data/observations_elaboree/observations-QmM-france-1991-2020.csv")
-if not fichier_hubeau.exists():
-    download_Hubeau_QmM_1991_2020.download_hubeau_1991_2020()
+import utils
 
 colonne_date_hubeau = "date_obs_elab"
 colonne_code_station_hubeau = "code_station"
 
-# === LECTURE DES CSV ===
-df_hubeau_historique = pd.read_csv(fichier_hubeau)
+_cache = {}
+def get_grandeur_historique_df(grandeur:str):
+    """
+    Renvoie le dataframe correspondant à la grandeur sur la période 1991-2020.
+    S'assure que la données est téléchargé, si ce n'est pas le cas, la télécharge.
+    :param grandeur: Une grandeur à télécharger
+    :return: Une DataFrame des données de 1991 à 2020 sur la grandeur correspondante.
+    """
+    if grandeur not in _cache:
+        download_Hubeau_1991_2020.ensure_grandeur_historique_downloaded(grandeur)
+        _cache[grandeur] = pd.read_csv(utils.get_path_historique_raw_csv(grandeur))
+    return _cache[grandeur]
 
-
-def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=Path(""), fichier_station_hubeau="output/hubeau/downloaded_data/stations/stations.csv") -> pd.DataFrame:
+def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=Path(""), grandeur_a_filtrer="", fichier_station_hubeau="output/hubeau/downloaded_data/stations/stations.csv") -> pd.DataFrame:
     """
     Va chercher le fichier des observations qmm dans les fichiers téléchargé.
     Charge les données et prendre uniquement les données correspondantes à la date en paramètre.
     On nettoie les rangs dupliqué et ceux qui n'ont pas de données.
+    :param grandeur_a_filtrer: Une grandeur à filtrer, utile uniquement lorsque l'on souhaite nettoyer des données historiques
     :param path_file_to_clean: Fichier vers le csv à nettoyer
     :param code_sandre: Le code sandre correspondant à la liste de station à extraire
     :param fichier_station_hubeau: Le nom du fichier à ouvrir et nettoyer.
     :param date_a_filtrer: La date qui servira de filtre au format YYYY-MM-DD
-    :return: Renvoie un pd.DataFrame représentant le QmM sur de la date YYYY-MM-DD via l'API Hubeau
+    :return: Renvoie un pd.DataFrame représentant la grandeur souhaité sur de la date YYYY-MM-DD via l'API Hubeau
     """
-    df_hubeau = df_hubeau_historique
+
     if path_file_to_clean != Path(""):
         # Delimiteur temportiare
         df_hubeau = pd.read_csv(path_file_to_clean)
+    elif grandeur_a_filtrer in utils.GRANDEUR:
+        df_hubeau = get_grandeur_historique_df(grandeur_a_filtrer)
+    else:
+        print("Path à nettoyer vide et grandeur inexistante.")
+        raise NameError
 
     # Filtrage pour avoir uniquement les enregistrements aux bonnes dates
     df_hubeau_filtre_date = df_hubeau[df_hubeau[colonne_date_hubeau] == date_a_filtrer]

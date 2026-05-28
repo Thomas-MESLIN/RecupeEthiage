@@ -4,6 +4,15 @@ import os
 from datetime import datetime
 import calendar
 import init_project
+import utils
+
+def ensure_grandeur_mensuel_downloaded(annee_mois:str, grandeur:str):
+    complete_path = utils.get_path_mensuel_raw_csv(annee_mois,grandeur)
+    if not complete_path.exists():
+        print(f"Téléchargement du fichier en cours : {complete_path}")
+        download_hubeau_france_mois(annee_mois,grandeur)
+        print(f"Téléchargement du fichier terminé : {complete_path}")
+
 
 def download_hubeau_france_mois(annee_mois : str, grandeur : str):
     """
@@ -22,9 +31,6 @@ def download_hubeau_france_mois(annee_mois : str, grandeur : str):
     os.environ['HTTP_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
     os.environ['https_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
     os.environ['HTTPS_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
-
-    # dossier vers lequel mettre les résultats
-    dest_folder = Path("output/hubeau/downloaded_data/observations_elaboree")
 
     # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
     bounding_box_grossiere = [2.307129,42.749916,7.734375,47.279318]
@@ -66,7 +72,7 @@ def download_hubeau_france_mois(annee_mois : str, grandeur : str):
         fields=format_attendu,
     )
 
-    chemin_fichier = dest_folder / f'observations-{grandeur}-france-{annee_mois_souhaite}.csv'
+    chemin_fichier = utils.get_path_mensuel_raw_csv(annee_mois,grandeur)
     dataframe_observation.to_csv(chemin_fichier)
     print(f"Fichier téléchargé : {chemin_fichier}")
 

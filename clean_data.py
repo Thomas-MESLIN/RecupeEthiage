@@ -4,14 +4,16 @@ from tqdm import tqdm
 import clean_utils
 import download_Hubeau_observations
 
-def clean_single_month(annee_mois, code_sandre):
+def clean_single_month(annee_mois, code_sandre, grandeur:str):
     """
     Clean a file containing a single month of data.
     Download it if the file does not exist.
+    :param grandeur: La grandeur a récupérer
     :param annee_mois: Année et mois au format AAAA-MM
     :param code_sandre: Code sandre à extraire
     """
     date_complete = f"{annee_mois}-01"
+    download_Hubeau_observations.ensure_grandeur_mensuel_downloaded(annee_mois, grandeur)
     complete_path = Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-QmM-france-{annee_mois}.csv")
     if not complete_path.exists():
         print(f"Téléchargement du fichier en cours : {complete_path}")
