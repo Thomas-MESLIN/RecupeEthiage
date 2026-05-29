@@ -1,7 +1,6 @@
 import datetime
 from datetime import timedelta
 import calendar
-
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -9,6 +8,53 @@ import clean_historic_data
 import utils
 from dateutil.relativedelta import relativedelta
 # Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
+
+def calcul_vcn3(annee_mois:str, code_sandre:str):
+    """
+    :param annee_mois:
+    :param code_sandre:
+    :return:
+    """
+    df_mois_actuel_et_precedent = get_df_moyenne_glissante(annee_mois, code_sandre)
+    all_stations_code = df_mois_actuel_et_precedent["code_station"].drop_duplicates()
+    mois = annee_mois[5:7]
+    rows = []
+
+
+    chemin_moyen_minimum = Path(f"output/hubeau/VCN3_denominateur/Moyenne_minimum_glissant_{code_sandre}_1991_2020.csv")
+    df_moyen_minimum = pd.read_csv(chemin_moyen_minimum)
+
+    for station_code in all_stations_code:
+        minimum_moyenne_glissante = get_min_moyenne_glissante_station_mois(df_mois_actuel_et_precedent, station_code,annee_mois)
+        valeur_df_min_historique = df_moyen_minimum[
+            (df_moyen_minimum["code_station"] == station_code) &
+            (df_moyen_minimum["mois"] == mois)
+        ]
+
+        row = {
+            "code_station": station_code,
+            "mois": mois,
+            "moyenne_minimum_glissant": minimum_moyenne_glissante,
+            "moyenne_minimum_historique": valeur_df_min_historique,
+        }
+        rows.append(row)
+
+    df_qmm_moyennes = pd.DataFrame(rows)
+
+    print(df_qmm_moyennes)
+
+    # ==========================================
+    # EXPORT CSV
+    # ==========================================
+
+    output_file = Path(f"output/VCN3/vcn3_{code_sandre}_{annee_mois}.csv")
+
+    df_qmm_moyennes.to_csv(
+        output_file,
+        index=False,
+        encoding="utf-8"
+    )
+
 
 def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
     """
@@ -25,27 +71,9 @@ def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
 
     return df_hubeau
 
-def get_all_qmnj(code_sandre:str) -> pd.DataFrame:
-    """
-    Renvoie un DataFrame contenant toute les données qmnj de la période 1991-2020, en ajoutant 1990-12
-    De la liste de station avec le code_sandre suivant.
-    :param code_sandre: code_sandre
-    :return: Un dataframe contenant toute les données au même format que les extractions Hubeau
-    """
-    all_df = get_qmnj(code_sandre,"1990-12")
-    for annee in range(1991,2021):
-        for mois in range(1,13):
-            annee_mois = f"{annee}-{mois}"
-            if mois <= 9:
-                annee_mois = f"{annee}-0{mois}"
-
-            df = get_qmnj(code_sandre, annee_mois)
-            all_df = pd.concat([all_df, df], ignore_index=True)
-    return all_df
-
 def get_all_stations(code_sandre:str) -> pd.DataFrame:
     """
-    Renvoie un DataFrame contenant toute les données qmnj de la période 1991-2020, en ajoutant 1990-12
+    Renvoie un DataFrame contenant toute les stations de la période 1991-2020, en ajoutant 1990-12
     De la liste de station avec le code_sandre suivant.
     :param code_sandre: code_sandre
     :return: Un dataframe contenant toute les données au même format que les extractions Hubeau
@@ -174,7 +202,7 @@ def calcule_minimum_glissant_moyen_1991_2020():
         # EXPORT CSV
         # ==========================================
 
-        output_file = Path(f"output/hubeau/QmM_moyen/QmM_moyennes_{code_sandre}_1991_2020.csv")
+        output_file = Path(f"output/hubeau/VCN3_denominateur/Moyenne_minimum_glissant_{code_sandre}_1991_2020.csv")
 
         df_qmm_moyennes.to_csv(
             output_file,
@@ -184,7 +212,8 @@ def calcule_minimum_glissant_moyen_1991_2020():
 
         print(f"\nCSV sauvegardé : {output_file}")
 
-if __name__ == "__main__":
+def test():
+
     print("TESTS MOYENNE GLISSANTE GENTILLE : ")
     print("echantillon : ")
     d = {
@@ -217,3 +246,8 @@ if __name__ == "__main__":
     res = get_min_moyenne_glissante_station_mois(df_qmnj_2025_08, "U401402001", 2025, 8)
     print(res)
 
+if __name__ == "__main__":
+    calcul_vcn3("2025-08","BSH001")
+    calcul_vcn3("2025-07","BSH001")
+    calcul_vcn3("2025-08","BSH101")
+    calcul_vcn3("2025-07","BSH101")
