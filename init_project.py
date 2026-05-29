@@ -29,7 +29,8 @@ for parent_folder in [hydroportail_folder,hubeau_folder]:
 
 result_folder = [
     Path("hydraulicite"),
+    Path("VCN3"),
 ]
 
 for folder in result_folder:
-    folder.mkdir(exist_ok=True)
+    ("output" / folder).mkdir(exist_ok=True)

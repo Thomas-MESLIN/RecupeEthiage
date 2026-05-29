@@ -28,7 +28,7 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
     :param path_file_to_clean: Fichier vers le csv à nettoyer
     :param code_sandre: Le code sandre correspondant à la liste de station à extraire
     :param fichier_station_hubeau: Le nom du fichier à ouvrir et nettoyer.
-    :param date_a_filtrer: La date qui servira de filtre au format YYYY-MM-DD
+    :param date_a_filtrer: La date qui servira de filtre au format YYYY-MM
     :return: Renvoie un pd.DataFrame représentant la grandeur souhaité sur de la date YYYY-MM-DD via l'API Hubeau
     """
 
@@ -41,8 +41,8 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
         print("Path à nettoyer vide et grandeur inexistante.")
         raise NameError
 
-    # Filtrage pour avoir uniquement les enregistrements aux bonnes dates
-    df_hubeau_filtre_date = df_hubeau[df_hubeau[colonne_date_hubeau] == date_a_filtrer]
+    # Filtrage pour avoir uniquement les enregistrements aux bonnes dates tous le bon mois.
+    df_hubeau_filtre_date = df_hubeau[df_hubeau[colonne_date_hubeau].astype(str).str.contains(date_a_filtrer)]
 
     # Ouverture et lecture du fichier des stations hubeau.
     # fichier_station_hubeau = output_folder / "stations.csv"
@@ -69,7 +69,7 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
     ]
 
     # On supprime les doublons du DataFrame
-    df_code_sandre_with_data_no_duplicate = df_stations_hubeau_code_sandre_with_data.drop_duplicates(subset=["code_station"])
+    df_code_sandre_with_data_no_duplicate = df_stations_hubeau_code_sandre_with_data.drop_duplicates(subset=["code_station","date_obs_elab"])
 
     return df_code_sandre_with_data_no_duplicate
 

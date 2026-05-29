@@ -3,6 +3,7 @@ from pathlib import Path
 from tqdm import tqdm
 import clean_utils
 import download_Hubeau_observations
+import utils
 
 def clean_single_month(annee_mois, code_sandre, grandeur:str):
     """
@@ -12,23 +13,21 @@ def clean_single_month(annee_mois, code_sandre, grandeur:str):
     :param annee_mois: Année et mois au format AAAA-MM
     :param code_sandre: Code sandre à extraire
     """
-    date_complete = f"{annee_mois}-01"
     download_Hubeau_observations.ensure_grandeur_mensuel_downloaded(annee_mois, grandeur)
-    complete_path = Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-QmM-france-{annee_mois}.csv")
+    complete_path = utils.get_path_mensuel_raw_csv(annee_mois, grandeur)
     if not complete_path.exists():
         print(f"Téléchargement du fichier en cours : {complete_path}")
-        download_Hubeau_observations.download_hubeau_france_mois(annee_mois,"QmM")
+        download_Hubeau_observations.download_hubeau_france_mois(annee_mois,grandeur)
         print(f"Téléchargement du fichier terminé : {complete_path}")
 
     df_clean = clean_utils.clean_hubeau_data(
-        date_complete,
+        annee_mois,
         code_sandre,
         path_file_to_clean=complete_path,
     )
 
     # Dossier de sortie
-    output_folder = Path("output/hubeau/cleaned_data")
-    output_file = output_folder / f"clean-QmM-{code_sandre}-{annee_mois}.csv"
+    output_file = utils.get_path_clean_csv(code_sandre, annee_mois, grandeur)
 
     df_clean.to_csv(output_file, index=False)
 
@@ -82,4 +81,7 @@ def clean_all_data():
     print("\nTraitement terminé.")
 
 if __name__ == "__main__":
-    clean_all_data()
+    #clean_all_data()
+    clean_single_month("2025-06", "BSH001","QmnJ")
+    clean_single_month("2025-07", "BSH001","QmnJ")
+    clean_single_month("2025-08", "BSH001","QmnJ")

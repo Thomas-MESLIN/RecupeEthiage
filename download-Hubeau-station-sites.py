@@ -2,12 +2,12 @@ from cl_hubeau import hydrometry
 from pathlib import Path
 import os
 import init_project
+import utils
 
 # Permet d'accéder à internet via le réseau interne de la DREAL
-os.environ['http_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
-os.environ['HTTP_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
-os.environ['https_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
-os.environ['HTTPS_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+
+# initialisation du proxy
+utils.set_up_working_proxy()
 
 # dossier vers lequel mettre les résultats
 dest_folder = Path("output/hubeau/downloaded_data")

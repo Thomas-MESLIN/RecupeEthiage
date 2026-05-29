@@ -26,14 +26,11 @@ def download_hubeau_france_mois(annee_mois : str, grandeur : str):
         print("Format de annee_mois invalide")
         help(download_hubeau_france_mois)
 
-    # Permet d'accéder à internet via le réseau interne de la DREAL
-    os.environ['http_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
-    os.environ['HTTP_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
-    os.environ['https_proxy'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
-    os.environ['HTTPS_PROXY'] = 'http://pfrie-std.proxy.e2.rie.gouv.fr:8080'
+    # initialisation du proxy
+    utils.set_up_working_proxy()
 
     # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
-    bounding_box_grossiere = [2.307129,42.749916,7.734375,47.279318]
+    bounding_box_grossiere = [1.142578, 42.039587, 8.481445, 49.612271]
 
     dernier_jour = calendar.monthrange(int(annee_mois[0:4]), int(annee_mois[5:]))[1]
 
@@ -69,6 +66,7 @@ def download_hubeau_france_mois(annee_mois : str, grandeur : str):
         date_debut_obs_elab=date_debut_observation,
         date_fin_obs_elab=date_fin_observation,
         grandeur_hydro_elab=grandeur_hydro,
+        bbox=bounding_box_grossiere,
         fields=format_attendu,
     )
 
@@ -91,5 +89,10 @@ if __name__ == "__main__":
     if len(annee_mois_souhaite) == 0:
         annee_mois_souhaite = date_actuelle
 
-    download_hubeau_france_mois(annee_mois_souhaite,"QmM")
+    # download_hubeau_france_mois(annee_mois_souhaite,"QmM")
+    #download_hubeau_france_mois(annee_mois_souhaite, "QmnJ")
+    ensure_grandeur_mensuel_downloaded("2025-06","QmnJ")
+    ensure_grandeur_mensuel_downloaded("2025-07","QmnJ")
+    ensure_grandeur_mensuel_downloaded("2025-08","QmnJ")
+
     # TODO, télécharger les autre données.
