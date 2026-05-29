@@ -1,6 +1,8 @@
 import datetime
 from datetime import timedelta
 import calendar
+
+import numpy as np
 import pandas as pd
 from pathlib import Path
 import clean_historic_data
@@ -25,24 +27,38 @@ def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
 
 def get_all_qmnj(code_sandre:str) -> pd.DataFrame:
     """
-    Renvoie un DataFrame contenant toute les données qmm de la période 1991-2020.
+    Renvoie un DataFrame contenant toute les données qmnj de la période 1991-2020, en ajoutant 1990-12
     De la liste de station avec le code_sandre suivant.
     :param code_sandre: code_sandre
     :return: Un dataframe contenant toute les données au même format que les extractions Hubeau
     """
-    all_df = get_qmnj(code_sandre,"1991-01")
+    all_df = get_qmnj(code_sandre,"1990-12")
     for annee in range(1991,2021):
         for mois in range(1,13):
             annee_mois = f"{annee}-{mois}"
             if mois <= 9:
                 annee_mois = f"{annee}-0{mois}"
 
-            if annee_mois == "1991-01":
-                continue
-
             df = get_qmnj(code_sandre, annee_mois)
             all_df = pd.concat([all_df, df], ignore_index=True)
+    return all_df
 
+def get_all_stations(code_sandre:str) -> pd.DataFrame:
+    """
+    Renvoie un DataFrame contenant toute les données qmnj de la période 1991-2020, en ajoutant 1990-12
+    De la liste de station avec le code_sandre suivant.
+    :param code_sandre: code_sandre
+    :return: Un dataframe contenant toute les données au même format que les extractions Hubeau
+    """
+    all_df = get_qmnj(code_sandre,"1990-12")["code_station"].drop_duplicates()
+    for annee in range(1991,2021):
+        for mois in range(1,13):
+            annee_mois = f"{annee}-{mois}"
+            if mois <= 9:
+                annee_mois = f"{annee}-0{mois}"
+
+            df = get_qmnj(code_sandre, annee_mois)["code_station"].drop_duplicates()
+            all_df = pd.concat([all_df, df], ignore_index=True)
     return all_df
 
 def get_df_moyenne_glissante(annee_mois:str, code_sandre:str):
@@ -108,62 +124,40 @@ def get_min_moyenne_glissante_station_mois(df:pd.DataFrame, station_code: str, a
     # On prend le minimum de ces moyennes
     return df_station_annee_mois["moyenne_glissante"].min()
 
-def get_min_moyenne_glissante_from_df_all(df_all:pd.DataFrame, station_code: str, mois: str):
-    """
-    Permet de récupérér le QmM moyen sur un mois réparti sur chaque année 1991-2020.
-    Le mois dois être au format MM, allant de 01 à 12.
-    :param df_all: Le DataFrame contenant tous les enregistrements nettoyés.
-    :param station_code: Le code de la station dont on veut avoir le débit moyen d'un mois aggrégé par année
-    :param mois: Le mois auquel on veut extraire la moyenne.
-    :return: Un flottant représentant la moyenne des QmM sur le mois depuis 1991 à 2020.
-    """
-    QmM_moyenne_station_mois = df_all[
-        (df_all["date_obs_elab"].astype(str).str.contains(f"-{mois}-01")) &
-        (df_all["code_station"] == station_code)]
-
-    QmM_moyenne_station_mois_aggre = QmM_moyenne_station_mois["resultat_obs_elab"].agg('mean')
-
-    return QmM_moyenne_station_mois_aggre
-
 def calcule_minimum_glissant_moyen_1991_2020():
     """
-    Calcule le QmM moyen historique allant de 1991 à 2020.
-    Sauvegarde le résultat dans QmM_moyennes_{code_sandre}_1991_2020.csv
+    Calcule la moyenne des minimum glissant historique allant de 1991 à 2020.
+    Sauvegarde le résultat dans QmnJ_moyennes_{code_sandre}_1991_2020.csv
     """
     code_sandre_a_aggreger = ["BSH001", "BSH101"]
 
     for code_sandre in code_sandre_a_aggreger:
         # On récupère et on aggrège toutes les années.
-        df_all_qmm = get_all_qmnj(code_sandre)
-        # print(df_all_qmm)
+        df_all_stations = get_all_stations(code_sandre)
 
         # On va faire un gros tableau csv qui contient pour chaques stations, pour chaque mois [1-12]. La moyenne du débit moyen mensuel.
         # En essayant de garder le format des csv Hub'eau de préférence.
         # code_station, date_osb_elab, QmM_moyenne
 
-        # On prend tous les numéros de stations
-        df_all_stations = df_all_qmm["code_station"].drop_duplicates()
-
         # boucle sur chaque station
         rows = []
-        for station_code in df_all_stations:
+        # boucle sur les 12 mois
+        for mois in range(1, 13):
+            mois_str = f"{mois:02d}"
+            for station_code in df_all_stations:
+                all_min_glissant = []
+                for annee in range(1992,2021):
+                    annee_mois = f"{annee}-{mois_str}"
+                    df_mois_actuel = get_df_moyenne_glissante(annee_mois, station_code)
+                    res_glisstant = get_min_moyenne_glissante_station_mois(df_mois_actuel, station_code, annee, mois)
+                    all_min_glissant.append(res_glisstant)
 
-            # boucle sur les 12 mois
-            for mois in range(1, 13):
-
-                mois_str = f"{mois:02d}"
-
-                # calcul moyenne QmM
-                qmm_moyenne = get_QmM_moyenne_station_mois_from_df_all(
-                    df_all=df_all_qmm,
-                    station_code=station_code,
-                    mois=mois_str
-                )
+                moyenne_mininmum_glissant = np.mean(all_min_glissant)
 
                 row = {
                     "code_station": station_code,
                     "mois": mois_str,
-                    "QmM_moyenne": qmm_moyenne
+                    "moyenne_minimum_glissant": moyenne_mininmum_glissant
                 }
 
                 rows.append(row)

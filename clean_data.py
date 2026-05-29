@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
 import clean_utils
-import download_Hubeau_observations
+import download_Hubeau
 import utils
 
 def clean_single_month(annee_mois, code_sandre, grandeur:str):
