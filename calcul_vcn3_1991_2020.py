@@ -5,8 +5,10 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import clean_historic_data
+import clean_data
 import utils
 from dateutil.relativedelta import relativedelta
+from tqdm import tqdm
 # Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
 
 def calcul_vcn3(annee_mois:str, code_sandre:str):
@@ -17,25 +19,28 @@ def calcul_vcn3(annee_mois:str, code_sandre:str):
     """
     df_mois_actuel_et_precedent = get_df_moyenne_glissante(annee_mois, code_sandre)
     all_stations_code = df_mois_actuel_et_precedent["code_station"].drop_duplicates()
-    mois = annee_mois[5:7]
+    mois = int(annee_mois[5:7])
+    annee = int(annee_mois[0:4])
     rows = []
 
-
-    chemin_moyen_minimum = Path(f"output/hubeau/VCN3_denominateur/Moyenne_minimum_glissant_{code_sandre}_1991_2020.csv")
-    df_moyen_minimum = pd.read_csv(chemin_moyen_minimum)
+    path_moyenne_minimum_historique = utils.get_path_qmnj_moyenne_minimum_glissant_historique(code_sandre)
+    df_moyen_minimum_historique = pd.read_csv(path_moyenne_minimum_historique)
 
     for station_code in all_stations_code:
-        minimum_moyenne_glissante = get_min_moyenne_glissante_station_mois(df_mois_actuel_et_precedent, station_code,annee_mois)
-        valeur_df_min_historique = df_moyen_minimum[
-            (df_moyen_minimum["code_station"] == station_code) &
-            (df_moyen_minimum["mois"] == mois)
-        ]
+        minimum_moyenne_glissante = get_min_moyenne_glissante_station_mois(df_mois_actuel_et_precedent, station_code, annee, mois)
+        serie_df_min_historique = df_moyen_minimum_historique[
+            (df_moyen_minimum_historique["code_station"] == station_code) &
+            (df_moyen_minimum_historique["mois"] == mois)
+        ]["moyenne_minimum_glissant"]
+
+        valeur_df_min_historique = serie_df_min_historique.iloc[0] if not serie_df_min_historique.empty else pd.NA
 
         row = {
             "code_station": station_code,
             "mois": mois,
             "moyenne_minimum_glissant": minimum_moyenne_glissante,
             "moyenne_minimum_historique": valeur_df_min_historique,
+            "vcn3": minimum_moyenne_glissante / valeur_df_min_historique,
         }
         rows.append(row)
 
@@ -47,15 +52,16 @@ def calcul_vcn3(annee_mois:str, code_sandre:str):
     # EXPORT CSV
     # ==========================================
 
-    output_file = Path(f"output/VCN3/vcn3_{code_sandre}_{annee_mois}.csv")
+    output_file = utils.get_path_vcn3(code_sandre, annee_mois)
 
     df_qmm_moyennes.to_csv(
         output_file,
         index=False,
         encoding="utf-8"
     )
+    print(f"Calcul Terminée pour {code_sandre}-{annee_mois} : {output_file}")
 
-
+_cache_qmnj = {}
 def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
     """
     Renvoie les qmnj à partir des données nettoyés. clean-QmnJ-SANDRE_CODE-AAAA-MM.csv
@@ -63,13 +69,18 @@ def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
     :param date_mois: L'annee et le mois au format AAAA-MM
     :return: Renvoie un Dataframe contenant les code des stations et les valeurs observés.
     """
-    chemin_fichier = utils.get_path_clean_csv(code_sandre, date_mois, "QmnJ")
-    if not chemin_fichier.exists():
-        clean_historic_data.clean_historic_data(code_sandre,"QmnJ")
-
-    df_hubeau = pd.read_csv(chemin_fichier)
-
-    return df_hubeau
+    if code_sandre not in _cache_qmnj:
+        _cache_qmnj[code_sandre] = {}
+    if date_mois not in _cache_qmnj[code_sandre]:
+        chemin_fichier = utils.get_path_clean_csv(code_sandre, date_mois, "QmnJ")
+        if not chemin_fichier.exists():
+            if utils.is_date_historique(date_mois):
+                clean_historic_data.clean_historic_data(code_sandre,"QmnJ")
+            else:
+                clean_data.clean_single_month(date_mois, code_sandre, "QmnJ")
+        df_hubeau = pd.read_csv(chemin_fichier)
+        _cache_qmnj[code_sandre][date_mois] = df_hubeau
+    return _cache_qmnj[code_sandre][date_mois]
 
 def get_all_stations(code_sandre:str) -> pd.DataFrame:
     """
@@ -87,7 +98,7 @@ def get_all_stations(code_sandre:str) -> pd.DataFrame:
 
             df = get_qmnj(code_sandre, annee_mois)["code_station"].drop_duplicates()
             all_df = pd.concat([all_df, df], ignore_index=True)
-    return all_df
+    return all_df.drop_duplicates()
 
 def get_df_moyenne_glissante(annee_mois:str, code_sandre:str):
     """
@@ -111,7 +122,7 @@ def get_df_moyenne_glissante(annee_mois:str, code_sandre:str):
 def get_min_moyenne_glissante_station_mois(df:pd.DataFrame, station_code: str, annee:int, mois: int):
     """
     Permet de récupérér le QmM moyen sur un mois réparti sur chaque année 1991-2020.
-    Le mois dois être au format MM, allant de 01 à 12.
+    Le mois et l'année doivent être des entier.
     :param df: Le DataFrame contenant tous les enregistrements nettoyés.
     :param station_code: Le code de la station dont on veut avoir le débit moyen d'un mois aggrégé par année
     :return: Un flottant représentant la moyenne des QmM sur le mois depuis 1991 à 2020.
@@ -139,6 +150,7 @@ def get_min_moyenne_glissante_station_mois(df:pd.DataFrame, station_code: str, a
     #df_station_annee_mois.to_csv(Path(f"output/VCN3/test-premiere-filtre-date-station-{annee}-{mois}.csv"))
 
     # Moyenne glissante sur 3 jours
+    df_station_annee_mois.sort_values("date_obs_elab", inplace=True)
     df_fenetre_glissante = df_station_annee_mois.rolling(timedelta(days=3),on="date_obs_elab",min_periods=3)
     #print("\nFenetre glissante : ")
     #print(df_fenetre_glissante)
@@ -170,25 +182,27 @@ def calcule_minimum_glissant_moyen_1991_2020():
         # boucle sur chaque station
         rows = []
         # boucle sur les 12 mois
-        for mois in range(1, 13):
-            mois_str = f"{mois:02d}"
-            for station_code in df_all_stations:
-                all_min_glissant = []
-                for annee in range(1992,2021):
-                    annee_mois = f"{annee}-{mois_str}"
-                    df_mois_actuel = get_df_moyenne_glissante(annee_mois, station_code)
-                    res_glisstant = get_min_moyenne_glissante_station_mois(df_mois_actuel, station_code, annee, mois)
-                    all_min_glissant.append(res_glisstant)
+        with tqdm(total=12*len(df_all_stations), desc="Calcul du VCN3") as pbar:
+            for mois in range(1, 13):
+                mois_str = f"{mois:02d}"
+                for station_code in df_all_stations:
+                    all_min_glissant = []
+                    for annee in range(1992,2021):
+                        annee_mois = f"{annee}-{mois_str}"
+                        df_mois_actuel = get_df_moyenne_glissante(annee_mois, code_sandre)
+                        res_glisstant = get_min_moyenne_glissante_station_mois(df_mois_actuel, station_code, annee, mois)
+                        all_min_glissant.append(res_glisstant)
 
-                moyenne_mininmum_glissant = np.mean(all_min_glissant)
+                    moyenne_mininmum_glissant = np.mean(all_min_glissant)
 
-                row = {
-                    "code_station": station_code,
-                    "mois": mois_str,
-                    "moyenne_minimum_glissant": moyenne_mininmum_glissant
-                }
+                    row = {
+                        "code_station": station_code,
+                        "mois": mois_str,
+                        "moyenne_minimum_glissant": moyenne_mininmum_glissant
+                    }
 
-                rows.append(row)
+                    rows.append(row)
+                    pbar.update(1)
 
         # ==========================================
         # DATAFRAME FINAL
@@ -202,7 +216,7 @@ def calcule_minimum_glissant_moyen_1991_2020():
         # EXPORT CSV
         # ==========================================
 
-        output_file = Path(f"output/hubeau/VCN3_denominateur/Moyenne_minimum_glissant_{code_sandre}_1991_2020.csv")
+        output_file = utils.get_path_qmnj_moyenne_minimum_glissant_historique(code_sandre)
 
         df_qmm_moyennes.to_csv(
             output_file,
@@ -247,6 +261,7 @@ def test():
     print(res)
 
 if __name__ == "__main__":
+    # calcule_minimum_glissant_moyen_1991_2020()
     calcul_vcn3("2025-08","BSH001")
     calcul_vcn3("2025-07","BSH001")
     calcul_vcn3("2025-08","BSH101")

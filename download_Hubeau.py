@@ -32,7 +32,7 @@ def download_hubeau_france_mois(annee_mois : str, grandeur : str):
     # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
     bounding_box_grossiere = [1.142578, 42.039587, 8.481445, 49.612271]
 
-    dernier_jour = calendar.monthrange(int(annee_mois[0:4]), int(annee_mois[5:]))[1]
+    dernier_jour = calendar.monthrange(int(annee_mois[0:4]), int(annee_mois[5:7]))[1]
 
     date_debut_observation = f"{annee_mois}-01"
     date_fin_observation = f"{annee_mois}-{dernier_jour}"

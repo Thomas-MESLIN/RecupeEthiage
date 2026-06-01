@@ -1,5 +1,6 @@
 import pandas as pd
 import download_Hubeau_1991_2020
+import download_Hubeau
 from pathlib import Path
 import utils
 
@@ -15,8 +16,25 @@ def get_grandeur_historique_df(grandeur:str):
     :return: Une DataFrame des données de 1991 à 2020 sur la grandeur correspondante.
     """
     if grandeur not in _cache:
+        print("Reading files...")
         download_Hubeau_1991_2020.ensure_grandeur_historique_downloaded(grandeur)
-        _cache[grandeur] = pd.read_csv(utils.get_path_historique_raw_csv(grandeur))
+        if utils.get_path_historique_raw_csv(grandeur).exists():
+            _cache[grandeur] = pd.read_csv(utils.get_path_historique_raw_csv(grandeur))
+        else:
+            # Le fichier des données n'est pas contenu dans un gros document, mais dans plein de petit, on dois tous les lire et les concaténer.
+            all_opened_df= []
+            download_Hubeau.ensure_grandeur_mensuel_downloaded("1990-12", grandeur)
+            all_opened_df.append(pd.read_csv(utils.get_path_mensuel_raw_csv("1990-12", grandeur)))
+            for annee in range(1991, 2021):
+                for mois in range(1, 13):
+                    annee_mois = f"{annee}-{mois}"
+                    if mois <= 9:
+                        annee_mois = f"{annee}-0{mois}"
+                    download_Hubeau.ensure_grandeur_mensuel_downloaded(annee_mois, grandeur)
+                    all_opened_df.append(pd.read_csv(utils.get_path_mensuel_raw_csv(annee_mois,grandeur)))
+            all_df = pd.concat(all_opened_df, ignore_index=True)
+            _cache[grandeur] = all_df
+        print("Files Reading Complete")
     return _cache[grandeur]
 
 def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=Path(""), grandeur_a_filtrer="", fichier_station_hubeau="output/hubeau/downloaded_data/stations/stations.csv") -> pd.DataFrame:
@@ -36,7 +54,11 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
         # Delimiteur temportiare
         df_hubeau = pd.read_csv(path_file_to_clean)
     elif grandeur_a_filtrer in utils.GRANDEUR:
-        df_hubeau = get_grandeur_historique_df(grandeur_a_filtrer)
+        if grandeur_a_filtrer == "QmnJ":
+            download_Hubeau.ensure_grandeur_mensuel_downloaded(date_a_filtrer, grandeur_a_filtrer)
+            df_hubeau = pd.read_csv(utils.get_path_mensuel_raw_csv(date_a_filtrer, grandeur_a_filtrer))
+        else:
+            df_hubeau = get_grandeur_historique_df(grandeur_a_filtrer)
     else:
         print("Path à nettoyer vide et grandeur inexistante.")
         raise NameError

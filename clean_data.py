@@ -13,11 +13,11 @@ def clean_single_month(annee_mois, code_sandre, grandeur:str):
     :param annee_mois: Année et mois au format AAAA-MM
     :param code_sandre: Code sandre à extraire
     """
-    download_Hubeau_observations.ensure_grandeur_mensuel_downloaded(annee_mois, grandeur)
+    download_Hubeau.ensure_grandeur_mensuel_downloaded(annee_mois, grandeur)
     complete_path = utils.get_path_mensuel_raw_csv(annee_mois, grandeur)
     if not complete_path.exists():
         print(f"Téléchargement du fichier en cours : {complete_path}")
-        download_Hubeau_observations.download_hubeau_france_mois(annee_mois,grandeur)
+        download_Hubeau.download_hubeau_france_mois(annee_mois,grandeur)
         print(f"Téléchargement du fichier terminé : {complete_path}")
 
     df_clean = clean_utils.clean_hubeau_data(

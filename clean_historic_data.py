@@ -1,4 +1,5 @@
 import clean_utils
+import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
 import utils
@@ -11,13 +12,12 @@ def clean_historic_data(code_sandre:str, grandeur:str):
     """
     total_iterations = (2021 - 1991) * 12
     with (tqdm(total=total_iterations, desc="Progression dates") as pbar):
-        for annee in range(1991,2021):
-            for mois in range(1,13):
-                if mois < 10:
-                    mois = "0" + str(mois)
-
-                annee_mois_filtre = f"{annee}-{mois}"
-                annee_mois_jour_filtre = f"{annee}-{mois}-01"
+        start_date = "1991-01-01"
+        if grandeur == "QmnJ":
+            start_date = "1990-12-01"
+        for date in pd.date_range(start_date, "2020-12-01", freq="MS"):
+                annee_mois_filtre = date.strftime("%Y-%m")
+                # annee_mois_jour_filtre = date.strftime("%Y-%m-%d")
 
                 if grandeur == "QmM":
                     # Clean hydroportail data
@@ -26,9 +26,10 @@ def clean_historic_data(code_sandre:str, grandeur:str):
                     df_hydroportail_clean.to_csv(chemin_fichier_clean_hydroportail, index=False)
 
                 # Clean Hubeau data
-                df_hubeau_clean = clean_utils.clean_hubeau_data(annee_mois_jour_filtre,code_sandre, grandeur_a_filtrer=grandeur)
-                chemin_fichier_clean_hubeau = utils.get_path_clean_csv(code_sandre,annee_mois_filtre,grandeur)
+                df_hubeau_clean = clean_utils.clean_hubeau_data(annee_mois_filtre,code_sandre, grandeur_a_filtrer=grandeur)
+                chemin_fichier_clean_hubeau = utils.get_path_clean_csv(code_sandre, annee_mois_filtre, grandeur)
                 df_hubeau_clean.to_csv(chemin_fichier_clean_hubeau, index=False)
+
 
                 pbar.update(1)
 

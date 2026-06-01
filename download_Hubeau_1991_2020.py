@@ -7,7 +7,7 @@ import download_Hubeau
 
 def ensure_grandeur_historique_downloaded(grandeur:str):
     path_grandeur = utils.get_path_historique_raw_csv(grandeur)
-    if not path_grandeur.exists():
+    if grandeur != "QmnJ" and not path_grandeur.exists():
         download_hubeau_1991_2020(grandeur)
     if grandeur == "QmnJ":
         download_Hubeau.ensure_grandeur_mensuel_downloaded("1990-12", "QmnJ")
@@ -18,6 +18,7 @@ def ensure_grandeur_historique_downloaded(grandeur:str):
                 if mois <= 9:
                     annee_mois = f"{annee}-0{mois}"
                 download_Hubeau.ensure_grandeur_mensuel_downloaded(annee_mois, "QmnJ")
+        print("Données téléchargées avec succès.")
 
 
 # TODO réduire la taille de la query.

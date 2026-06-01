@@ -24,6 +24,15 @@ def get_path_qmm_moyen_historique(code_sandre:str):
 def get_path_hydraulicite(code_sandre:str, annee_mois:str):
     return Path(f"output/hydraulicite/hydraulicite-{code_sandre}-{annee_mois}.csv")
 
+def get_path_qmnj_moyenne_minimum_glissant_historique(code_sandre:str):
+    return Path(f"output/hubeau/VCN3_denominateur/Moyenne_minimum_glissant_{code_sandre}_1991_2020.csv")
+
+def get_path_vcn3(code_sandre:str, annee_mois:str):
+    return Path(f"output/VCN3/VCN3-{code_sandre}-{annee_mois}.csv")
+
+def is_date_historique(annee_mois:str):
+    return "1990-12" <= annee_mois <= "2020-12"
+
 # SELECTION DU PROXY
 
 PROXIES = {
