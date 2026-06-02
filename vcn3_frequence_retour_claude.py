@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import warnings
 import utils
+import calcul_vcn3_1991_2020
 warnings.filterwarnings("ignore")
 
 
@@ -477,7 +478,7 @@ def plot_period_from_flow(q_obs: float, res: dict,
 # 9. Get resultat station
 # ==========================
 
-def get_result_station(code_station:str, mois:int, vcn3_observation:float):
+def get_result_station(code_station:str, mois:str, vcn3_observation):
     """
 
     :param code_station:
@@ -486,6 +487,7 @@ def get_result_station(code_station:str, mois:int, vcn3_observation:float):
     :return:
     """
     mois_a_etudier = f"{mois:02}"
+    calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(code_station)
     df_all_vcn3 = pd.read_csv(utils.get_path_vcn3_station(code_station))
     df_mois_precis = df_all_vcn3[df_all_vcn3["annee_mois"].astype(str).str.contains(f"-{mois_a_etudier}")]
     vcn3_exemple =  df_mois_precis["vcn3_mensuel"].to_numpy()
@@ -499,11 +501,11 @@ def get_result_station(code_station:str, mois:int, vcn3_observation:float):
     )
 
     print_results(resultats)
-    plot_results(resultats, title="VCN3 — Analyse fréquentielle", output_path=Path("output/test/vcn3_plot_result.png"))
+    plot_results(resultats, title="VCN3 — Analyse fréquentielle", output_path=Path(f"output/VCN3/plot_stations/analyse-frequentielle-{code_station}-{mois:02}.png"))
     # Juste le résultat numérique
     r = get_period_from_flow(q_obs=vcn3_observation, res=resultats)
     plot_period_from_flow(q_obs=vcn3_observation, res=resultats,
-                      output_path=Path("output/test/grahpique_vcn3_plot_avril_station_speciale.png"))
+                      output_path=Path(f"output/VCN3/plot_stations/periode-de-retour-{code_station}-{mois:02}.png"))
     print(f"Résultat période estimé : {r}")
     return r
 
@@ -512,4 +514,21 @@ def get_result_station(code_station:str, mois:int, vcn3_observation:float):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    get_result_station("U214201001", 4, 10539)
+    #get_result_station("U214201001", 4, 10539)
+    code_sandre = "BSH001"
+    date = pd.to_datetime("2026-04-01")
+    annee_mois = date.strftime("%Y-%m")
+    mois = date.strftime("%m")
+    df_station = utils.get_stations("BSH001","2026-04")
+    # On charge les données des stations du mois désiré.
+
+    df_annee_mois_selectionne = pd.read_csv(utils.get_path_vcn3(code_sandre, annee_mois))
+    for station_code in df_station["code_station"]:
+        df_valeur = df_annee_mois_selectionne[df_annee_mois_selectionne["code_station"] == station_code]
+        valeur = df_valeur["vcn3_mensuel"].iloc[0] if not df_valeur.empty else pd.NA
+        if not pd.isna(valeur):
+            get_result_station(station_code, mois, valeur)
+        else:
+            print(f"La station {station_code} n'a pas de donnée du mois {mois}.")
+# calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(station_code)
+#

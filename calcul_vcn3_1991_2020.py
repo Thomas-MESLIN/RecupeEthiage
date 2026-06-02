@@ -307,16 +307,35 @@ def calcul_vcn3_station(code_station:str, all_df:pd.DataFrame) -> pd.DataFrame:
     df_vcn3_station.to_csv(utils.get_path_vcn3_station(code_station), index=False)
     return df_vcn3_station
 
-def get_all_df_mensuel(code_sandre:str):
-    all_df = []
-    for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
-        annee_mois = date.strftime("%Y-%m")
-        df_mois = pd.read_csv(utils.get_path_vcn3_mensuel(code_sandre, annee_mois))
-        df_mois["annee_mois"] = annee_mois
-        all_df.append(df_mois)
 
-    df_all_vcn3 = pd.concat(all_df, ignore_index=True)
-    return df_all_vcn3
+_cache_get_all_df_mensuel = {}
+def get_all_df_mensuel(code_sandre:str):
+    if code_sandre not in _cache_get_all_df_mensuel:
+        all_df = []
+        for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
+            annee_mois = date.strftime("%Y-%m")
+            df_mois = pd.read_csv(utils.get_path_vcn3_mensuel(code_sandre, annee_mois))
+            df_mois["annee_mois"] = annee_mois
+            all_df.append(df_mois)
+
+        df_all_vcn3 = pd.concat(all_df, ignore_index=True)
+
+        _cache_get_all_df_mensuel[code_sandre] = df_all_vcn3.copy()
+    return _cache_get_all_df_mensuel[code_sandre]
+
+
+def ensure_calcul_vcn3_station(code_station:str) -> pd.DataFrame:
+    """
+    LA STATION DOIT ETRE DNAS LE BSH001 POUR LINSTANT
+    # TODO A CHANGER
+    S'asssure que le vcn3 de la station a bien été calculé
+    :param code_station:
+    :return: Rien
+    """
+    path_vcn3_station = utils.get_path_vcn3_station(code_station)
+    df_all_vcn3 = get_all_df_mensuel("BSH001")
+    if not path_vcn3_station.exists():
+        calcul_vcn3_station(code_station, df_all_vcn3)
 
 if __name__ == "__main__":
     #calcule_minimum_glissant_moyen_1991_2020()
@@ -327,9 +346,11 @@ if __name__ == "__main__":
     #calcul_vcn3_frequence_retour("2025-07","BSH101")
    # calcul_vcn3_frequence_retour("2025-05","BSH001")
     calcul_vcn3_frequence_retour("2026-04","BSH001")
+    # TODO, on suppose que les stations sont dans le BSH 001, mais à vrai dire, ça devrait être agnostique du BSH
     df_all_vcn3 = get_all_df_mensuel("BSH001")
     calcul_vcn3_station("U200201001", df_all_vcn3)
     calcul_vcn3_station("Y141502001", df_all_vcn3)
     calcul_vcn3_station("U214201001", df_all_vcn3)
     calcul_vcn3_station("U263501001", df_all_vcn3)
+    calcul_vcn3_station("U201201001", df_all_vcn3)
 
