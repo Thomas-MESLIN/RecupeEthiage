@@ -492,18 +492,19 @@ def get_result_station(code_station:str, mois:str, vcn3_observation):
     calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(code_station)
     df_all_vcn3 = pd.read_csv(utils.get_path_vcn3_station(code_station))
     df_mois_precis = df_all_vcn3[df_all_vcn3["annee_mois"].astype(str).str.contains(f"-{mois_a_etudier}")]
-    vcn3_exemple =  df_mois_precis["vcn3_mensuel"].to_numpy()
+    # On enlève les cases vide...
+    vcn3_exemple =  df_mois_precis["vcn3_mensuel"].dropna().to_numpy()
 
-    if vcn3_exemple.size < 6:
+    try:
+        resultats = vcn3_frequence_retour(
+            y           = vcn3_exemple,
+            T_grid      = np.array([2, 5, 10, 20, 50, 100]),
+            split_zeros = True,
+            IC_level    = 0.95,
+            n_sim       = 1000,
+        )
+    except ValueError:
         return {}
-
-    resultats = vcn3_frequence_retour(
-        y           = vcn3_exemple,
-        T_grid      = np.array([2, 5, 10, 20, 50, 100]),
-        split_zeros = True,
-        IC_level    = 0.95,
-        n_sim       = 1000,
-    )
 
     print_results(resultats)
     plot_results(resultats, title=f"VCN3 — Analyse fréquentielle - Station : {code_station}", output_path=Path(f"output/VCN3/plot_stations/analyse-frequentielle-{code_station}-{mois:02}.png"))
@@ -536,11 +537,16 @@ if __name__ == "__main__":
             valeur = df_valeur["vcn3_mensuel"].iloc[0] if not df_valeur.empty else pd.NA
             if not pd.isna(valeur):
                 row = get_result_station(station_code, mois, valeur)
+                row["code_station"] = station_code
                 all_rows.append(row)
             else:
                 print(f"La station {station_code} n'a pas de donnée du mois {mois}.")
+            df_all_analysis = pd.DataFrame(data=all_rows)
+            df_all_analysis.to_csv(Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv"),
+                                   index=False)
             pbar.update(1)
-    df_all_analysis = pd.concat(all_rows, ignore_index=True)
-    df_all_analysis.to_csv(Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv"), index=False)
+    #df_all_analysis = pd.DataFrame(data=all_rows)
+    #df_all_analysis.to_csv(Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv"),
+    #                       index=False)
 # calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(station_code)
 #
