@@ -30,6 +30,9 @@ def get_path_vcn3_moyenne_historique(code_sandre:str):
 def get_path_vcn3_mensuel(code_sandre:str, annee_mois:str):
     return Path(f"output/hubeau/VCN3/VCN3-{code_sandre}-{annee_mois}.csv")
 
+def get_path_vcn3_station(code_station:str):
+    return Path(f"output/VCN3/stations/VCN3-station-{code_station}.csv")
+
 def get_path_vcn3(code_sandre:str, annee_mois:str):
     return Path(f"output/VCN3/VCN3-{code_sandre}-{annee_mois}.csv")
 

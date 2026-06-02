@@ -31,6 +31,7 @@ for parent_folder in [hydroportail_folder,hubeau_folder]:
 result_folder = [
     Path("hydraulicite"),
     Path("VCN3"),
+    Path("VCN3/stations"),
 ]
 
 for folder in result_folder:

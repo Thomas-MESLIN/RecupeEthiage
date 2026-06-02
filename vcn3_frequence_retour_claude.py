@@ -15,6 +15,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import warnings
+import utils
 warnings.filterwarnings("ignore")
 
 
@@ -341,7 +342,6 @@ def plot_results(res: dict, title: str = "Analyse fréquentielle VCN3",
     ax2.legend(fontsize=9)
     ax2.grid(True, alpha=0.3)
     ax2.set_xlim(0, 1)
-    ax2.set_ylim(0, 7000)
 
     # -------------------------------------------------------------------
     # Graphique 3 : CDF — débit vs probabilité de non-dépassement
@@ -368,11 +368,127 @@ def plot_results(res: dict, title: str = "Analyse fréquentielle VCN3",
 
 
 # ---------------------------------------------------------------------------
-# 7. Exemple d'utilisation
+# 7. Période de retour d'un débit donné
 # ---------------------------------------------------------------------------
 
-if __name__ == "__main__":
-    vcn3_exemple =  pd.read_csv(Path("output/test/vcn3_station_U200201001.csv"))["vcn3_mensuel"].to_numpy()
+def get_period_from_flow(q_obs: float, res: dict) -> dict:
+    """
+    Retrouve la période de retour T correspondant à un débit observé q_obs,
+    par interpolation sur la courbe théorique (grille continue pcdf).
+
+    Paramètres
+    ----------
+    q_obs : débit observé (m³/s)
+    res   : résultat de vcn3_frequence_retour()
+
+    Retourne
+    --------
+    dict avec :
+        'q'      : débit en entrée
+        'p'      : probabilité de non-dépassement interpolée
+        'T'      : période de retour (ans)
+        'IC_low' : borne basse IC 95% sur T
+        'IC_high': borne haute IC 95% sur T
+    """
+    x = res["pcdf"]["x"]
+    cdf = res["pcdf"]["cdf"]
+    ic_low = res["pcdf"]["IC_low"]
+    ic_high = res["pcdf"]["IC_high"]
+
+    if q_obs <= 0:
+        return {"q": q_obs, "p": res["p0"], "T": 1.0 / res["p0"] if res["p0"] > 0 else np.inf,
+                "IC_low": np.nan, "IC_high": np.nan}
+
+    if q_obs < x[0] or q_obs > x[-1]:
+        raise ValueError(f"q_obs={q_obs} hors de la plage de la grille [{x[0]:.3f}, {x[-1]:.3f}].")
+
+    # Interpolation linéaire sur la grille x → cdf
+    p_interp = np.interp(q_obs, x, cdf)
+    # Pour l'IC : la borne basse du IC débit → borne haute du IC en T (et vice-versa)
+    # ic_low[i] = débit bas pour une fréquence donnée → T plus grand
+    # ic_high[i] = débit haut pour une fréquence donnée → T plus petit
+    # On inverse : pour q_obs fixé, on cherche la fréquence sur ic_high et ic_low
+    p_ic_low = np.interp(q_obs, ic_high, cdf)  # q sur courbe haute → fréquence basse → T grand
+    p_ic_high = np.interp(q_obs, ic_low, cdf)  # q sur courbe basse → fréquence haute → T petit
+
+    T = 1.0 / p_interp if p_interp > 0 else np.inf
+    T_low = 1.0 / p_ic_high if p_ic_high > 0 else np.inf
+    T_high = 1.0 / p_ic_low if p_ic_low > 0 else np.inf
+
+    result = {"q": q_obs, "p": p_interp, "T": T, "IC_low": T_low, "IC_high": T_high}
+
+    # Affichage
+    print(f"\n{'=' * 55}")
+    print(f"  Débit observé          : {q_obs:.4f} m³/s")
+    print(f"  Prob. non-dépassement  : {p_interp:.4f}")
+    print(f"  Période de retour      : {T:.1f} ans")
+    print(f"  IC 95%                 : [{T_low:.1f} – {T_high:.1f}] ans")
+    print(f"{'=' * 55}\n")
+
+    return result
+
+
+def plot_period_from_flow(q_obs: float, res: dict,
+                          output_path: str = "/mnt/user-data/outputs/vcn3_retour_qobs.png") -> None:
+    """Trace la courbe T vs débit avec le débit q_obs mis en évidence."""
+    r = get_period_from_flow(q_obs, res)
+
+    pcdf = res["pcdf"]
+    emp = res["empirical"]
+    T_min = min(emp["T"].min(), 1.0)
+    T_max = emp["T"].max() * 1.05
+    mask = np.isfinite(pcdf["T"]) & (pcdf["T"] >= T_min) & (pcdf["T"] <= T_max)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.set_xlim(T_min, T_max)
+
+    ax.fill_between(pcdf["T"][mask], pcdf["IC_low"][mask], pcdf["IC_high"][mask],
+                    color="firebrick", alpha=0.15, label="IC 95% (PBOOT)")
+    ax.plot(pcdf["T"][mask], pcdf["x"][mask], color="firebrick",
+            linewidth=1.5, label="Loi Log-Normale (L-mom)")
+    ax.scatter(emp["T"], emp["y_sorted"], color="steelblue", s=20, zorder=5,
+               alpha=0.8, label="Observations")
+
+    # Lignes de lecture
+    ax.axhline(q_obs, color="darkorange", linestyle="--", linewidth=1.2)
+    ax.axvline(r["T"], color="darkorange", linestyle="--", linewidth=1.2)
+    ax.plot(r["T"], q_obs, "o", color="darkorange", markersize=9, zorder=10,
+            label=f"q = {q_obs:.2f} m³/s → T = {r['T']:.1f} ans")
+
+    # Zone IC sur T (bande verticale)
+    ax.axvspan(r["IC_low"], r["IC_high"], color="darkorange", alpha=0.10,
+               label=f"IC T : [{r['IC_low']:.1f} – {r['IC_high']:.1f}] ans")
+
+    ax.set_xscale("log")
+    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+    ax.set_xlabel("Période de retour T (ans)", fontsize=11)
+    ax.set_ylabel("VCN3 (m³/s)", fontsize=11)
+    ax.set_title(f"Période de retour pour q = {q_obs:.4f} m³/s", fontsize=12, fontweight="bold")
+    ax.legend(fontsize=9)
+    ax.grid(True, which="both", alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.show()
+    print(f"Graphique sauvegardé : {output_path}")
+
+
+# ==========================
+# 9. Get resultat station
+# ==========================
+
+def get_result_station(code_station:str, mois:int, vcn3_observation:float):
+    """
+
+    :param code_station:
+    :param mois:
+    :param vcn3_observation:
+    :return:
+    """
+    mois_a_etudier = f"{mois:02}"
+    df_all_vcn3 = pd.read_csv(utils.get_path_vcn3_station(code_station))
+    df_mois_precis = df_all_vcn3[df_all_vcn3["annee_mois"].astype(str).str.contains(f"-{mois_a_etudier}")]
+    vcn3_exemple =  df_mois_precis["vcn3_mensuel"].to_numpy()
 
     resultats = vcn3_frequence_retour(
         y           = vcn3_exemple,
@@ -384,3 +500,16 @@ if __name__ == "__main__":
 
     print_results(resultats)
     plot_results(resultats, title="VCN3 — Analyse fréquentielle", output_path=Path("output/test/vcn3_plot_result.png"))
+    # Juste le résultat numérique
+    r = get_period_from_flow(q_obs=vcn3_observation, res=resultats)
+    plot_period_from_flow(q_obs=vcn3_observation, res=resultats,
+                      output_path=Path("output/test/grahpique_vcn3_plot_avril_station_speciale.png"))
+    print(f"Résultat période estimé : {r}")
+    return r
+
+# ---------------------------------------------------------------------------
+# 8. Exemple d'utilisation
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    get_result_station("U214201001", 4, 10539)

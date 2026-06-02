@@ -40,10 +40,8 @@ def calcul_vcn3_frequence_retour(annee_mois:str, code_sandre:str):
         row = {
             "code_station": station_code,
             "mois": mois,
-            "moyenne_minimum_glissant": minimum_moyenne_glissante,
-            "moyenne_minimum_historique": valeur_df_min_historique,
-            "vcn3": valeur_vcn3,
-            #"frequence":
+            "vcn3_mensuel": minimum_moyenne_glissante,
+            "vcn3_moyenne_historique": valeur_df_min_historique,
         }
         rows.append(row)
 
@@ -286,11 +284,52 @@ def test():
     res = get_vcn3_station_mois(df_qmnj_2025_08, "U401402001", 2025, 8)
     print(res)
 
+def calcul_vcn3_station(code_station:str, all_df:pd.DataFrame) -> pd.DataFrame:
+    """
+    Calcul le VCN3 mensuel d'une station et le stocke de manière à pouvoir y accéder en fonction du nom de la station, puisque chaque calcul se déroule station par station.
+    Il faut que le dataframe associé contienne les données de la station.
+    :param code_station: Le code de la station à calculer
+    :param all_df: Le dataframe contenant au moins les données VCN3 de la station.
+    :return: Un dataframe contenant les données de la station.
+    """
+    df_station = all_df[all_df["code_station"] == code_station]
+    all_rows = []
+    for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
+        annee_mois = date.strftime("%Y-%m")
+        df_annee_mois = df_station[df_station["annee_mois"] == annee_mois]
+        row = {
+            "code_station" : code_station,
+            "annee_mois": annee_mois,
+            "vcn3_mensuel" : df_annee_mois["vcn3_mensuel"].iloc[0] if not df_annee_mois.empty else pd.NA,
+        }
+        all_rows.append(row)
+    df_vcn3_station = pd.DataFrame(data=all_rows)
+    df_vcn3_station.to_csv(utils.get_path_vcn3_station(code_station), index=False)
+    return df_vcn3_station
+
+def get_all_df_mensuel(code_sandre:str):
+    all_df = []
+    for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
+        annee_mois = date.strftime("%Y-%m")
+        df_mois = pd.read_csv(utils.get_path_vcn3_mensuel(code_sandre, annee_mois))
+        df_mois["annee_mois"] = annee_mois
+        all_df.append(df_mois)
+
+    df_all_vcn3 = pd.concat(all_df, ignore_index=True)
+    return df_all_vcn3
+
 if __name__ == "__main__":
-    calcule_minimum_glissant_moyen_1991_2020()
+    #calcule_minimum_glissant_moyen_1991_2020()
+    #calcul_vcn3_frequence_retour("2026-04","BSH001")
+    #calcul_vcn3_frequence_retour("2025-08","BSH001")
+    #calcul_vcn3_frequence_retour("2025-07","BSH001")
+   # calcul_vcn3_frequence_retour("2025-08","BSH101")
+    #calcul_vcn3_frequence_retour("2025-07","BSH101")
+   # calcul_vcn3_frequence_retour("2025-05","BSH001")
     calcul_vcn3_frequence_retour("2026-04","BSH001")
-    calcul_vcn3_frequence_retour("2025-08","BSH001")
-    calcul_vcn3_frequence_retour("2025-07","BSH001")
-    calcul_vcn3_frequence_retour("2025-08","BSH101")
-    calcul_vcn3_frequence_retour("2025-07","BSH101")
-    calcul_vcn3_frequence_retour("2025-05","BSH001")
+    df_all_vcn3 = get_all_df_mensuel("BSH001")
+    calcul_vcn3_station("U200201001", df_all_vcn3)
+    calcul_vcn3_station("Y141502001", df_all_vcn3)
+    calcul_vcn3_station("U214201001", df_all_vcn3)
+    calcul_vcn3_station("U263501001", df_all_vcn3)
+
