@@ -2,6 +2,7 @@
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
+import utils
 import calcul_hydraulicite_mensuel
 
 def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
@@ -49,10 +50,28 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
     # 3. Jointure sur code_station
     # ============================================================
 
-    gdf_final = gdf_stations.merge(
+    gdf_final_avec_station = gdf_stations.merge(
         df_hydro,
         on="code_station",
         how="left"
+    )
+
+    # On ajoute les sites.
+
+
+    # On charge toute les stations
+    sites_path = utils.get_path_sites()
+    # Le fichier contient une colonne WKT : POINT(...)
+    df_sites = pd.DataFrame(pd.read_csv(sites_path))
+
+    # ============================================================
+    # 3. Jointure sur code_station
+    # ============================================================
+
+    gdf_final = gdf_final_avec_station.merge(
+        df_sites,
+        on="code_site",
+        how="inner"
     )
 
     # ============================================================

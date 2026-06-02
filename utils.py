@@ -50,6 +50,9 @@ def is_date_historique(annee_mois:str):
 def get_path_stations():
     return Path("output/hubeau/downloaded_data/stations/stations.csv")
 
+def get_path_sites():
+    return Path("output/hubeau/downloaded_data/sites/sites.csv")
+
 # SELECTION DU PROXY
 
 PROXIES = {
