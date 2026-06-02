@@ -33,6 +33,7 @@ result_folder = [
     Path("VCN3"),
     Path("VCN3/stations"),
     Path("VCN3/plot_stations"),
+    Path("VCN3/analyse_frequence_periode"),
 ]
 
 for folder in result_folder:

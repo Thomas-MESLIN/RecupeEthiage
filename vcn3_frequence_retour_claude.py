@@ -15,6 +15,9 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import warnings
+
+from tqdm import tqdm
+
 import utils
 import calcul_vcn3_1991_2020
 warnings.filterwarnings("ignore")
@@ -184,7 +187,6 @@ def vcn3_frequence_retour(
     # -----------------------------------------------------------------------
     alpha = 1.0 - IC_level
     Q_sim = np.full((n_sim, len(T_grid)), np.nan)
-
     for i in range(n_sim):
         # Simulation depuis la loi ajustée (bootstrap paramétrique)
         z_sim = stats.lognorm.rvs(*params, size=len(z), random_state=rng)
@@ -429,7 +431,7 @@ def get_period_from_flow(q_obs: float, res: dict) -> dict:
     return result
 
 
-def plot_period_from_flow(q_obs: float, res: dict,
+def plot_period_from_flow(q_obs: float, res: dict, code_station: str,
                           output_path: str = "/mnt/user-data/outputs/vcn3_retour_qobs.png") -> None:
     """Trace la courbe T vs débit avec le débit q_obs mis en évidence."""
     r = get_period_from_flow(q_obs, res)
@@ -464,7 +466,7 @@ def plot_period_from_flow(q_obs: float, res: dict,
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.set_xlabel("Période de retour T (ans)", fontsize=11)
     ax.set_ylabel("VCN3 (m³/s)", fontsize=11)
-    ax.set_title(f"Période de retour pour q = {q_obs:.4f} m³/s", fontsize=12, fontweight="bold")
+    ax.set_title(f"Période de retour pour q = {q_obs:.4f} m³/s - Station {code_station}", fontsize=12, fontweight="bold")
     ax.legend(fontsize=9)
     ax.grid(True, which="both", alpha=0.3)
 
@@ -492,6 +494,9 @@ def get_result_station(code_station:str, mois:str, vcn3_observation):
     df_mois_precis = df_all_vcn3[df_all_vcn3["annee_mois"].astype(str).str.contains(f"-{mois_a_etudier}")]
     vcn3_exemple =  df_mois_precis["vcn3_mensuel"].to_numpy()
 
+    if vcn3_exemple.size < 6:
+        return {}
+
     resultats = vcn3_frequence_retour(
         y           = vcn3_exemple,
         T_grid      = np.array([2, 5, 10, 20, 50, 100]),
@@ -501,10 +506,11 @@ def get_result_station(code_station:str, mois:str, vcn3_observation):
     )
 
     print_results(resultats)
-    plot_results(resultats, title="VCN3 — Analyse fréquentielle", output_path=Path(f"output/VCN3/plot_stations/analyse-frequentielle-{code_station}-{mois:02}.png"))
+    plot_results(resultats, title=f"VCN3 — Analyse fréquentielle - Station : {code_station}", output_path=Path(f"output/VCN3/plot_stations/analyse-frequentielle-{code_station}-{mois:02}.png"))
     # Juste le résultat numérique
     r = get_period_from_flow(q_obs=vcn3_observation, res=resultats)
-    plot_period_from_flow(q_obs=vcn3_observation, res=resultats,
+
+    plot_period_from_flow(q_obs=vcn3_observation, res=resultats, code_station=code_station,
                       output_path=Path(f"output/VCN3/plot_stations/periode-de-retour-{code_station}-{mois:02}.png"))
     print(f"Résultat période estimé : {r}")
     return r
@@ -523,12 +529,18 @@ if __name__ == "__main__":
     # On charge les données des stations du mois désiré.
 
     df_annee_mois_selectionne = pd.read_csv(utils.get_path_vcn3(code_sandre, annee_mois))
-    for station_code in df_station["code_station"]:
-        df_valeur = df_annee_mois_selectionne[df_annee_mois_selectionne["code_station"] == station_code]
-        valeur = df_valeur["vcn3_mensuel"].iloc[0] if not df_valeur.empty else pd.NA
-        if not pd.isna(valeur):
-            get_result_station(station_code, mois, valeur)
-        else:
-            print(f"La station {station_code} n'a pas de donnée du mois {mois}.")
+    all_rows = []
+    with tqdm(total=len(df_station)) as pbar:
+        for station_code in df_station["code_station"]:
+            df_valeur = df_annee_mois_selectionne[df_annee_mois_selectionne["code_station"] == station_code]
+            valeur = df_valeur["vcn3_mensuel"].iloc[0] if not df_valeur.empty else pd.NA
+            if not pd.isna(valeur):
+                row = get_result_station(station_code, mois, valeur)
+                all_rows.append(row)
+            else:
+                print(f"La station {station_code} n'a pas de donnée du mois {mois}.")
+            pbar.update(1)
+    df_all_analysis = pd.concat(all_rows, ignore_index=True)
+    df_all_analysis.to_csv(Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv"), index=False)
 # calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(station_code)
 #
