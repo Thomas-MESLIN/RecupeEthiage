@@ -11,7 +11,7 @@ from dateutil.relativedelta import relativedelta
 from tqdm import tqdm
 # Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
 
-def calcul_vcn3(annee_mois:str, code_sandre:str):
+def calcul_vcn3_frequence_retour(annee_mois:str, code_sandre:str):
     """
     :param annee_mois:
     :param code_sandre:
@@ -23,11 +23,11 @@ def calcul_vcn3(annee_mois:str, code_sandre:str):
     annee = int(annee_mois[0:4])
     rows = []
 
-    path_moyenne_minimum_historique = utils.get_path_qmnj_moyenne_minimum_glissant_historique(code_sandre)
+    path_moyenne_minimum_historique = utils.get_path_vcn3_moyenne_historique(code_sandre)
     df_moyen_minimum_historique = pd.read_csv(path_moyenne_minimum_historique)
 
     for station_code in all_stations_code:
-        minimum_moyenne_glissante = get_min_moyenne_glissante_station_mois(df_mois_actuel_et_precedent, station_code, annee, mois)
+        minimum_moyenne_glissante = get_vcn3_station_mois(df_mois_actuel_et_precedent, station_code, annee, mois)
         serie_df_min_historique = df_moyen_minimum_historique[
             (df_moyen_minimum_historique["code_station"] == station_code) &
             (df_moyen_minimum_historique["mois"] == mois)
@@ -35,12 +35,15 @@ def calcul_vcn3(annee_mois:str, code_sandre:str):
 
         valeur_df_min_historique = serie_df_min_historique.iloc[0] if not serie_df_min_historique.empty else pd.NA
 
+        valeur_vcn3 = minimum_moyenne_glissante / valeur_df_min_historique
+
         row = {
             "code_station": station_code,
             "mois": mois,
             "moyenne_minimum_glissant": minimum_moyenne_glissante,
             "moyenne_minimum_historique": valeur_df_min_historique,
-            "vcn3": minimum_moyenne_glissante / valeur_df_min_historique,
+            "vcn3": valeur_vcn3,
+            #"frequence":
         }
         rows.append(row)
 
@@ -119,7 +122,7 @@ def get_df_moyenne_glissante(annee_mois:str, code_sandre:str):
     return df_qmnj_all
 
 
-def get_min_moyenne_glissante_station_mois(df:pd.DataFrame, station_code: str, annee:int, mois: int):
+def get_vcn3_station_mois(df:pd.DataFrame, station_code: str, annee:int, mois: int):
     """
     Permet de récupérér le QmM moyen sur un mois réparti sur chaque année 1991-2020.
     Le mois et l'année doivent être des entier.
@@ -180,20 +183,34 @@ def calcule_minimum_glissant_moyen_1991_2020():
         # code_station, date_osb_elab, QmM_moyenne
 
         # boucle sur chaque station
+        save_vc3_station = {}
         rows = []
         # boucle sur les 12 mois
-        with tqdm(total=12*len(df_all_stations), desc="Calcul du VCN3") as pbar:
+        with tqdm(total=12*len(df_all_stations), desc="Calcul des VCN3 Historique") as pbar:
             for mois in range(1, 13):
                 mois_str = f"{mois:02d}"
                 for station_code in df_all_stations:
-                    all_min_glissant = []
-                    for annee in range(1992,2021):
+                    vcn3_mensuel_1991_2020 = []
+                    for annee in range(1991,2021):
+                        if not annee in save_vc3_station:
+                            save_vc3_station[annee] = {}
+                        if not mois_str in save_vc3_station[annee]:
+                            save_vc3_station[annee][mois_str] = []
                         annee_mois = f"{annee}-{mois_str}"
                         df_mois_actuel = get_df_moyenne_glissante(annee_mois, code_sandre)
-                        res_glisstant = get_min_moyenne_glissante_station_mois(df_mois_actuel, station_code, annee, mois)
-                        all_min_glissant.append(res_glisstant)
+                        vcn3_mensuel = get_vcn3_station_mois(df_mois_actuel, station_code, annee, mois)
 
-                    moyenne_mininmum_glissant = np.mean(all_min_glissant)
+                        # Sauvegarde du VCN3 mensuel calculé.
+                        save_vc3_station[annee][mois_str].append(
+                            {
+                                "code_station": station_code,
+                                "vcn3_mensuel": vcn3_mensuel,
+                            }
+                        )
+
+                        vcn3_mensuel_1991_2020.append(vcn3_mensuel)
+
+                    moyenne_mininmum_glissant = np.mean(vcn3_mensuel_1991_2020)
 
                     row = {
                         "code_station": station_code,
@@ -216,7 +233,7 @@ def calcule_minimum_glissant_moyen_1991_2020():
         # EXPORT CSV
         # ==========================================
 
-        output_file = utils.get_path_qmnj_moyenne_minimum_glissant_historique(code_sandre)
+        output_file = utils.get_path_vcn3_moyenne_historique(code_sandre)
 
         df_qmm_moyennes.to_csv(
             output_file,
@@ -225,6 +242,15 @@ def calcule_minimum_glissant_moyen_1991_2020():
         )
 
         print(f"\nCSV sauvegardé : {output_file}")
+
+        # Export des vcn3 mensuel
+        for annee in save_vc3_station:
+            for mois in save_vc3_station[annee]:
+                data_frame = pd.DataFrame(save_vc3_station[annee][mois])
+                data_frame.to_csv(utils.get_path_vcn3_mensuel(code_sandre, f"{annee}-{mois}"), index=False)
+
+        print(f"\nCSV vcn mensuel sauvegardé.")
+
 
 def test():
 
@@ -237,7 +263,7 @@ def test():
     }
     df = pd.DataFrame(data=d)
     print(df)
-    res = get_min_moyenne_glissante_station_mois(df, "station1", 1991, 1)
+    res = get_vcn3_station_mois(df, "station1", 1991, 1)
     print(res)
 
 
@@ -250,19 +276,21 @@ def test():
     }
     df2 = pd.DataFrame(data=d3)
     print(df2)
-    res = get_min_moyenne_glissante_station_mois(df2, "station1", 1991, 1)
+    res = get_vcn3_station_mois(df2, "station1", 1991, 1)
     print(res)
 
     df_qmnj_2025_07 = get_df_moyenne_glissante("2025-07","BSH001")
-    res = get_min_moyenne_glissante_station_mois(df_qmnj_2025_07, "U401402001", 2025, 7)
+    res = get_vcn3_station_mois(df_qmnj_2025_07, "U401402001", 2025, 7)
     print(res)
     df_qmnj_2025_08 = get_df_moyenne_glissante("2025-08","BSH001")
-    res = get_min_moyenne_glissante_station_mois(df_qmnj_2025_08, "U401402001", 2025, 8)
+    res = get_vcn3_station_mois(df_qmnj_2025_08, "U401402001", 2025, 8)
     print(res)
 
 if __name__ == "__main__":
-    # calcule_minimum_glissant_moyen_1991_2020()
-    calcul_vcn3("2025-08","BSH001")
-    calcul_vcn3("2025-07","BSH001")
-    calcul_vcn3("2025-08","BSH101")
-    calcul_vcn3("2025-07","BSH101")
+    calcule_minimum_glissant_moyen_1991_2020()
+    calcul_vcn3_frequence_retour("2026-04","BSH001")
+    calcul_vcn3_frequence_retour("2025-08","BSH001")
+    calcul_vcn3_frequence_retour("2025-07","BSH001")
+    calcul_vcn3_frequence_retour("2025-08","BSH101")
+    calcul_vcn3_frequence_retour("2025-07","BSH101")
+    calcul_vcn3_frequence_retour("2025-05","BSH001")

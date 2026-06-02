@@ -4,6 +4,8 @@ import os
 import init_project
 import utils
 
+# TODO, regarder de quand date les fichiers, si les fichiers sont trop vieux, (>1ans), proposer des les remplacer.
+
 # Permet d'accéder à internet via le réseau interne de la DREAL
 
 # initialisation du proxy

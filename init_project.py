@@ -18,7 +18,7 @@ folder_to_create = [
     Path("downloaded_data/sites"),
     Path("downloaded_data/stations"),
     Path("QmM_moyen"),
-    Path("VCN3_denominateur"),
+    Path("VCN3"),
 ]
 
 # Création de l'arborescence en dessous de chaque folder
