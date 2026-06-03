@@ -183,20 +183,30 @@ def vcn3_frequence_retour(
     quantiles = np.array(quantiles)
 
     # -----------------------------------------------------------------------
-    # 4.5 Grille CDF théorique (pour tracé) — calculée avant le bootstrap
-    #     pour que la boucle puisse remplir Q_sim et Q_fine en une seule passe
+    # 4.5 Grille de probabilités fixe pour le tracé continu
+    #
+    # p_fine est une grille FIXE de probabilités (indépendante des params),
+    # qui sert d'axe commun à toutes les simulations bootstrap.
+    # Pour chaque sim, on calcule q_sim(p) = F_sim⁻¹(p) sur cette grille.
+    # Les IC résultants sont donc des intervalles sur les DÉBITS à p fixé,
+    # ce qui est la définition correcte de l'enveloppe d'incertitude.
+    #
+    # x_grid et cdf_grid sont ensuite dérivés des params initiaux pour le tracé.
     # -----------------------------------------------------------------------
-    x_max = max(y.max(), quantiles.max()) * 1.2
-    x_grid = np.linspace(0.001, x_max, 300)
-    cdf_grid = np.array([p0 + (1 - p0) * cdf_lognormal(x, params) for x in x_grid])
-    T_cdf = np.where(cdf_grid > 0, 1.0 / cdf_grid, np.nan)
+    p_fine = np.linspace(1e-4, 1.0 - 1e-4, 300)  # grille fixe de probabilités
+    x_grid = np.array([  # débits théoriques initiaux
+        0.0 if p <= p0 else max(quantile_lognormal((p - p0) / (1.0 - p0), params), 0.0)
+        for p in p_fine
+    ])
+    cdf_grid = p_fine  # par construction
+    T_cdf = np.where(p_fine > 0, 1.0 / p_fine, np.nan)
 
     # -----------------------------------------------------------------------
-    # 4.6 Bootstrap PARAMÉTRIQUE — une seule boucle pour T_grid ET x_grid
+    # 4.6 Bootstrap PARAMÉTRIQUE — une seule boucle pour T_grid ET p_fine
     # -----------------------------------------------------------------------
     alpha = 1.0 - IC_level
     Q_sim = np.full((n_sim, len(T_grid)), np.nan)  # IC sur points discrets T_grid
-    Q_fine = np.full((n_sim, len(x_grid)), np.nan)  # IC sur grille continue x_grid
+    Q_fine = np.full((n_sim, len(p_fine)), np.nan)  # IC sur grille continue p_fine
 
     for i in range(n_sim):
         z_sim = stats.lognorm.rvs(*params, size=len(z), random_state=rng)
@@ -208,19 +218,17 @@ def vcn3_frequence_retour(
         try:
             params_sim = fit_lognormal_lmom(z_sim)
 
-            # IC discrets (T_grid)
-            for j, p in enumerate(p_grid):
-                if p <= p0_sim:
-                    Q_sim[i, j] = 0.0
-                else:
-                    Q_sim[i, j] = max(quantile_lognormal((p - p0_sim) / (1.0 - p0_sim), params_sim), 0.0)
+            # IC discrets (T_grid) — vectorisé
+            mask_sim = p_grid > p0_sim
+            p_adj = np.where(mask_sim, (p_grid - p0_sim) / (1.0 - p0_sim), np.nan)
+            q_vec = np.where(mask_sim, np.maximum(quantile_lognormal(p_adj, params_sim), 0.0), 0.0)
+            Q_sim[i, :] = q_vec
 
-            # IC continus (cdf_grid = grille de probabilités de x_grid)
-            for j, p in enumerate(cdf_grid):
-                if p <= p0_sim:
-                    Q_fine[i, j] = 0.0
-                else:
-                    Q_fine[i, j] = max(quantile_lognormal((p - p0_sim) / (1.0 - p0_sim), params_sim), 0.0)
+            # IC continus (p_fine) — vectorisé
+            mask_fine = p_fine > p0_sim
+            p_adj_fine = np.where(mask_fine, (p_fine - p0_sim) / (1.0 - p0_sim), np.nan)
+            q_fine_vec = np.where(mask_fine, np.maximum(quantile_lognormal(p_adj_fine, params_sim), 0.0), 0.0)
+            Q_fine[i, :] = q_fine_vec
 
         except Exception:
             continue
@@ -493,7 +501,7 @@ def get_result_station(code_station:str, mois:str, vcn3_observation):
     except ValueError:
         return {}
 
-    print_results(resultats)
+    #print_results(resultats)
     plot_results(resultats, title=f"VCN3 — Analyse fréquentielle - Station : {code_station}", output_path=Path(f"output/VCN3/plot_stations/analyse-frequentielle-{code_station}-{mois:02}.png"))
     # Juste le résultat numérique
     r = get_period_from_flow(q_obs=vcn3_observation, res=resultats)
@@ -514,7 +522,7 @@ if __name__ == "__main__":
     annee_mois = date.strftime("%Y-%m")
     mois = date.strftime("%m")
     df_station = utils.get_stations("BSH001","2026-04")
-    df_station = df_station.head(5)
+    df_station = df_station.head(30)
     # On charge les données des stations du mois désiré.
 
     df_annee_mois_selectionne = pd.read_csv(utils.get_path_vcn3(code_sandre, annee_mois))
