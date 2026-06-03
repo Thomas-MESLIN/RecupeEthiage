@@ -31,22 +31,11 @@ def get_path_hydraulicite(code_sandre:str, annee_mois:str):
 def get_path_vcn3_moyenne_historique(code_sandre:str):
     return Path(f"output/hubeau/VCN3/VCN3-moyenne-{code_sandre}-1991-2020.csv")
 
-# TODO, fix ces fonctions nulle.
 def get_path_vcn3_mensuel(code_sandre:str, annee_mois:str):
     return Path(f"output/hubeau/VCN3/VCN3-{code_sandre}-{annee_mois}.csv")
 
 def get_path_vcn3_station(code_station:str):
     return Path(f"output/VCN3/stations/VCN3-station-{code_station}.csv")
-
-def get_path_vcn3(code_sandre:str, annee_mois:str):
-    """
-    Renvoie le chemin d'un VCN3 calculé et pas historique
-    # TODO changer le nom
-    :param code_sandre:
-    :param annee_mois:
-    :return:
-    """
-    return Path(f"output/VCN3/VCN3-{code_sandre}-{annee_mois}.csv")
 
 def get_path_periode_de_retour(code_sandre:str, annee_mois:str):
     return Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{code_sandre}-{annee_mois}.csv")

@@ -11,56 +11,6 @@ from dateutil.relativedelta import relativedelta
 from tqdm import tqdm
 # Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
 
-def calcul_vcn3_frequence_retour(annee_mois:str, code_sandre:str):
-    """
-    :param annee_mois:
-    :param code_sandre:
-    :return:
-    """
-    df_mois_actuel_et_precedent = get_df_moyenne_glissante(annee_mois, code_sandre)
-    all_stations_code = df_mois_actuel_et_precedent["code_station"].drop_duplicates()
-    mois = int(annee_mois[5:7])
-    annee = int(annee_mois[0:4])
-    rows = []
-
-    path_moyenne_minimum_historique = utils.get_path_vcn3_moyenne_historique(code_sandre)
-    df_moyen_minimum_historique = pd.read_csv(path_moyenne_minimum_historique)
-
-    for station_code in all_stations_code:
-        minimum_moyenne_glissante = get_vcn3_station_mois(df_mois_actuel_et_precedent, station_code, annee, mois)
-        serie_df_min_historique = df_moyen_minimum_historique[
-            (df_moyen_minimum_historique["code_station"] == station_code) &
-            (df_moyen_minimum_historique["mois"] == mois)
-        ]["moyenne_minimum_glissant"]
-
-        valeur_df_min_historique = serie_df_min_historique.iloc[0] if not serie_df_min_historique.empty else pd.NA
-
-        #valeur_vcn3 = minimum_moyenne_glissante / valeur_df_min_historique
-
-        row = {
-            "code_station": station_code,
-            "mois": mois,
-            "vcn3_mensuel": minimum_moyenne_glissante,
-            "vcn3_moyenne_historique": valeur_df_min_historique,
-        }
-        rows.append(row)
-
-    df_qmm_moyennes = pd.DataFrame(rows)
-
-    print(df_qmm_moyennes)
-
-    # ==========================================
-    # EXPORT CSV
-    # ==========================================
-
-    output_file = utils.get_path_vcn3(code_sandre, annee_mois)
-
-    df_qmm_moyennes.to_csv(
-        output_file,
-        index=False,
-        encoding="utf-8"
-    )
-    print(f"Calcul Terminée pour {code_sandre}-{annee_mois} : {output_file}")
 
 _cache_qmnj = {}
 def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
@@ -339,13 +289,6 @@ def ensure_calcul_vcn3_station(code_station:str) -> pd.DataFrame:
 
 if __name__ == "__main__":
     #calcule_minimum_glissant_moyen_1991_2020()
-    #calcul_vcn3_frequence_retour("2026-04","BSH001")
-    #calcul_vcn3_frequence_retour("2025-08","BSH001")
-    #calcul_vcn3_frequence_retour("2025-07","BSH001")
-   # calcul_vcn3_frequence_retour("2025-08","BSH101")
-    #calcul_vcn3_frequence_retour("2025-07","BSH101")
-   # calcul_vcn3_frequence_retour("2025-05","BSH001")
-    calcul_vcn3_frequence_retour("2026-04","BSH001")
     # TODO, on suppose que les stations sont dans le BSH 001, mais à vrai dire, ça devrait être agnostique du BSH
     df_all_vcn3 = get_all_df_mensuel("BSH001")
     calcul_vcn3_station("U200201001", df_all_vcn3)
@@ -353,4 +296,3 @@ if __name__ == "__main__":
     calcul_vcn3_station("U214201001", df_all_vcn3)
     calcul_vcn3_station("U263501001", df_all_vcn3)
     calcul_vcn3_station("U201201001", df_all_vcn3)
-
