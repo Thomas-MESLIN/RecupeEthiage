@@ -29,10 +29,10 @@ def get_path_hydraulicite(code_sandre:str, annee_mois:str):
     return Path(f"output/hydraulicite/hydraulicite-{code_sandre}-{annee_mois}.csv")
 
 def get_path_vcn3_moyenne_historique(code_sandre:str):
-    return Path(f"output/hubeau/VCN3/VCN3-moyenne-{code_sandre}-1991-2020.csv")
+    return Path(f"output/VCN3/moyenne_historique/VCN3-moyenne-{code_sandre}-1991-2020.csv")
 
 def get_path_vcn3_mensuel(code_sandre:str, annee_mois:str):
-    return Path(f"output/hubeau/VCN3/VCN3-{code_sandre}-{annee_mois}.csv")
+    return Path(f"output/VCN3/mensuel/VCN3-{code_sandre}-{annee_mois}.csv")
 
 def get_path_vcn3_station(code_station:str):
     return Path(f"output/VCN3/stations/VCN3-station-{code_station}.csv")

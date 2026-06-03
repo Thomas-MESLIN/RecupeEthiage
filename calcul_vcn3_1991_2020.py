@@ -115,89 +115,87 @@ def get_vcn3_station_mois(df:pd.DataFrame, station_code: str, annee:int, mois: i
     # On prend le minimum de ces moyennes
     return df_station_annee_mois["moyenne_glissante"].min()
 
-def calcule_minimum_glissant_moyen_1991_2020():
+def calcule_minimum_glissant_moyen_1991_2020(code_sandre:str):
     """
     Calcule la moyenne des minimum glissant historique allant de 1991 à 2020.
     Sauvegarde le résultat dans QmnJ_moyennes_{code_sandre}_1991_2020.csv
     """
-    code_sandre_a_aggreger = ["BSH001", "BSH101"]
 
-    for code_sandre in code_sandre_a_aggreger:
-        # On récupère et on aggrège toutes les années.
-        df_all_stations = get_all_stations(code_sandre)
+    # On récupère et on aggrège toutes les années.
+    df_all_stations = get_all_stations(code_sandre)
 
-        # On va faire un gros tableau csv qui contient pour chaques stations, pour chaque mois [1-12]. La moyenne du débit moyen mensuel.
-        # En essayant de garder le format des csv Hub'eau de préférence.
-        # code_station, date_osb_elab, QmM_moyenne
+    # On va faire un gros tableau csv qui contient pour chaques stations, pour chaque mois [1-12]. La moyenne du débit moyen mensuel.
+    # En essayant de garder le format des csv Hub'eau de préférence.
+    # code_station, date_osb_elab, QmM_moyenne
 
-        # boucle sur chaque station
-        save_vc3_station = {}
-        rows = []
-        # boucle sur les 12 mois
-        with tqdm(total=12*len(df_all_stations), desc="Calcul des VCN3 Historique") as pbar:
-            for mois in range(1, 13):
-                mois_str = f"{mois:02d}"
-                for station_code in df_all_stations:
-                    vcn3_mensuel_1991_2020 = []
-                    for annee in range(1991,2021):
-                        if not annee in save_vc3_station:
-                            save_vc3_station[annee] = {}
-                        if not mois_str in save_vc3_station[annee]:
-                            save_vc3_station[annee][mois_str] = []
-                        annee_mois = f"{annee}-{mois_str}"
-                        df_mois_actuel = get_df_moyenne_glissante(annee_mois, code_sandre)
-                        vcn3_mensuel = get_vcn3_station_mois(df_mois_actuel, station_code, annee, mois)
+    # boucle sur chaque station
+    save_vc3_station = {}
+    rows = []
+    # boucle sur les 12 mois
+    with tqdm(total=12*len(df_all_stations), desc="Calcul des VCN3 Historique") as pbar:
+        for mois in range(1, 13):
+            mois_str = f"{mois:02d}"
+            for station_code in df_all_stations:
+                vcn3_mensuel_1991_2020 = []
+                for annee in range(1991,2021):
+                    if not annee in save_vc3_station:
+                        save_vc3_station[annee] = {}
+                    if not mois_str in save_vc3_station[annee]:
+                        save_vc3_station[annee][mois_str] = []
+                    annee_mois = f"{annee}-{mois_str}"
+                    df_mois_actuel = get_df_moyenne_glissante(annee_mois, code_sandre)
+                    vcn3_mensuel = get_vcn3_station_mois(df_mois_actuel, station_code, annee, mois)
 
-                        # Sauvegarde du VCN3 mensuel calculé.
-                        save_vc3_station[annee][mois_str].append(
-                            {
-                                "code_station": station_code,
-                                "vcn3_mensuel": vcn3_mensuel,
-                            }
-                        )
+                    # Sauvegarde du VCN3 mensuel calculé.
+                    save_vc3_station[annee][mois_str].append(
+                        {
+                            "code_station": station_code,
+                            "vcn3_mensuel": vcn3_mensuel,
+                        }
+                    )
 
-                        vcn3_mensuel_1991_2020.append(vcn3_mensuel)
+                    vcn3_mensuel_1991_2020.append(vcn3_mensuel)
 
-                    moyenne_mininmum_glissant = np.mean(vcn3_mensuel_1991_2020)
+                moyenne_mininmum_glissant = np.mean(vcn3_mensuel_1991_2020)
 
-                    row = {
-                        "code_station": station_code,
-                        "mois": mois_str,
-                        "moyenne_minimum_glissant": moyenne_mininmum_glissant
-                    }
+                row = {
+                    "code_station": station_code,
+                    "mois": mois_str,
+                    "moyenne_minimum_glissant": moyenne_mininmum_glissant
+                }
 
-                    rows.append(row)
-                    pbar.update(1)
+                rows.append(row)
+                pbar.update(1)
 
-        # ==========================================
-        # DATAFRAME FINAL
-        # ==========================================
+    # ==========================================
+    # DATAFRAME FINAL
+    # ==========================================
 
-        df_qmm_moyennes = pd.DataFrame(rows)
+    df_qmm_moyennes = pd.DataFrame(rows)
 
-        print(df_qmm_moyennes)
+    print(df_qmm_moyennes)
 
-        # ==========================================
-        # EXPORT CSV
-        # ==========================================
+    # ==========================================
+    # EXPORT CSV
+    # ==========================================
 
-        output_file = utils.get_path_vcn3_moyenne_historique(code_sandre)
+    output_file = utils.get_path_vcn3_moyenne_historique(code_sandre)
 
-        df_qmm_moyennes.to_csv(
-            output_file,
-            index=False,
-            encoding="utf-8"
-        )
+    df_qmm_moyennes.to_csv(
+        output_file,
+        index=False,
+        encoding="utf-8"
+    )
 
-        print(f"\nCSV sauvegardé : {output_file}")
+    print(f"\nCSV sauvegardé : {output_file}")
 
-        # Export des vcn3 mensuel
-        for annee in save_vc3_station:
-            for mois in save_vc3_station[annee]:
-                data_frame = pd.DataFrame(save_vc3_station[annee][mois])
-                data_frame.to_csv(utils.get_path_vcn3_mensuel(code_sandre, f"{annee}-{mois}"), index=False)
+    # Export des vcn3 mensuel
+    for annee in save_vc3_station:
+        for mois in save_vc3_station[annee]:
+            data_frame = pd.DataFrame(save_vc3_station[annee][mois])
+            data_frame.to_csv(utils.get_path_vcn3_mensuel(code_sandre, f"{annee}-{mois}"), index=False)
 
-        print(f"\nCSV vcn mensuel sauvegardé.")
+    print(f"\nCSV vcn mensuel sauvegardé.")
 
 
 def test():
@@ -264,6 +262,8 @@ def get_all_df_mensuel(code_sandre:str):
         all_df = []
         for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
             annee_mois = date.strftime("%Y-%m")
+            if not utils.get_path_vcn3_mensuel(code_sandre, annee_mois).exists():
+                calcule_minimum_glissant_moyen_1991_2020(code_sandre)
             df_mois = pd.read_csv(utils.get_path_vcn3_mensuel(code_sandre, annee_mois))
             df_mois["annee_mois"] = annee_mois
             all_df.append(df_mois)
@@ -274,25 +274,18 @@ def get_all_df_mensuel(code_sandre:str):
     return _cache_get_all_df_mensuel[code_sandre]
 
 
-def ensure_calcul_vcn3_station(code_station:str) -> pd.DataFrame:
+def ensure_calcul_vcn3_station(code_station:str, code_sandre:str):
     """
-    LA STATION DOIT ETRE DNAS LE BSH001 POUR LINSTANT
-    # TODO A CHANGER
     S'asssure que le vcn3 de la station a bien été calculé
-    :param code_station:
+    :param code_sandre: Le code sandre dans lequel se trouve la station et qu'un vcn3 a été calculé.
+    :param code_station:Le code de la station à calculer
     :return: Rien
     """
     path_vcn3_station = utils.get_path_vcn3_station(code_station)
-    df_all_vcn3 = get_all_df_mensuel("BSH001")
     if not path_vcn3_station.exists():
+        df_all_vcn3 = get_all_df_mensuel(code_sandre)
         calcul_vcn3_station(code_station, df_all_vcn3)
 
 if __name__ == "__main__":
     #calcule_minimum_glissant_moyen_1991_2020()
-    # TODO, on suppose que les stations sont dans le BSH 001, mais à vrai dire, ça devrait être agnostique du BSH
-    df_all_vcn3 = get_all_df_mensuel("BSH001")
-    calcul_vcn3_station("U200201001", df_all_vcn3)
-    calcul_vcn3_station("Y141502001", df_all_vcn3)
-    calcul_vcn3_station("U214201001", df_all_vcn3)
-    calcul_vcn3_station("U263501001", df_all_vcn3)
-    calcul_vcn3_station("U201201001", df_all_vcn3)
+    ensure_calcul_vcn3_station("U200201001", "BSH001")

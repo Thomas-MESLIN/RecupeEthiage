@@ -18,7 +18,6 @@ folder_to_create = [
     Path("downloaded_data/sites"),
     Path("downloaded_data/stations"),
     Path("QmM_moyen"),
-    Path("VCN3"),
 ]
 
 # Création de l'arborescence en dessous de chaque folder
@@ -40,6 +39,8 @@ result_folder = [
     Path("VCN3/stations"),
     Path("VCN3/plot_stations"),
     Path("VCN3/analyse_frequence_periode"),
+    Path("VCN3/mensuel"),
+    Path("VCN3/moyenne_historique"),
 ]
 
 for folder in result_folder:
