@@ -23,54 +23,15 @@ import utils
 import calcul_vcn3_1991_2020
 warnings.filterwarnings("ignore")
 
+from lmoments3 import distr as lm_distr
 
 # ---------------------------------------------------------------------------
 # 1. Estimateur des L-moments pour la loi Log-Normale
 # ---------------------------------------------------------------------------
 
-def lmom_lognormal(z: np.ndarray) -> tuple[float, float]:
-    """
-    Estime les paramètres (mu, sigma) de la loi Log-Normale
-    par la méthode des L-moments.
-
-    Les L-moments d'ordre 1 et 2 sont :
-        L1 = moyenne = exp(mu + sigma²/2)
-        L2 = exp(mu + sigma²/2) * (2*Phi(sigma/sqrt(2)) - 1)
-    où Phi est la CDF de la loi normale standard.
-
-    On résout numériquement le rapport L2/L1 pour trouver sigma, puis mu.
-    """
-    n = len(z)
-    z_sorted = np.sort(z)
-
-    # Calcul des L-moments empiriques par la méthode PWM (Probability Weighted Moments)
-    # b0 = L1 = moyenne
-    # b1 = (1/n) * sum( (i-1)/(n-1) * z_i )
-    i = np.arange(1, n + 1, dtype=float)
-    b0 = np.mean(z_sorted)
-    b1 = np.sum(((i - 1) / (n - 1)) * z_sorted) / n
-
-    L1 = b0
-    L2 = 2 * b1 - b0   # L-moment d'ordre 2 (L-scale)
-
-    tau2 = L2 / L1      # L-CV (coefficient de variation des L-moments)
-
-    # Résolution numérique : tau2 = 2*Phi(sigma/sqrt(2)) - 1
-    # → sigma = sqrt(2) * Phi⁻¹( (tau2 + 1) / 2 )
-    sigma = np.sqrt(2) * stats.norm.ppf((tau2 + 1) / 2)
-    mu    = np.log(L1) - sigma**2 / 2
-
-    return mu, sigma
-
-
 def fit_lognormal_lmom(z: np.ndarray) -> tuple:
-    """
-    Ajuste une loi Log-Normale par L-moments.
-    Retourne les paramètres au format scipy.stats.lognorm :
-        (s=sigma, loc=0, scale=exp(mu))
-    """
-    mu, sigma = lmom_lognormal(z)
-    return (sigma, 0.0, np.exp(mu))
+    paras = lm_distr.nor.lmom_fit(np.log(z))   # {"loc": mu, "scale": sigma}
+    return (paras["scale"], 0.0, np.exp(paras["loc"]))
 
 
 # ---------------------------------------------------------------------------
@@ -501,7 +462,7 @@ def get_result_station(code_station:str, mois:str, vcn3_observation):
     except ValueError:
         return {}
 
-    #print_results(resultats)
+    print_results(resultats)
     plot_results(resultats, title=f"VCN3 — Analyse fréquentielle - Station : {code_station}", output_path=Path(f"output/VCN3/plot_stations/analyse-frequentielle-{code_station}-{mois:02}.png"))
     # Juste le résultat numérique
     r = get_period_from_flow(q_obs=vcn3_observation, res=resultats)
