@@ -322,7 +322,7 @@ def plot_results(res: dict, title: str = "Analyse fréquentielle VCN3",
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    plt.show()
+    # plt.show()
     print(f"Graphique sauvegardé : {output_path}")
 
 
@@ -428,7 +428,7 @@ def plot_period_from_flow(q_obs: float, res: dict, code_station: str,
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    plt.show()
+    # plt.show()
     print(f"Graphique sauvegardé : {output_path}")
 
 
@@ -483,7 +483,6 @@ if __name__ == "__main__":
     annee_mois = date.strftime("%Y-%m")
     mois = date.strftime("%m")
     df_station = utils.get_stations("BSH001","2026-04")
-    df_station = df_station.head(30)
     # On charge les données des stations du mois désiré.
 
     df_annee_mois_selectionne = pd.read_csv(utils.get_path_vcn3(code_sandre, annee_mois))
@@ -498,12 +497,11 @@ if __name__ == "__main__":
                 all_rows.append(row)
             else:
                 print(f"La station {station_code} n'a pas de donnée du mois {mois}.")
-            df_all_analysis = pd.DataFrame(data=all_rows)
-            df_all_analysis.to_csv(Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv"),
-                                   index=False)
             pbar.update(1)
-    #df_all_analysis = pd.DataFrame(data=all_rows)
-    #df_all_analysis.to_csv(Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv"),
-    #                       index=False)
+
+    df_all_analysis = pd.DataFrame(data=all_rows)
+    df_all_analysis.to_csv(Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv"),
+        index=False)
+
 # calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(station_code)
 #
