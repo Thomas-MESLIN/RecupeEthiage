@@ -5,24 +5,15 @@ Estimateur : L-moments
 Incertitude : Bootstrap paramétrique (PBOOT)
 
 Adapté de Benjamin Renard (Irstea Lyon) / HydroPortailStats
-Formule : q(T) = F⁻¹( (1/T - p0) / (1 - p0) ; µ, σ )
 """
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import warnings
-import cProfile
-
+import plot_vcn3_periode_de_retour
 from tqdm import tqdm
-
 import utils
 import calcul_vcn3_1991_2020
-warnings.filterwarnings("ignore")
-
 from lmoments3 import distr as lm_distr
 
 # ---------------------------------------------------------------------------
@@ -30,16 +21,25 @@ from lmoments3 import distr as lm_distr
 # ---------------------------------------------------------------------------
 
 def fit_lognormal_lmom(z: np.ndarray) -> tuple:
+    """
+    Estimateur des L-moments pour la loi Log-Normale.
+    :param z: Les données à estimer.
+    :return: Renvoie l'écart type, un truc et la moyenne.
+    """
     paras = lm_distr.nor.lmom_fit(np.log(z))   # {"loc": mu, "scale": sigma}
     return (paras["scale"], 0.0, np.exp(paras["loc"]))
-
 
 # ---------------------------------------------------------------------------
 # 2. Fonctions quantile et CDF Log-Normale
 # ---------------------------------------------------------------------------
 
 def quantile_lognormal(p: float, params: tuple) -> float:
-    """Quantile de la loi Log-Normale pour la probabilité p."""
+    """
+    Quantile de la loi Log-Normale pour la probabilité p.
+    :param p: La probabilité pour extraire ses quantiles
+    :param params: Le résultat de fit_lognormal_lmom()
+    :return: Renvoie les quantiles de la loi Log-Normale pour cette probabilité.
+    """
     return stats.lognorm.ppf(p, *params)
 
 
@@ -63,6 +63,25 @@ def get_emp_freq(n: int) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # 4. Calcul principal
 # ---------------------------------------------------------------------------
+
+def is_enough_data(y: np.ndarray, split_zeros:bool) -> bool:
+    """
+    Renvoie vrai si il y a assez de données dans la série pour calculer le reste.
+    :param y:
+    :param split_zeros:
+    :return:
+    """
+    y = np.asarray(y, dtype=float)
+    ny = len(y)
+    if ny == 0:
+        return False
+
+    if split_zeros:
+        z = y[y > 0]
+    else:
+        z = y.copy()
+
+    return len(z) >= 5
 
 def vcn3_frequence_retour(
         y: np.ndarray,
@@ -101,7 +120,6 @@ def vcn3_frequence_retour(
 
     y = np.asarray(y, dtype=float)
     ny = len(y)
-
     # -----------------------------------------------------------------------
     # 4.1 Séparation des zéros
     # -----------------------------------------------------------------------
@@ -227,119 +245,6 @@ def vcn3_frequence_retour(
         },
     }
 
-
-# ---------------------------------------------------------------------------
-# 5. Affichage console
-# ---------------------------------------------------------------------------
-
-def print_results(res: dict) -> None:
-    print("=" * 65)
-    print("  Loi : Log-Normale  |  Estimateur : L-moments  |  IC : PBOOT")
-    print(f"  µ (log) = {res['mu']:.4f}   σ (log) = {res['sigma']:.4f}")
-    print(f"  p0 (prob. débit nul) = {res['p0']:.3f}")
-    print(f"  n total = {len(res['y'])}   n positifs = {len(res['z'])}")
-    print("=" * 65)
-    print(f"\n{'T (ans)':>10}  {'p non-dép.':>12}  {'VCN3 (m³/s)':>14}  {'IC bas':>10}  {'IC haut':>10}")
-    print("-" * 65)
-    q = res["quantiles"]
-    for T, p, qv, ic_l, ic_h in zip(q["T"], q["p"], q["q"], q["IC_low"], q["IC_high"]):
-        print(f"{T:>10.0f}  {p:>12.4f}  {qv:>14.4f}  {ic_l:>10.4f}  {ic_h:>10.4f}")
-    print()
-
-
-# ---------------------------------------------------------------------------
-# 6. Tracé
-# ---------------------------------------------------------------------------
-
-def plot_results(res: dict, title: str = "Analyse fréquentielle VCN3",
-                 output_path: str = "/mnt/user-data/outputs/vcn3_resultat.png") -> None:
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-    fig.suptitle(title + "\n[Log-Normale — L-moments — Bootstrap paramétrique]",
-                 fontsize=12, fontweight="bold")
-
-    emp = res["empirical"]
-    quant = res["quantiles"]
-    pcdf = res["pcdf"]
-
-    # Bornes X (période de retour)
-    T_min_data = min(emp["T"].min(), 1.0)
-    T_max_data = emp["T"].max() * 1.05
-
-    # Borne Y : basée sur les données observées + marge de 20%
-    # On ignore volontairement les valeurs théoriques aux bords de la loi
-    # qui divergent et écrasent l'échelle des graphiques.
-    y_max = emp["y_sorted"].max() * 1.2
-    y_min = 0.0
-
-    # -------------------------------------------------------------------
-    # Graphique 1 : Période de retour T (ans) vs débit
-    # -------------------------------------------------------------------
-    ax1 = axes[0]
-    ax1.set_xlim(T_min_data, T_max_data)
-    ax1.set_ylim(y_min, y_max)
-
-    mask1 = np.isfinite(pcdf["T"]) & (pcdf["T"] >= T_min_data) & (pcdf["T"] <= T_max_data)
-    ax1.fill_between(pcdf["T"][mask1],
-                     pcdf["IC_low"][mask1], pcdf["IC_high"][mask1],
-                     color="firebrick", alpha=0.15, label="IC 95% (PBOOT)")
-    ax1.plot(pcdf["T"][mask1], pcdf["x"][mask1], color="firebrick",
-             linewidth=1.5, label="Loi Log-Normale (L-mom)")
-    ax1.scatter(emp["T"], emp["y_sorted"], color="steelblue", s=20, zorder=5,
-                alpha=0.8, label="Observations")
-    ax1.set_xscale("log")
-    ax1.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax1.set_xlabel("Période de retour T (ans)", fontsize=11)
-    ax1.set_ylabel("VCN3 (m³/s)", fontsize=11)
-    ax1.set_title("Période de retour vs débit")
-    ax1.legend(fontsize=9)
-    ax1.grid(True, which="both", alpha=0.3)
-
-    # -------------------------------------------------------------------
-    # Graphique 2 : Fréquence de non-dépassement vs débit
-    # -------------------------------------------------------------------
-    ax2 = axes[1]
-    ax2.set_xlim(0, 1)
-    ax2.set_ylim(y_min, y_max)
-
-    ax2.fill_between(pcdf["cdf"],
-                     pcdf["IC_low"], pcdf["IC_high"],
-                     color="firebrick", alpha=0.15, label="IC 95% (PBOOT)")
-    ax2.plot(pcdf["cdf"], pcdf["x"], color="firebrick",
-             linewidth=1.5, label="Loi Log-Normale (L-mom)")
-    ax2.scatter(emp["freq"], emp["y_sorted"], color="steelblue", s=20, zorder=5,
-                alpha=0.8, label="Observations")
-    ax2.set_xlabel("Fréquence de non-dépassement", fontsize=11)
-    ax2.set_ylabel("VCN3 (m³/s)", fontsize=11)
-    ax2.set_title("Fréquence vs débit")
-    ax2.legend(fontsize=9)
-    ax2.grid(True, alpha=0.3)
-
-    # -------------------------------------------------------------------
-    # Graphique 3 : CDF — débit vs probabilité de non-dépassement
-    # -------------------------------------------------------------------
-    ax3 = axes[2]
-    ax3.set_xlim(y_min, y_max)
-    ax3.set_ylim(0, 1)
-
-    ax3.plot(pcdf["x"], pcdf["cdf"], color="firebrick", linewidth=1.5,
-             label="CDF Log-Normale (L-mom)")
-    ax3.scatter(emp["y_sorted"], emp["freq"], color="steelblue", s=20,
-                zorder=5, alpha=0.8, label="Fréquences empiriques (Hazen)")
-    if res["p0"] > 0:
-        ax3.axhline(res["p0"], color="gray", linestyle="--", linewidth=0.8,
-                    label=f"p0 = {res['p0']:.2f}")
-    ax3.set_xlabel("VCN3 (m³/s)", fontsize=11)
-    ax3.set_ylabel("Probabilité de non-dépassement", fontsize=11)
-    ax3.set_title("CDF empirique vs théorique")
-    ax3.legend(fontsize=9)
-    ax3.grid(True, alpha=0.3)
-
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    # plt.show()
-    print(f"Graphique sauvegardé : {output_path}")
-
-
 # ---------------------------------------------------------------------------
 # 7. Période de retour d'un débit donné
 # ---------------------------------------------------------------------------
@@ -357,11 +262,11 @@ def get_period_from_flow(q_obs: float, res: dict) -> dict:
     Retourne
     --------
     dict avec :
-        'q'      : débit en entrée
-        'p'      : probabilité de non-dépassement interpolée
-        'T'      : période de retour (ans)
-        'IC_low' : borne basse IC 95% sur T
-        'IC_high': borne haute IC 95% sur T
+        'debit_obs' : débit en entrée
+        'frequence_non_depassement' : probabilité de non-dépassement interpolée
+        'Periode_de_retour' : période de retour (ans)
+        'Periode_de_retour_interval_confiance_bas' : borne basse IC 95% sur T
+        'Periode_de_retour_interval_confiance_haut': borne haute IC 95% sur T
     """
     x = res["pcdf"]["x"]
     cdf = res["pcdf"]["cdf"]
@@ -388,112 +293,81 @@ def get_period_from_flow(q_obs: float, res: dict) -> dict:
     T_low = 1.0 / p_ic_high if p_ic_high > 0 else np.inf
     T_high = 1.0 / p_ic_low if p_ic_low > 0 else np.inf
 
-    result = {"q": q_obs, "p": p_interp, "T": T, "IC_low": T_low, "IC_high": T_high}
+    result = {"debit_obs": q_obs, "frequence_non_depassement": p_interp, "Periode_de_retour": T,
+              "Periode_de_retour_interval_confiance_bas": T_low, "Periode_de_retour_interval_confiance_haut": T_high}
 
     return result
-
-
-def plot_period_from_flow(q_obs: float, res: dict, code_station: str,
-                          output_path: str = "/mnt/user-data/outputs/vcn3_retour_qobs.png") -> None:
-    """Trace la courbe T vs débit avec le débit q_obs mis en évidence."""
-    r = get_period_from_flow(q_obs, res)
-
-    pcdf = res["pcdf"]
-    emp = res["empirical"]
-    T_min = min(emp["T"].min(), 1.0)
-    T_max = emp["T"].max() * 1.05
-    mask = np.isfinite(pcdf["T"]) & (pcdf["T"] >= T_min) & (pcdf["T"] <= T_max)
-
-    # Borne Y : basée sur les données observées + marge 20%, même logique que plot_results
-    y_max = emp["y_sorted"].max() * 1.2
-    y_min = 0.0
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.set_xlim(T_min, T_max)
-    ax.set_ylim(y_min, y_max)
-
-    ax.fill_between(pcdf["T"][mask], pcdf["IC_low"][mask], pcdf["IC_high"][mask],
-                    color="firebrick", alpha=0.15, label="IC 95% (PBOOT)")
-    ax.plot(pcdf["T"][mask], pcdf["x"][mask], color="firebrick",
-            linewidth=1.5, label="Loi Log-Normale (L-mom)")
-    ax.scatter(emp["T"], emp["y_sorted"], color="steelblue", s=20, zorder=5,
-               alpha=0.8, label="Observations")
-
-    # Lignes de lecture
-    ax.axhline(q_obs, color="darkorange", linestyle="--", linewidth=1.2)
-    ax.axvline(r["T"], color="darkorange", linestyle="--", linewidth=1.2)
-    ax.plot(r["T"], q_obs, "o", color="darkorange", markersize=9, zorder=10,
-            label=f"q = {q_obs:.2f} m³/s → T = {r['T']:.1f} ans")
-
-    # Zone IC sur T (bande verticale)
-    ax.axvspan(r["IC_low"], r["IC_high"], color="darkorange", alpha=0.10,
-               label=f"IC T : [{r['IC_low']:.1f} – {r['IC_high']:.1f}] ans")
-
-    ax.set_xscale("log")
-    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax.set_xlabel("Période de retour T (ans)", fontsize=11)
-    ax.set_ylabel("VCN3 (m³/s)", fontsize=11)
-    ax.set_title(f"Période de retour pour q = {q_obs:.4f} m³/s - Station {code_station}", fontsize=12, fontweight="bold")
-    ax.legend(fontsize=9)
-    ax.grid(True, which="both", alpha=0.3)
-
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    # plt.show()
-    print(f"Graphique sauvegardé : {output_path}")
-
 
 # ==========================
 # 9. Get resultat station
 # ==========================
 
-def get_result_station(code_station:str, mois:str, vcn3_observation):
+def get_result_station(code_station:str, mois:str, vcn3_observation, plot_resultat:bool=False) -> dict:
     """
-
-    :param code_station:
-    :param mois:
-    :param vcn3_observation:
-    :return:
+    Renvoie la période de retour de la station et sa fréquence de non-dépassement,
+    ainsi que les intervalles de confiance associés
+    :param plot_resultat: Si a True, va crée et sauvegarder des plots de toutes les statistiques calculées.
+    :param code_station:Le code de la station à évaluer.
+    :param mois: Au format MM
+    :param vcn3_observation: vcn3 observé, à comparer avec les données historiques
+    :return: dict avec :
+        'debit_obs' : débit en entrée
+        'frequence_non_depassement' : probabilité de non-dépassement interpolé
+        'Periode_de_retour' : période de retour (ans)
+        'Periode_de_retour_interval_confiance_bas' : borne basse IC 95% sur T
+        'Periode_de_retour_interval_confiance_haut' : borne haute IC 95% sur T
     """
     mois_a_etudier = f"{mois:02}"
     calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(code_station)
     df_all_vcn3 = pd.read_csv(utils.get_path_vcn3_station(code_station))
     df_mois_precis = df_all_vcn3[df_all_vcn3["annee_mois"].astype(str).str.contains(f"-{mois_a_etudier}")]
     # On enlève les cases vide...
-    vcn3_exemple =  df_mois_precis["vcn3_mensuel"].dropna().to_numpy()
-
-    try:
-        resultats = vcn3_frequence_retour(
-            y           = vcn3_exemple,
-            T_grid      = np.array([2, 5, 10, 20, 50, 100]),
-            split_zeros = True,
-            IC_level    = 0.95,
-            n_sim       = 1000,
-        )
-    except ValueError:
+    vcn3_a_calculer =  df_mois_precis["vcn3_mensuel"].dropna().to_numpy()
+    if is_enough_data(vcn3_a_calculer, True):
+        try:
+            resultats = vcn3_frequence_retour(
+                y           = vcn3_a_calculer,
+                T_grid      = np.array([2, 5, 10, 20, 50, 100]),
+                split_zeros = True,
+                IC_level    = 0.95,
+                n_sim       = 1000,
+            )
+        except ValueError:
+            return {}
+    else:
+        print(code_station)
+        print("Donnéé insuffisante")
         return {}
 
-    print_results(resultats)
-    plot_results(resultats, title=f"VCN3 — Analyse fréquentielle - Station : {code_station}", output_path=Path(f"output/VCN3/plot_stations/analyse-frequentielle-{code_station}-{mois:02}.png"))
-    # Juste le résultat numérique
-    r = get_period_from_flow(q_obs=vcn3_observation, res=resultats)
 
-    plot_period_from_flow(q_obs=vcn3_observation, res=resultats, code_station=code_station,
-                      output_path=Path(f"output/VCN3/plot_stations/periode-de-retour-{code_station}-{mois:02}.png"))
-    print(f"Résultat période estimé : {r}")
-    return r
+    # print_results(resultats)
+    # Juste le résultat numérique
+    resultat_periode_de_retour = get_period_from_flow(q_obs=vcn3_observation, res=resultats)
+
+    if plot_resultat:
+        plot_vcn3_periode_de_retour.plot_result_station(code_station, mois_a_etudier, resultat_periode_de_retour, resultats)
+    return resultat_periode_de_retour
 
 # ---------------------------------------------------------------------------
 # 8. Exemple d'utilisation
 # ---------------------------------------------------------------------------
 
-if __name__ == "__main__":
-    #get_result_station("U214201001", 4, 10539)
-    code_sandre = "BSH001"
-    date = pd.to_datetime("2026-04-01")
+def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code_sandre:str,
+    is_result_plotted = False) -> pd.DataFrame:
+    """
+    S'assure que la frequence de retour est calculé et renvoie le résultat de celle-ci dans un DataFrame
+    :param is_result_plotted: Si True, les résultats sont enregistré dans des plots, affichant les différentes stats calculées
+    :param annee_mois: Format AAAA-MM
+    :param code_sandre: Le code sandre des stations à explorer.
+    :return: Un Dataframe contenant les périodes de retour
+    """
+    if utils.get_path_periode_de_retour(code_sandre, annee_mois).exists():
+        return pd.DataFrame(pd.read_csv(utils.get_path_periode_de_retour(code_sandre, annee_mois)))
+    print("Calcul des fréquences de non dépassement et des périodes de retour.")
+    date = pd.to_datetime(f"{annee_mois}-01")
     annee_mois = date.strftime("%Y-%m")
     mois = date.strftime("%m")
-    df_station = utils.get_stations("BSH001","2026-04")
+    df_station = utils.get_stations(code_sandre, annee_mois)
     # On charge les données des stations du mois désiré.
 
     df_annee_mois_selectionne = pd.read_csv(utils.get_path_vcn3(code_sandre, annee_mois))
@@ -503,13 +377,21 @@ if __name__ == "__main__":
             df_valeur = df_annee_mois_selectionne[df_annee_mois_selectionne["code_station"] == station_code]
             valeur = df_valeur["vcn3_mensuel"].iloc[0] if not df_valeur.empty else pd.NA
             if not pd.isna(valeur):
-                row = get_result_station(station_code, mois, valeur)
+                row = get_result_station(station_code, mois, valeur, plot_resultat=is_result_plotted)
                 row["code_station"] = station_code
+                df_date_ouverture = df_station[df_station["code_station"] == station_code]["date_ouverture_station"]
+                row["date_ouverture_station"] = df_date_ouverture.iloc[0] if not df_date_ouverture.empty else pd.NA
                 all_rows.append(row)
             else:
-                print(f"La station {station_code} n'a pas de donnée du mois {mois}.")
+                print(f"La station {station_code} n'a pas de donnée lors du mois {date.strftime('%B')}.")
             pbar.update(1)
 
     df_all_analysis = pd.DataFrame(data=all_rows)
-    df_all_analysis.to_csv(Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv"),
-        index=False)
+    path_periode_retour = utils.get_path_periode_de_retour(code_sandre, annee_mois)
+    df_all_analysis.to_csv(path_periode_retour,
+                           index=False)
+    print(f"Fréquence de non dépassement et période de retour calculé, Fichier sauvegardé à : {path_periode_retour}")
+    return df_all_analysis
+
+if __name__ == "__main__":
+    ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=True)

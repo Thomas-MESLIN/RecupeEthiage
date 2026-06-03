@@ -35,8 +35,8 @@ def create_geojson_from_sites(code_sandre:str|None=None):
     sites_path = utils.get_path_sites()
     df_sites = pd.DataFrame(pd.read_csv(sites_path))
 
-    gdf_complet_sites_code_sandre = gdf_final.merge(
-        df_sites,
+    gdf_complet_sites_code_sandre = df_sites.merge(
+        gdf_final,
         on="code_site",
         how="left"
     )

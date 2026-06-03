@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 import requests
 import pandas as pd
+import locale
+
+loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
 
 GRANDEUR = {
     "QmM",
@@ -28,6 +31,7 @@ def get_path_hydraulicite(code_sandre:str, annee_mois:str):
 def get_path_vcn3_moyenne_historique(code_sandre:str):
     return Path(f"output/hubeau/VCN3/VCN3-moyenne-{code_sandre}-1991-2020.csv")
 
+# TODO, fix ces fonctions nulle.
 def get_path_vcn3_mensuel(code_sandre:str, annee_mois:str):
     return Path(f"output/hubeau/VCN3/VCN3-{code_sandre}-{annee_mois}.csv")
 
@@ -43,6 +47,9 @@ def get_path_vcn3(code_sandre:str, annee_mois:str):
     :return:
     """
     return Path(f"output/VCN3/VCN3-{code_sandre}-{annee_mois}.csv")
+
+def get_path_periode_de_retour(code_sandre:str, annee_mois:str):
+    return Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{code_sandre}-{annee_mois}.csv")
 
 def is_date_historique(annee_mois:str):
     return "1990-12" <= annee_mois <= "2020-12"
@@ -125,7 +132,7 @@ def set_up_working_proxy():
 def get_stations(code_sandre:str, annee_mois_active:str|None=None) -> pd.DataFrame:
     """
     Renvoie toutes les stations associé au code sandre sous forme d'un DataFrame.
-    Si on renseigne
+    Si on renseigne annee_mois_active, ne renvoie que les stations qui sont actives à ce moment là.
     :param code_sandre: Le code sandre de ces stations.
     :param annee_mois_active: L'année et le mois actif.
     :return: Un dataframe contenant toute les stations associé au code sandre, étant active à cette date (si date renseignée)
