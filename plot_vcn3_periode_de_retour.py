@@ -56,10 +56,7 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
         how="left"
     )
 
-    # On ajoute les sites.
-
-
-    # On charge toute les stations
+    # On charge toute les sites
     sites_path = utils.get_path_sites()
     # Le fichier contient une colonne WKT : POINT(...)
     df_sites = pd.DataFrame(pd.read_csv(sites_path))
@@ -92,7 +89,7 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
     # 5. Export GeoJSON
     # ============================================================
 
-    output_geojson = Path(f"output/VCN3/analyse_frequence_periode/periode-de-retour-{annee_mois}.geojson")
+    output_geojson = Path(f"output/QGIS/VCN3_periode_de_retour/periode-de-retour-{annee_mois}.geojson")
 
     gdf_final.to_file(
         output_geojson,
@@ -105,5 +102,4 @@ if __name__ == "__main__":
     #create_geojson_from_hydraulicite("2026-04", "BSH001")
     #create_geojson_from_hydraulicite("2026-04", "BSH101")
     #create_geojson_from_hydraulicite("2026-02", "BSH001")
-    #create_geojson_from_vcn3("2025-07", "BSH001")
     create_geojson_from_periode_de_retour("2026-04", "BSH001")

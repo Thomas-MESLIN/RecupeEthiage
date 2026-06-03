@@ -30,6 +30,12 @@ for parent_folder in [hydroportail_folder,hubeau_folder]:
 
 result_folder = [
     Path("hydraulicite"),
+    Path("QGIS"),
+    Path("QGIS/stations"),
+    Path("QGIS/sites"),
+    Path("QGIS/VCN3_periode_de_retour"),
+    Path("QGIS/hydraulicite"),
+    Path("QGIS/sites"),
     Path("VCN3"),
     Path("VCN3/stations"),
     Path("VCN3/plot_stations"),
