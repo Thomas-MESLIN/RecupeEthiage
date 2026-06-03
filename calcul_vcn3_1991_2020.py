@@ -35,7 +35,7 @@ def calcul_vcn3_frequence_retour(annee_mois:str, code_sandre:str):
 
         valeur_df_min_historique = serie_df_min_historique.iloc[0] if not serie_df_min_historique.empty else pd.NA
 
-        valeur_vcn3 = minimum_moyenne_glissante / valeur_df_min_historique
+        #valeur_vcn3 = minimum_moyenne_glissante / valeur_df_min_historique
 
         row = {
             "code_station": station_code,

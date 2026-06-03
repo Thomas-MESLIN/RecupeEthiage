@@ -15,6 +15,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import warnings
+import cProfile
 
 from tqdm import tqdm
 
@@ -527,6 +528,7 @@ if __name__ == "__main__":
     annee_mois = date.strftime("%Y-%m")
     mois = date.strftime("%m")
     df_station = utils.get_stations("BSH001","2026-04")
+    df_station = df_station.head(5)
     # On charge les données des stations du mois désiré.
 
     df_annee_mois_selectionne = pd.read_csv(utils.get_path_vcn3(code_sandre, annee_mois))
