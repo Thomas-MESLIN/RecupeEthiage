@@ -183,37 +183,8 @@ def vcn3_frequence_retour(
     quantiles = np.array(quantiles)
 
     # -----------------------------------------------------------------------
-    # 4.5 Bootstrap PARAMÉTRIQUE pour les intervalles de confiance
-    # On simule depuis la loi Log-Normale ajustée (et non depuis les données)
-    # -----------------------------------------------------------------------
-    alpha = 1.0 - IC_level
-    Q_sim = np.full((n_sim, len(T_grid)), np.nan)
-    for i in range(n_sim):
-        # Simulation depuis la loi ajustée (bootstrap paramétrique)
-        z_sim = stats.lognorm.rvs(*params, size=len(z), random_state=rng)
-
-        # Recalcul de p0 : on tire ny valeurs en tout, dont n0 sont nulles
-        n0_sim = rng.binomial(ny, p0)
-        p0_sim = n0_sim / ny
-
-        if len(z_sim) < 4:
-            continue
-        try:
-            params_sim = fit_lognormal_lmom(z_sim)
-            for j, p in enumerate(p_grid):
-                if p <= p0_sim:
-                    Q_sim[i, j] = 0.0
-                else:
-                    p_adj = (p - p0_sim) / (1.0 - p0_sim)
-                    Q_sim[i, j] = max(quantile_lognormal(p_adj, params_sim), 0.0)
-        except Exception:
-            continue
-
-    IC_low = np.nanquantile(Q_sim, alpha / 2, axis=0)
-    IC_high = np.nanquantile(Q_sim, 1.0 - alpha / 2, axis=0)
-
-    # -----------------------------------------------------------------------
-    # 4.6 Grille CDF théorique (pour tracé)
+    # 4.5 Grille CDF théorique (pour tracé) — calculée avant le bootstrap
+    #     pour que la boucle puisse remplir Q_sim et Q_fine en une seule passe
     # -----------------------------------------------------------------------
     x_max = max(y.max(), quantiles.max()) * 1.2
     x_grid = np.linspace(0.001, x_max, 300)
@@ -221,26 +192,41 @@ def vcn3_frequence_retour(
     T_cdf = np.where(cdf_grid > 0, 1.0 / cdf_grid, np.nan)
 
     # -----------------------------------------------------------------------
-    # 4.7 IC sur la grille continue (enveloppe lisse pour le tracé)
+    # 4.6 Bootstrap PARAMÉTRIQUE — une seule boucle pour T_grid ET x_grid
     # -----------------------------------------------------------------------
-    Q_fine = np.full((n_sim, len(x_grid)), np.nan)
-    rng2 = np.random.default_rng(seed)
+    alpha = 1.0 - IC_level
+    Q_sim = np.full((n_sim, len(T_grid)), np.nan)  # IC sur points discrets T_grid
+    Q_fine = np.full((n_sim, len(x_grid)), np.nan)  # IC sur grille continue x_grid
+
     for i in range(n_sim):
-        z_sim = stats.lognorm.rvs(*params, size=len(z), random_state=rng2)
-        n0_sim = rng2.binomial(ny, p0)
+        z_sim = stats.lognorm.rvs(*params, size=len(z), random_state=rng)
+        n0_sim = rng.binomial(ny, p0)
         p0_sim = n0_sim / ny
+
         if len(z_sim) < 4:
             continue
         try:
             params_sim = fit_lognormal_lmom(z_sim)
+
+            # IC discrets (T_grid)
+            for j, p in enumerate(p_grid):
+                if p <= p0_sim:
+                    Q_sim[i, j] = 0.0
+                else:
+                    Q_sim[i, j] = max(quantile_lognormal((p - p0_sim) / (1.0 - p0_sim), params_sim), 0.0)
+
+            # IC continus (cdf_grid = grille de probabilités de x_grid)
             for j, p in enumerate(cdf_grid):
                 if p <= p0_sim:
                     Q_fine[i, j] = 0.0
                 else:
-                    p_adj = (p - p0_sim) / (1.0 - p0_sim)
-                    Q_fine[i, j] = max(quantile_lognormal(p_adj, params_sim), 0.0)
+                    Q_fine[i, j] = max(quantile_lognormal((p - p0_sim) / (1.0 - p0_sim), params_sim), 0.0)
+
         except Exception:
             continue
+
+    IC_low = np.nanquantile(Q_sim, alpha / 2, axis=0)
+    IC_high = np.nanquantile(Q_sim, 1.0 - alpha / 2, axis=0)
     IC_low_fine = np.nanquantile(Q_fine, alpha / 2, axis=0)
     IC_high_fine = np.nanquantile(Q_fine, 1.0 - alpha / 2, axis=0)
 
