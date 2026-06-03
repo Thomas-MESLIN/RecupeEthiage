@@ -260,19 +260,32 @@ def plot_results(res: dict, title: str = "Analyse fréquentielle VCN3",
     emp = res["empirical"]
     quant = res["quantiles"]
     pcdf = res["pcdf"]
-    mask_cdf = np.isfinite(pcdf["T"]) & (pcdf["T"] > 0) & (pcdf["T"] < 500)
+
+    # Bornes X (période de retour)
+    T_min_data = min(emp["T"].min(), 1.0)
+    T_max_data = emp["T"].max() * 1.05
+
+    # Borne Y : basée sur les données observées + marge de 20%
+    # On ignore volontairement les valeurs théoriques aux bords de la loi
+    # qui divergent et écrasent l'échelle des graphiques.
+    y_max = emp["y_sorted"].max() * 1.2
+    y_min = 0.0
 
     # -------------------------------------------------------------------
     # Graphique 1 : Période de retour T (ans) vs débit
     # -------------------------------------------------------------------
     ax1 = axes[0]
+    ax1.set_xlim(T_min_data, T_max_data)
+    ax1.set_ylim(y_min, y_max)
+
+    mask1 = np.isfinite(pcdf["T"]) & (pcdf["T"] >= T_min_data) & (pcdf["T"] <= T_max_data)
+    ax1.fill_between(pcdf["T"][mask1],
+                     pcdf["IC_low"][mask1], pcdf["IC_high"][mask1],
+                     color="firebrick", alpha=0.15, label="IC 95% (PBOOT)")
+    ax1.plot(pcdf["T"][mask1], pcdf["x"][mask1], color="firebrick",
+             linewidth=1.5, label="Loi Log-Normale (L-mom)")
     ax1.scatter(emp["T"], emp["y_sorted"], color="steelblue", s=20, zorder=5,
                 alpha=0.8, label="Observations")
-    ax1.plot(pcdf["T"][mask_cdf], pcdf["x"][mask_cdf], color="firebrick",
-             linewidth=1.5, label="Loi Log-Normale (L-mom)")
-    ax1.fill_between(pcdf["T"][mask_cdf],
-                     pcdf["IC_low"][mask_cdf], pcdf["IC_high"][mask_cdf],
-                     color="firebrick", alpha=0.15, label="IC 95% (PBOOT)")
     ax1.set_xscale("log")
     ax1.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax1.set_xlabel("Période de retour T (ans)", fontsize=11)
@@ -280,32 +293,34 @@ def plot_results(res: dict, title: str = "Analyse fréquentielle VCN3",
     ax1.set_title("Période de retour vs débit")
     ax1.legend(fontsize=9)
     ax1.grid(True, which="both", alpha=0.3)
-    ax1.set_xlim(left=1)
 
     # -------------------------------------------------------------------
     # Graphique 2 : Fréquence de non-dépassement vs débit
-    # axe x = probabilité de non-dépassement (0 → 1)
-    # IC calculé sur la grille continue pcdf pour une enveloppe lisse
     # -------------------------------------------------------------------
     ax2 = axes[1]
-    ax2.scatter(emp["freq"], emp["y_sorted"], color="steelblue", s=20, zorder=5,
-                alpha=0.8, label="Observations")
-    ax2.plot(pcdf["cdf"], pcdf["x"], color="firebrick",
-             linewidth=1.5, label="Loi Log-Normale (L-mom)")
+    ax2.set_xlim(0, 1)
+    ax2.set_ylim(y_min, y_max)
+
     ax2.fill_between(pcdf["cdf"],
                      pcdf["IC_low"], pcdf["IC_high"],
                      color="firebrick", alpha=0.15, label="IC 95% (PBOOT)")
+    ax2.plot(pcdf["cdf"], pcdf["x"], color="firebrick",
+             linewidth=1.5, label="Loi Log-Normale (L-mom)")
+    ax2.scatter(emp["freq"], emp["y_sorted"], color="steelblue", s=20, zorder=5,
+                alpha=0.8, label="Observations")
     ax2.set_xlabel("Fréquence de non-dépassement", fontsize=11)
     ax2.set_ylabel("VCN3 (m³/s)", fontsize=11)
     ax2.set_title("Fréquence vs débit")
     ax2.legend(fontsize=9)
     ax2.grid(True, alpha=0.3)
-    ax2.set_xlim(0, 1)
 
     # -------------------------------------------------------------------
     # Graphique 3 : CDF — débit vs probabilité de non-dépassement
     # -------------------------------------------------------------------
     ax3 = axes[2]
+    ax3.set_xlim(y_min, y_max)
+    ax3.set_ylim(0, 1)
+
     ax3.plot(pcdf["x"], pcdf["cdf"], color="firebrick", linewidth=1.5,
              label="CDF Log-Normale (L-mom)")
     ax3.scatter(emp["y_sorted"], emp["freq"], color="steelblue", s=20,
@@ -318,7 +333,6 @@ def plot_results(res: dict, title: str = "Analyse fréquentielle VCN3",
     ax3.set_title("CDF empirique vs théorique")
     ax3.legend(fontsize=9)
     ax3.grid(True, alpha=0.3)
-    ax3.set_ylim(0, 1)
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -376,14 +390,6 @@ def get_period_from_flow(q_obs: float, res: dict) -> dict:
 
     result = {"q": q_obs, "p": p_interp, "T": T, "IC_low": T_low, "IC_high": T_high}
 
-    # Affichage
-    print(f"\n{'=' * 55}")
-    print(f"  Débit observé          : {q_obs:.4f} m³/s")
-    print(f"  Prob. non-dépassement  : {p_interp:.4f}")
-    print(f"  Période de retour      : {T:.1f} ans")
-    print(f"  IC 95%                 : [{T_low:.1f} – {T_high:.1f}] ans")
-    print(f"{'=' * 55}\n")
-
     return result
 
 
@@ -398,8 +404,13 @@ def plot_period_from_flow(q_obs: float, res: dict, code_station: str,
     T_max = emp["T"].max() * 1.05
     mask = np.isfinite(pcdf["T"]) & (pcdf["T"] >= T_min) & (pcdf["T"] <= T_max)
 
+    # Borne Y : basée sur les données observées + marge 20%, même logique que plot_results
+    y_max = emp["y_sorted"].max() * 1.2
+    y_min = 0.0
+
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.set_xlim(T_min, T_max)
+    ax.set_ylim(y_min, y_max)
 
     ax.fill_between(pcdf["T"][mask], pcdf["IC_low"][mask], pcdf["IC_high"][mask],
                     color="firebrick", alpha=0.15, label="IC 95% (PBOOT)")
@@ -502,6 +513,3 @@ if __name__ == "__main__":
     df_all_analysis = pd.DataFrame(data=all_rows)
     df_all_analysis.to_csv(Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv"),
         index=False)
-
-# calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(station_code)
-#
