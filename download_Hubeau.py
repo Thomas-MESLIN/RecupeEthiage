@@ -89,8 +89,6 @@ if __name__ == "__main__":
     if len(annee_mois_souhaite) == 0:
         annee_mois_souhaite = date_actuelle
 
-    # download_hubeau_france_mois(annee_mois_souhaite,"QmM")
-    #download_hubeau_france_mois(annee_mois_souhaite, "QmnJ")
     ensure_grandeur_mensuel_downloaded("2025-06","QmnJ")
     ensure_grandeur_mensuel_downloaded("2025-07","QmnJ")
     ensure_grandeur_mensuel_downloaded("2025-08","QmnJ")

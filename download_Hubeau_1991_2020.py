@@ -72,4 +72,3 @@ def download_hubeau_1991_2020(grandeur_souhaite):
 if __name__ == "__main__":
     ensure_grandeur_historique_downloaded("QmM")
     ensure_grandeur_historique_downloaded("QmnJ")
-    #download_hubeau_1991_2020("QmM")

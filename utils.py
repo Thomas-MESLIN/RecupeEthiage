@@ -216,7 +216,7 @@ def is_file_renewed(chemin:Path) -> bool:
 
 def is_file_need_download(chemin:Path):
     """
-    Assure que toutes le fichier est téléchargés.
+    Vérifie qu'un fichier doit être téléchargé.
     Demande à l'utilisateur de renouveler le fichier si celui-ci est trop vieux.
     :param chemin: Le fichier a potentiellement renouveler.
     :return: Rien
