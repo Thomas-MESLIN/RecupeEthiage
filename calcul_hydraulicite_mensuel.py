@@ -68,5 +68,6 @@ if __name__ == "__main__":
     #calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
     calcul_et_plot_hydraulicite_mensuel("2026-05","BSH001")
     calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
-    #calcul_et_plot_hydraulicite_mensuel("2026-04","BSH101")
-    #calcul_et_plot_hydraulicite_mensuel("2024-02","BSH001")
+    calcul_et_plot_hydraulicite_mensuel("2026-03","BSH001")
+    calcul_et_plot_hydraulicite_mensuel("2026-02","BSH001")
+    calcul_et_plot_hydraulicite_mensuel("2026-01","BSH001")
