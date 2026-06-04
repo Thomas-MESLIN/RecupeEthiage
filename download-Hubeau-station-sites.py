@@ -1,45 +1,52 @@
 from cl_hubeau import hydrometry
 from pathlib import Path
-import os
-import init_project
 import utils
 
 # TODO, regarder de quand date les fichiers, si les fichiers sont trop vieux, (>1ans), proposer des les remplacer.
 
-# Permet d'accéder à internet via le réseau interne de la DREAL
+def download_stations():
+    """
+    Télécharge toute les stations de France qui ont existé.
+    :return: Rien
+    """
+    print("Téléchargement des stations.")
+    utils.set_up_working_proxy()
 
-# initialisation du proxy
-utils.set_up_working_proxy()
+    df_all_stations = hydrometry.get_all_stations()
+    df_all_stations.to_csv(utils.get_path_stations())
+    print(f"Stations téléchargées -> {utils.get_path_stations()}")
 
-# dossier vers lequel mettre les résultats
-dest_folder = Path("output/hubeau/downloaded_data")
-#fields=["resultat_obs_elab", "code_site", "date_obs_elab"]
-#fields=[]
-df = hydrometry.get_all_stations()
-df.to_csv(dest_folder/ 'stations' / 'stations.csv')
-station_geojson = df.to_json(default=str)
-with open(dest_folder/ 'stations' / 'stations.geojson', 'w') as file:
-    file.write(station_geojson)
+def download_sites():
+    """
+    Télécharges tous les sites de France.
+    :return: Rien
+    """
+    print("Téléchargement des sites.")
+    utils.set_up_working_proxy()
 
-df = hydrometry.get_all_sites()
-df.to_csv(dest_folder / 'sites' / 'sites.csv')
-sites_geojson = df.to_json(default=str)
-with open(dest_folder / 'sites' / 'sites.geojson', 'w') as file:
-    file.write(sites_geojson)
+    df_all_sites = hydrometry.get_all_sites()
+    df_all_sites.to_csv(utils.get_path_sites())
+    print(f"Sites téléchargées -> {utils.get_path_sites()}")
 
-# Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
-bounding_box_grossiere = [2.307129,42.749916,7.734375,47.279318]
-# Petite bounding box autour de Lyon pour tester
-bounding_box_lyon = [4.130859,45.431642,5.559082,46.136066]
-# bbox=bounding_box_lyon,
+def ensure_station_downloaded():
+    """
+    Assure que toutes les stations sont téléchargés.
+    :return:
+    """
+    chemin = utils.get_path_stations()
+    if utils.is_file_need_download(chemin):
+        download_stations()
 
-# Format de date AAAA-MM-JJ
-date_debut_observation = "2026-01-01"
-date_fin_observation = "2026-01-31"
+def ensure_sites_downloaded():
+    """
+    Assure que tous les sites sont téléchargés.
+    :return:
+    """
+    chemin = utils.get_path_sites()
+    if utils.is_file_need_download(chemin):
+        download_sites()
 
-#dg = hydrometry.get_observations(date_debut_obs_elab=date_debut_observation,date_fin_obs_elab=date_fin_observation)
-
-# Quelle que soit la bounding box choisie, le programme va quand même query absolument toutes les sources de données...
-# Ce qui résulte en une extraction durant 2h...
-
-#dg.to_csv(dest_folder / 'observations-janvier-france.csv')
+# Si on lance ce script, on re-télécharge toutes les stations et tous les sites.
+if __name__ == "__main__":
+    ensure_station_downloaded()
+    ensure_sites_downloaded()

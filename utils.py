@@ -3,6 +3,8 @@ from pathlib import Path
 import requests
 import pandas as pd
 import locale
+from datetime import datetime, timedelta
+import dateutil
 
 loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
 
@@ -86,11 +88,15 @@ def test_connection(
     except requests.RequestException:
         return False
 
-
+_cache_proxy = {}
 def set_up_working_proxy():
     """
     Détermine automatiquement si le proxy doit être utilisé.
+
+    Le proxy sert à accéder à internet sur le réseau interne de la DREAL.
     """
+    if "proxy_set_up" in _cache_proxy:
+        return _cache_proxy["proxy_set_up"]
     print("Configuration du proxy...\n")
     print("Test avec proxy...")
 
@@ -100,6 +106,7 @@ def set_up_working_proxy():
         os.environ['HTTP_PROXY'] = PROXIES['HTTP']
         os.environ['https_proxy'] = PROXIES['https']
         os.environ['HTTPS_PROXY'] = PROXIES['HTTPS']
+        _cache_proxy["proxy_set_up"] = PROXIES
         return PROXIES
 
     print("Proxy KO")
@@ -111,6 +118,7 @@ def set_up_working_proxy():
         os.environ['HTTP_PROXY'] = ""
         os.environ['https_proxy'] = ""
         os.environ['HTTPS_PROXY'] = ""
+        _cache_proxy["proxy_set_up"] = None
         return None
 
     raise RuntimeError(
@@ -145,3 +153,81 @@ def get_stations(code_sandre:str, annee_mois_active:str|None=None) -> pd.DataFra
         df_stations_sandre_ouverte = df_stations_sandre
 
     return df_stations_sandre_ouverte
+
+
+
+# Vérification de l'ancienneté des données.
+def is_path_valid_age(chemin:Path) -> bool:
+    """
+    Renvoie vrai si le fichier est assez récent (< 1 ans)
+    :param chemin: Un chemin sous forme de Path pointant vers un fichier.
+    :return: Vrai si le fichier est récent (< 1 ans), faux sinon.
+    """
+    if not chemin.exists():
+        raise FileNotFoundError(chemin)
+    #one_year = timedelta(days=360) # 1 ans
+    one_year = timedelta(seconds=10)  # 101 seconde pour le test
+    time_modification_fichier = chemin.stat().st_mtime
+    date_modification_fichier = datetime.fromtimestamp(time_modification_fichier)
+    date_actuelle = datetime.now()
+    delta = date_actuelle - date_modification_fichier
+    return delta < one_year
+
+_cache_prompt = {}
+def prompt_renew_old_data(chemin:Path) -> bool:
+    """
+    Demande à l'utilisateur s'il souhaite renouveler le fichier pointé vers Path.
+    :param chemin: Un chemin sous forme de Path pointant vers un fichier à renouveller.
+    :return: Vrai si l'utilisateur accepte de renouveller le fichier, faux sinon.
+    """
+    # Si on a répondu à renouveller tous précédemment, on renvoie True sans rien re-demander à l'utilisateur.
+    if "renouveler_tout" in _cache_prompt:
+        return True
+    elif "renouveler_rien" in _cache_prompt:
+        return False
+
+    res_prompt = input(f"\nLe fichier : {chemin.name} est vieux de plus d'un an, souhaitez vous : \n"
+                       f"Ne rien renouveler ? (0)\n"
+                       f"renouveler uniquement ce fichier ? (1)\n"
+                       f"renouveler tous les fichiers trop vieux ? (2)\n"
+                       f"Entrez votre réponse (0,1 ou 2) -> ")
+
+    if res_prompt == "1": # On renouvelle uniquement un fichier
+        return True
+    elif res_prompt == "2": # On renouvelle tous les fichiers trop vieux.
+        _cache_prompt["renouveler_tout"] = True
+        return True
+    else: # On ne renouvelle aucun fichier
+        _cache_prompt["renouveler_rien"] = False
+        print("\nAucun fichier ne sera renouvelé.\n")
+        return False
+
+def is_file_renewed(chemin:Path) -> bool:
+    """
+    Effectue un check complet sur le fichier pointé,
+    Si celui ci est trop vieux, l'utilisateur est interrogé.
+    :param chemin: Le fichier a potentiellement renouveler.
+    :return: Renvoie True si l'utilisateur accepte de renouveler le fichier, False sinon.
+    """
+    if not is_path_valid_age(chemin):
+        return prompt_renew_old_data(chemin)
+    else:
+        return True
+
+def is_file_need_download(chemin:Path):
+    """
+    Assure que toutes le fichier est téléchargés.
+    Demande à l'utilisateur de renouveler le fichier si celui-ci est trop vieux.
+    :param chemin: Le fichier a potentiellement renouveler.
+    :return: Rien
+    """
+    if chemin.exists() and is_path_valid_age(chemin):
+        return False
+    elif prompt_renew_old_data(chemin):
+        print(f"\nLe fichier {chemin.name} va être re-téléchargé. \n"
+              "si le temps d'attente est trop long, vous pouvez annuler la commande avec ctrl+c.\n"
+              "Il suffira de relancer le script et de refuser le prompt qui va s'afficher, \n"
+              "l'ancien fichier sera alors utilisé.\n")
+        return True
+    else:
+        return False

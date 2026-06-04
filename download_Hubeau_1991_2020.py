@@ -6,8 +6,13 @@ import init_project
 import download_Hubeau
 
 def ensure_grandeur_historique_downloaded(grandeur:str):
+    """
+    Garantie que les données historiques pour la grandeur sont téléchargées.
+    :param grandeur: La grandeur téléchargée souhaitée
+    :return: Rien
+    """
     path_grandeur = utils.get_path_historique_raw_csv(grandeur)
-    if grandeur != "QmnJ" and not path_grandeur.exists():
+    if grandeur != "QmnJ" and utils.is_file_need_download(path_grandeur):
         download_hubeau_1991_2020(grandeur)
     if grandeur == "QmnJ":
         download_Hubeau.ensure_grandeur_mensuel_downloaded("1990-12", "QmnJ")
@@ -21,7 +26,6 @@ def ensure_grandeur_historique_downloaded(grandeur:str):
         print("Données téléchargées avec succès.")
 
 
-# TODO réduire la taille de la query.
 def download_hubeau_1991_2020(grandeur_souhaite):
     """
     Télécharge les observations de 1991 à 2020 de la grandeur souhaite et de toute la france
@@ -31,9 +35,6 @@ def download_hubeau_1991_2020(grandeur_souhaite):
     # Permet d'accéder à internet via le réseau interne de la DREAL
     # initialisation du proxy
     utils.set_up_working_proxy()
-
-    # dossier vers lequel mettre les résultats
-    dest_folder = Path("output/hubeau/downloaded_data/observations_elaboree")
 
     # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
     bounding_box_grossiere = [1.142578, 42.039587, 8.481445, 49.612271]
@@ -64,10 +65,11 @@ def download_hubeau_1991_2020(grandeur_souhaite):
             fields=format_attendu,
         )
 
-        dataframe_observation.to_csv(dest_folder / f'observations-{grandeur_souhaite}-france-1991-2020.csv')
+        dataframe_observation.to_csv(utils.get_path_historique_raw_csv(grandeur_souhaite), index=False)
     else:
         ensure_grandeur_historique_downloaded("QmnJ")
 
 if __name__ == "__main__":
-    download_hubeau_1991_2020("QmnJ")
+    ensure_grandeur_historique_downloaded("QmM")
+    ensure_grandeur_historique_downloaded("QmnJ")
     #download_hubeau_1991_2020("QmM")

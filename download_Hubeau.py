@@ -8,7 +8,7 @@ import utils
 
 def ensure_grandeur_mensuel_downloaded(annee_mois:str, grandeur:str):
     complete_path = utils.get_path_mensuel_raw_csv(annee_mois,grandeur)
-    if not complete_path.exists():
+    if utils.is_file_need_download(complete_path):
         print(f"Téléchargement du fichier en cours : {complete_path}")
         download_hubeau_france_mois(annee_mois,grandeur)
         print(f"Téléchargement du fichier terminé : {complete_path}")
@@ -94,5 +94,3 @@ if __name__ == "__main__":
     ensure_grandeur_mensuel_downloaded("2025-06","QmnJ")
     ensure_grandeur_mensuel_downloaded("2025-07","QmnJ")
     ensure_grandeur_mensuel_downloaded("2025-08","QmnJ")
-
-    # TODO, télécharger les autre données.
