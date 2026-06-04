@@ -302,10 +302,11 @@ def get_period_from_flow(q_obs: float, res: dict) -> dict:
 # 9. Get resultat station
 # ==========================
 
-def get_result_station(code_station:str, mois:str, vcn3_observation, plot_resultat:bool=False) -> dict:
+def get_result_station(code_station:str, mois:str, code_sandre:str, vcn3_observation, plot_resultat:bool=False) -> dict:
     """
     Renvoie la période de retour de la station et sa fréquence de non-dépassement,
     ainsi que les intervalles de confiance associés
+    :param code_sandre:
     :param plot_resultat: Si a True, va crée et sauvegarder des plots de toutes les statistiques calculées.
     :param code_station:Le code de la station à évaluer.
     :param mois: Au format MM
@@ -318,7 +319,7 @@ def get_result_station(code_station:str, mois:str, vcn3_observation, plot_result
         'Periode_de_retour_interval_confiance_haut' : borne haute IC 95% sur T
     """
     mois_a_etudier = f"{mois:02}"
-    calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(code_station)
+    calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(code_station, code_sandre)
     df_all_vcn3 = pd.read_csv(utils.get_path_vcn3_station(code_station))
     df_mois_precis = df_all_vcn3[df_all_vcn3["annee_mois"].astype(str).str.contains(f"-{mois_a_etudier}")]
     # On enlève les cases vide...
@@ -363,21 +364,26 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     """
     if utils.get_path_periode_de_retour(code_sandre, annee_mois).exists():
         return pd.DataFrame(pd.read_csv(utils.get_path_periode_de_retour(code_sandre, annee_mois)))
+
     print("Calcul des fréquences de non dépassement et des périodes de retour.")
     date = pd.to_datetime(f"{annee_mois}-01")
     annee_mois = date.strftime("%Y-%m")
-    mois = date.strftime("%m")
+    mois_str = date.strftime("%m")
+    annee = date.year
+    mois = date.month
     df_station = utils.get_stations(code_sandre, annee_mois)
     # On charge les données des stations du mois désiré.
 
-    df_annee_mois_selectionne = pd.read_csv(utils.get_path_vcn3(code_sandre, annee_mois))
     all_rows = []
     with tqdm(total=len(df_station)) as pbar:
         for station_code in df_station["code_station"]:
-            df_valeur = df_annee_mois_selectionne[df_annee_mois_selectionne["code_station"] == station_code]
-            valeur = df_valeur["vcn3_mensuel"].iloc[0] if not df_valeur.empty else pd.NA
+            #calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(station_code, code_sandre)
+            #df_station_historique = pd.read_csv(utils.get_path_vcn3_station(station_code))
+            #df_valeur = df_station_historique[df_station_historique["annee_mois"] == annee_mois]
+            #valeur = df_valeur["vcn3_mensuel"].iloc[0] if not df_valeur.empty else pd.NA
+            valeur = calcul_vcn3_1991_2020.get_vcn3_station_mois(calcul_vcn3_1991_2020.get_df_moyenne_glissante(annee_mois, code_sandre),station_code, annee=annee, mois=mois)
             if not pd.isna(valeur):
-                row = get_result_station(station_code, mois, valeur, plot_resultat=is_result_plotted)
+                row = get_result_station(station_code, mois_str, code_sandre, valeur, plot_resultat=is_result_plotted)
                 row["code_station"] = station_code
                 df_date_ouverture = df_station[df_station["code_station"] == station_code]["date_ouverture_station"]
                 row["date_ouverture_station"] = df_date_ouverture.iloc[0] if not df_date_ouverture.empty else pd.NA
@@ -394,4 +400,6 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     return df_all_analysis
 
 if __name__ == "__main__":
-    ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=True)
+    #ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=True)
+    ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=False)
+    ensure_frequence_non_depassement_periode_retour_calcule("2026-05","BSH001", is_result_plotted=False)

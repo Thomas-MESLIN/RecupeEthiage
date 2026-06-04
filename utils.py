@@ -14,7 +14,7 @@ GRANDEUR = {
 }
 
 def get_path_historique_raw_csv(grandeur:str):
-    return Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-{grandeur}-france-1991-2020.csv")
+    return Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-{grandeur}-AURA-1991-2020.csv")
 
 def get_path_mensuel_raw_csv(annee_mois:str, grandeur:str):
     return Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-{grandeur}-AURA-{annee_mois}.csv")
@@ -50,6 +50,37 @@ def get_path_stations():
 
 def get_path_sites():
     return Path("output/hubeau/downloaded_data/sites/sites.csv")
+
+_cache_path_source_historique = {}
+def get_paths_source_historique(grandeur:str) -> list[Path]:
+    """
+    Renvoie le chemin des fichiers contenant la source de donnée historique de la grandeur.
+    :param grandeur: Une grandeur à spécifier
+    :return: La liste des chemins nécessaire au calcul de cette grandeur
+    """
+    if grandeur in _cache_path_source_historique:
+        return _cache_path_source_historique[grandeur].copy()
+    path_list = []
+    if grandeur == "QmnJ":
+        for date in pd.date_range("1990-12", "2020-12", freq="MS"):
+            annee_mois = date.strftime("%Y-%m")
+            path_list.append(Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-QmnJ-AURA-{annee_mois}.csv"))
+    elif grandeur == "QmM":
+        path_list.append(Path("output/hubeau/downloaded_data/observations_elaboree/observations-QmM-AURA-1991-2020.csv"))
+    path_list.append(get_path_sites())
+    path_list.append(get_path_stations())
+    _cache_path_source_historique[grandeur] = path_list.copy()
+    return path_list.copy()
+
+def get_paths_source_mensuel(grandeur:str, annee_mois:str) -> list[Path]:
+    """
+    Renvoie le chemin des fichiers contenant la source de donnée de la grandeur mis en paramètre et de la date
+    :param grandeur: Une grandeur.
+    :param annee_mois: AAAA-MM
+    :return: Une liste de chemin vers les sources des données mensuel.
+    """
+    list_chemin = [get_path_stations(), get_path_sites(), get_path_mensuel_raw_csv(annee_mois,grandeur)]
+    return list_chemin.copy()
 
 # SELECTION DU PROXY
 
@@ -221,7 +252,9 @@ def is_file_need_download(chemin:Path):
     :param chemin: Le fichier a potentiellement renouveler.
     :return: Rien
     """
-    if chemin.exists() and is_path_valid_age(chemin):
+    if not chemin.exists():
+        return True
+    elif chemin.exists() and is_path_valid_age(chemin):
         return False
     elif prompt_renew_old_data(chemin):
         print(f"\nLe fichier {chemin.name} va être re-téléchargé. \n"
@@ -231,3 +264,26 @@ def is_file_need_download(chemin:Path):
         return True
     else:
         return False
+
+def is_res_updated_with_source(chemin_source_list:list[Path], chemin_resultat:Path) -> bool:
+    """
+    Compare la date de modification du fichier de résultat et du fichier source
+    vérifie que le fichier de résultat est plus récent que celui d'entrée.
+    Si c'est le fichier source qui est plus récent, alors le fichier résultat doit être mis à jour.
+    Si la source n'existe pas, on renvoie False.
+    :param chemin_source_list: Une liste de fichier qui sert à construire le résultat
+    :param chemin_resultat: Le fichier résultat basé sur le fichier source.
+    :return: Renvoie True si le fichier résultat est plus ancien que le fichier source. False sinon.
+    """
+    if not chemin_resultat.exists():
+        return False
+    is_resultat_plus_recent_que_source = True
+    for chemin_source in chemin_source_list:
+        if not chemin_source.exists():
+            return False
+        date_modification_source = chemin_source.stat().st_mtime
+        date_modification_resultat = chemin_resultat.stat().st_mtime
+        if not date_modification_source < date_modification_resultat:
+            is_resultat_plus_recent_que_source = False
+            break
+    return is_resultat_plus_recent_que_source

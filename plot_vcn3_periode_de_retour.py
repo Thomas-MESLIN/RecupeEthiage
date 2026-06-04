@@ -6,7 +6,7 @@ import utils
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
-
+import calcul_vcn3_frequence_retour_claude
 def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
     """
     Suppose que le fichier a déjà été calculé.
@@ -17,8 +17,8 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
     # ============================================================
     # 1. Chargement des données du vnc3
     # ============================================================
-
-    data_hydro_path = Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{annee_mois}.csv")
+    calcul_vcn3_frequence_retour_claude.ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, code_sandre)
+    data_hydro_path = utils.get_path_periode_de_retour(code_sandre, annee_mois)
 
     df_hydro = pd.read_csv(data_hydro_path)
 
@@ -26,24 +26,12 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
     # 2. Chargement des stations
     # ============================================================
 
-    # On charge toute les stations
-    stations_path = Path("output/hubeau/downloaded_data/stations/stations.csv")
-
-    # Le fichier contient une colonne WKT : POINT(...)
-    df_stations = pd.read_csv(stations_path)
-
-    # Filtre les stations pour avoir celle avec le bon code Sandre
-    df_stations_sandre = df_stations[df_stations["code_sandre_reseau_station"].astype(str).str.contains(code_sandre)]
-
-    # On filtre les stations
-    df_stations_sandre_ouverte = df_stations_sandre[
-        (annee_mois < df_stations_sandre["date_fermeture_station"].astype(str)) &
-        (df_stations_sandre["date_ouverture_station"].astype(str) < annee_mois)
-    ]
+    # On charge toute les stations active ce mois là.
+    df_stations = utils.get_stations(code_sandre, annee_mois)
 
     # Conversion en GeoDataFrame
     gdf_stations = gpd.GeoDataFrame(
-        df_stations_sandre_ouverte,
+        df_stations,
         geometry=gpd.GeoSeries.from_wkt(df_stations["geometry"]),
         crs="EPSG:4326"
     )
@@ -91,7 +79,7 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
     # 5. Export GeoJSON
     # ============================================================
 
-    output_geojson = Path(f"output/QGIS/VCN3_periode_de_retour/periode-de-retour-{annee_mois}.geojson")
+    output_geojson = Path(f"output/QGIS/VCN3_periode_de_retour/periode-de-retour-{code_sandre}-{annee_mois}.geojson")
 
     gdf_final.to_file(
         output_geojson,
@@ -284,4 +272,6 @@ if __name__ == "__main__":
     #create_geojson_from_hydraulicite("2026-04", "BSH001")
     #create_geojson_from_hydraulicite("2026-04", "BSH101")
     #create_geojson_from_hydraulicite("2026-02", "BSH001")
+    #create_geojson_from_periode_de_retour("2026-04", "BSH001")
     create_geojson_from_periode_de_retour("2026-04", "BSH001")
+    create_geojson_from_periode_de_retour("2026-05", "BSH001")

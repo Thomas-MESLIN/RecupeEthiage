@@ -33,6 +33,15 @@ def clean_historic_data(code_sandre:str, grandeur:str):
 
                 pbar.update(1)
 
+def ensure_historic_data_cleaned(code_sandre:str, grandeur:str):
+    """
+    S'assure que les données historique de cette grandeur et pour ce code Sandre on été nettoyés et sont à jour
+    :param code_sandre: Code Sandre des données à Nettoyer
+    :param grandeur: Grandeur des données à Nettoyer
+    :return: Rien
+    """
+    #if utils.is_res_updated_with_source(utils.get_paths_source_historique(grandeur), )
+
 if __name__ == "__main__":
     sandre_code = input("Rentrez un code sandre à filtrer (BSH001 par défaut) : ")
     if sandre_code == "":

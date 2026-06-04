@@ -1,11 +1,14 @@
 import datetime
 from datetime import timedelta
 import calendar
+
+import dateutil
 import numpy as np
 import pandas as pd
 from pathlib import Path
 import clean_historic_data
 import clean_data
+import download_Hubeau_1991_2020
 import utils
 from dateutil.relativedelta import relativedelta
 from tqdm import tqdm
@@ -26,8 +29,10 @@ def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
         chemin_fichier = utils.get_path_clean_csv(code_sandre, date_mois, "QmnJ")
         if not chemin_fichier.exists():
             if utils.is_date_historique(date_mois):
+                #clean_historic_data.ensure_historic_data_cleaned(code_sandre, "QmnJ")
                 clean_historic_data.clean_historic_data(code_sandre,"QmnJ")
             else:
+                #ensure_mensuel_data_cleaned(date_mois, code_sandre, "QmnJ")
                 clean_data.clean_single_month(date_mois, code_sandre, "QmnJ")
         df_hubeau = pd.read_csv(chemin_fichier)
         _cache_qmnj[code_sandre][date_mois] = df_hubeau
@@ -258,19 +263,21 @@ def calcul_vcn3_station(code_station:str, all_df:pd.DataFrame) -> pd.DataFrame:
 
 _cache_get_all_df_mensuel = {}
 def get_all_df_mensuel(code_sandre:str):
-    if code_sandre not in _cache_get_all_df_mensuel:
-        all_df = []
-        for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
-            annee_mois = date.strftime("%Y-%m")
-            if not utils.get_path_vcn3_mensuel(code_sandre, annee_mois).exists():
-                calcule_minimum_glissant_moyen_1991_2020(code_sandre)
-            df_mois = pd.read_csv(utils.get_path_vcn3_mensuel(code_sandre, annee_mois))
-            df_mois["annee_mois"] = annee_mois
-            all_df.append(df_mois)
+    if code_sandre in _cache_get_all_df_mensuel:
+        return _cache_get_all_df_mensuel[code_sandre]
+    all_df = []
+    for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
+        annee_mois = date.strftime("%Y-%m")
+        path_mensuel = utils.get_path_vcn3_mensuel(code_sandre, annee_mois)
+        if not utils.is_res_updated_with_source(utils.get_paths_source_historique("QmnJ"), path_mensuel):
+            calcule_minimum_glissant_moyen_1991_2020(code_sandre)
+        df_mois = pd.read_csv(path_mensuel)
+        df_mois["annee_mois"] = annee_mois
+        all_df.append(df_mois)
 
-        df_all_vcn3 = pd.concat(all_df, ignore_index=True)
+    df_all_vcn3 = pd.concat(all_df, ignore_index=True)
 
-        _cache_get_all_df_mensuel[code_sandre] = df_all_vcn3.copy()
+    _cache_get_all_df_mensuel[code_sandre] = df_all_vcn3.copy()
     return _cache_get_all_df_mensuel[code_sandre]
 
 
@@ -278,14 +285,15 @@ def ensure_calcul_vcn3_station(code_station:str, code_sandre:str):
     """
     S'asssure que le vcn3 de la station a bien été calculé
     :param code_sandre: Le code sandre dans lequel se trouve la station et qu'un vcn3 a été calculé.
-    :param code_station:Le code de la station à calculer
+    :param code_station: Le code de la station à calculer
     :return: Rien
     """
     path_vcn3_station = utils.get_path_vcn3_station(code_station)
-    if not path_vcn3_station.exists():
+    if not utils.is_res_updated_with_source(utils.get_paths_source_historique("QmnJ"), path_vcn3_station):
         df_all_vcn3 = get_all_df_mensuel(code_sandre)
         calcul_vcn3_station(code_station, df_all_vcn3)
 
 if __name__ == "__main__":
     #calcule_minimum_glissant_moyen_1991_2020()
-    ensure_calcul_vcn3_station("U200201001", "BSH001")
+    ensure_calcul_vcn3_station("U072401001", "BSH001")
+    ensure_calcul_vcn3_station("U072401001", "BSH001")
