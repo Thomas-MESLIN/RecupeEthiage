@@ -11,7 +11,7 @@ def clean_historic_data(code_sandre:str, grandeur:str):
     :param code_sandre: Filtre les données avec les stations associées à code_sandre.
     """
     total_iterations = (2021 - 1991) * 12
-    with (tqdm(total=total_iterations, desc="Progression dates") as pbar):
+    with (tqdm(total=total_iterations, desc="Nettoyage des données historiques") as pbar):
         start_date = "1991-01-01"
         if grandeur == "QmnJ":
             start_date = "1990-12-01"

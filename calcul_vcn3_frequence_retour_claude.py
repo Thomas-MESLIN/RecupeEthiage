@@ -277,9 +277,6 @@ def get_period_from_flow(q_obs: float, res: dict) -> dict:
         return {"q": q_obs, "p": res["p0"], "T": 1.0 / res["p0"] if res["p0"] > 0 else np.inf,
                 "IC_low": np.nan, "IC_high": np.nan}
 
-    if q_obs < x[0] or q_obs > x[-1]:
-        raise ValueError(f"q_obs={q_obs} hors de la plage de la grille [{x[0]:.3f}, {x[-1]:.3f}].")
-
     # Interpolation linéaire sur la grille x → cdf
     p_interp = np.interp(q_obs, x, cdf)
     # Pour l'IC : la borne basse du IC débit → borne haute du IC en T (et vice-versa)
@@ -400,7 +397,7 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     return df_all_analysis
 
 if __name__ == "__main__":
-    #ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=True)
-    #ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=False)
-    #ensure_frequence_non_depassement_periode_retour_calcule("2026-05","BSH001", is_result_plotted=False)
-    ensure_frequence_non_depassement_periode_retour_calcule("2026-05","custom", is_result_plotted=False)
+    ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=False)
+    ensure_frequence_non_depassement_periode_retour_calcule("2026-04","custom", is_result_plotted=False)
+    ensure_frequence_non_depassement_periode_retour_calcule("2026-05","BSH001", is_result_plotted=False)
+    ensure_frequence_non_depassement_periode_retour_calcule("2026-05","custom", is_result_plotted=True)

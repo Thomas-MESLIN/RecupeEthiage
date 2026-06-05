@@ -15,10 +15,6 @@ def clean_single_month(annee_mois, code_sandre, grandeur:str):
     """
     download_Hubeau.ensure_grandeur_mensuel_downloaded(annee_mois, grandeur)
     complete_path = utils.get_path_mensuel_raw_csv(annee_mois, grandeur)
-    if not complete_path.exists():
-        print(f"Téléchargement du fichier en cours : {complete_path}")
-        download_Hubeau.download_hubeau_france_mois(annee_mois,grandeur)
-        print(f"Téléchargement du fichier terminé : {complete_path}")
 
     df_clean = clean_utils.clean_hubeau_data(
         annee_mois,
@@ -85,3 +81,5 @@ if __name__ == "__main__":
     clean_single_month("2025-06", "BSH001","QmnJ")
     clean_single_month("2025-07", "BSH001","QmnJ")
     clean_single_month("2025-08", "BSH001","QmnJ")
+
+    clean_single_month("2024-06", "custom", "QmM")

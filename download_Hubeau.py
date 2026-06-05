@@ -7,6 +7,12 @@ import init_project
 import utils
 
 def ensure_grandeur_mensuel_downloaded(annee_mois:str, grandeur:str):
+    """
+    S'assure que le fichier contenant la grandeur mensuel est téléchargé et à jour
+    :param annee_mois: AAAA-MM
+    :param grandeur: Une grandeur à télécharger
+    :return: Rien
+    """
     complete_path = utils.get_path_mensuel_raw_csv(annee_mois,grandeur)
     if utils.is_file_need_download(complete_path):
         print(f"Téléchargement du fichier en cours : {complete_path}")

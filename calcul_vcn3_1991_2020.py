@@ -27,12 +27,10 @@ def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
         _cache_qmnj[code_sandre] = {}
     if date_mois not in _cache_qmnj[code_sandre]:
         chemin_fichier = utils.get_path_clean_csv(code_sandre, date_mois, "QmnJ")
-        if not chemin_fichier.exists():
+        if utils.is_file_need_download(chemin_fichier):
             if utils.is_date_historique(date_mois):
-                #clean_historic_data.ensure_historic_data_cleaned(code_sandre, "QmnJ")
                 clean_historic_data.clean_historic_data(code_sandre,"QmnJ")
             else:
-                #ensure_mensuel_data_cleaned(date_mois, code_sandre, "QmnJ")
                 clean_data.clean_single_month(date_mois, code_sandre, "QmnJ")
         df_hubeau = pd.read_csv(chemin_fichier)
         _cache_qmnj[code_sandre][date_mois] = df_hubeau

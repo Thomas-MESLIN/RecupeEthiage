@@ -31,7 +31,8 @@ def calcul_hydraulicite(annee_mois: str, code_sandre: str):
 
     df_moyenne = pd.read_csv(data_moyenne_path)
 
-    df_moyenne = df_moyenne[df_moyenne["mois"] == 1]
+    mois_a_trouver = int(annee_mois[5:7])
+    df_moyenne = df_moyenne[df_moyenne["mois"] == mois_a_trouver]
     data_mois_correct = df_moyenne["QmM_moyenne"]
     #print(data_mois_correct)
 
@@ -65,10 +66,8 @@ def calcul_et_plot_hydraulicite_mensuel(annee_mois: str, code_sandre: str):
     plot_carte_hydraulicite.create_geojson_from_hydraulicite(annee_mois,code_sandre)
 
 if __name__ == "__main__":
-    #calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
-    #calcul_et_plot_hydraulicite_mensuel("2026-05","BSH001")
-    #calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
-    #calcul_et_plot_hydraulicite_mensuel("2026-03","BSH001")
-    #calcul_et_plot_hydraulicite_mensuel("2026-02","BSH001")
-    #calcul_et_plot_hydraulicite_mensuel("2026-01","BSH001")
+    calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
+    calcul_et_plot_hydraulicite_mensuel("2026-05","BSH001")
+    calcul_et_plot_hydraulicite_mensuel("2026-04","custom")
     calcul_et_plot_hydraulicite_mensuel("2026-05","custom")
+    # calcul_et_plot_hydraulicite_mensuel("2025-11","custom")

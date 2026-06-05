@@ -63,6 +63,7 @@ def find_perfect_station(code_site_list:list[str]) -> pd.DataFrame:
         df_stations_lie = df_all_station[df_all_station["code_site"] == code_site]
         if len(df_stations_lie) == 0:
             nombre_absent += 1
+            print()
             print(f"Il n'y a aucune station associé. - {code_site}")
         elif len(df_stations_lie) == 1:
             nombre_unique +=1
@@ -72,13 +73,14 @@ def find_perfect_station(code_site_list:list[str]) -> pd.DataFrame:
             # print("Il y a exactement une station associé.")
         else:
             nombre_plusieurs += 1
-            print(df_stations_lie["code_station"])
+            print()
             print(f"Il y a plus d'une station associé. - {code_site}")
+            print(df_stations_lie["code_station"])
             for code_station in df_stations_lie["code_station"]:
                 row = {"code_site": code_site, "code_station": code_station}
                 list_correspondance.append(row)
 
-    print(f"Nombre site inexistant {nombre_site_inexistant}, \n"
+    print(f"\nNombre site inexistant {nombre_site_inexistant}, \n"
           f"Nombre pas de stations correspondante {nombre_absent}, \n"
           f"Nombre 1 station correspondant {nombre_unique}, \n"
           f"Nombre plusieurs stations correspondantes {nombre_plusieurs}\n")
