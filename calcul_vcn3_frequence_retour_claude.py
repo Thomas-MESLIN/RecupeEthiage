@@ -331,11 +331,11 @@ def get_result_station(code_station:str, mois:str, code_sandre:str, vcn3_observa
                 n_sim       = 1000,
             )
         except ValueError:
-            return {}
+            return {"debit_obs":vcn3_observation}
     else:
         print(code_station)
         print("Donnéé insuffisante")
-        return {}
+        return {"debit_obs":vcn3_observation}
 
 
     # print_results(resultats)
