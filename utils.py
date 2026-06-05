@@ -40,7 +40,7 @@ def get_path_vcn3_station(code_station:str):
     return Path(f"output/VCN3/stations/VCN3-station-{code_station}.csv")
 
 def get_path_periode_de_retour(code_sandre:str, annee_mois:str):
-    return Path(f"output/VCN3/analyse_frequence_periode/analyse-frequence-{code_sandre}-{annee_mois}.csv")
+    return Path(f"output/VCN3/analyse_frequence_periode/periode-de-retour-{code_sandre}-{annee_mois}.csv")
 
 def is_date_historique(annee_mois:str):
     return "1990-12" <= annee_mois <= "2020-12"
