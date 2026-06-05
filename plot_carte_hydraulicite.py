@@ -23,25 +23,13 @@ def create_geojson_from_hydraulicite(annee_mois:str, code_sandre:str):
     # 2. Chargement des stations
     # ============================================================
 
-    # On charge toute les stations
-    stations_path = Path("output/hubeau/downloaded_data/stations/stations.csv")
-
-    # Le fichier contient une colonne WKT : POINT(...)
-    df_stations = pd.read_csv(stations_path)
-
     # Filtre les stations pour avoir celle avec le bon code Sandre
-    df_stations_sandre = df_stations[df_stations["code_sandre_reseau_station"].astype(str).str.contains(code_sandre)]
-
-    # On filtre les stations
-    df_stations_sandre_ouverte = df_stations_sandre[
-        (annee_mois < df_stations_sandre["date_fermeture_station"].astype(str)) &
-        (df_stations_sandre["date_ouverture_station"].astype(str) < annee_mois)
-    ]
+    df_stations_sandre = utils.get_stations(code_sandre, annee_mois)
 
     # Conversion en GeoDataFrame
     gdf_stations = gpd.GeoDataFrame(
-        df_stations_sandre_ouverte,
-        geometry=gpd.GeoSeries.from_wkt(df_stations["geometry"]),
+        df_stations_sandre,
+        geometry=gpd.GeoSeries.from_wkt(df_stations_sandre["geometry"]),
         crs="EPSG:4326"
     )
 
@@ -86,4 +74,4 @@ if __name__ == "__main__":
     #create_geojson_from_hydraulicite("2026-04", "BSH001")
     #create_geojson_from_hydraulicite("2026-04", "BSH101")
     #create_geojson_from_hydraulicite("2026-02", "BSH001")
-    create_geojson_from_hydraulicite("2026-04", "BSH001")
+    create_geojson_from_hydraulicite("2026-05", "custom")

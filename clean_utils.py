@@ -68,30 +68,31 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
 
     # Ouverture et lecture du fichier des stations hubeau.
     # fichier_station_hubeau = output_folder / "stations.csv"
-    df_stations_hubeau = pd.read_csv(fichier_station_hubeau)
+    df_stations_hubeau = utils.get_stations(code_sandre, date_a_filtrer)
+    # df_stations_hubeau = pd.read_csv(fichier_station_hubeau)
 
     # Filtrage pour avoir uniquement les stations du code SANDRE correspondant
-    colonne_code_sandre = "code_sandre_reseau_station"
-    df_stations_hubeau_filtre_code_sandre = df_stations_hubeau[
-        df_stations_hubeau[colonne_code_sandre].astype(str).str.contains(code_sandre, na=False)
-    ]
+    # colonne_code_sandre = "code_sandre_reseau_station"
+    # df_stations_hubeau_filtre_code_sandre = df_stations_hubeau[
+    #     df_stations_hubeau[colonne_code_sandre].astype(str).str.contains(code_sandre, na=False)
+    # ]
 
     # Garder uniquement les données qui correspondent au code Sandre.
     df_stations_hubeau_code_sandre = df_hubeau_filtre_date[
         # On garde les colonnes où les données apparaissent dans les station-filtré
         df_hubeau_filtre_date[colonne_code_station_hubeau].isin(
-            df_stations_hubeau_filtre_code_sandre[colonne_code_station_hubeau]
+            df_stations_hubeau[colonne_code_station_hubeau]
         )
     ]
 
     colonne_donnee_hubeau = "resultat_obs_elab"
     # On supprime les stations où il n'y a pas de données.
-    df_stations_hubeau_code_sandre_with_data = df_stations_hubeau_code_sandre[
-        ~(pd.isna(df_stations_hubeau_code_sandre[colonne_donnee_hubeau]))
-    ]
+    #df_stations_hubeau_code_sandre_with_data = df_stations_hubeau_code_sandre[
+    #    ~(pd.isna(df_stations_hubeau_code_sandre[colonne_donnee_hubeau]))
+    #]
 
     # On supprime les doublons du DataFrame
-    df_code_sandre_with_data_no_duplicate = df_stations_hubeau_code_sandre_with_data.drop_duplicates(subset=["code_station","date_obs_elab"])
+    df_code_sandre_with_data_no_duplicate = df_stations_hubeau_code_sandre.drop_duplicates(subset=["code_station","date_obs_elab"])
 
     return df_code_sandre_with_data_no_duplicate
 

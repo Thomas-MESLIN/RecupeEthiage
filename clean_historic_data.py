@@ -19,7 +19,7 @@ def clean_historic_data(code_sandre:str, grandeur:str):
                 annee_mois_filtre = date.strftime("%Y-%m")
                 # annee_mois_jour_filtre = date.strftime("%Y-%m-%d")
 
-                if grandeur == "QmM":
+                if grandeur == "QmM" and code_sandre in ["BSH001","BSH002"]:
                     # Clean hydroportail data
                     df_hydroportail_clean = clean_utils.clean_hydroportail_data(annee_mois_filtre,code_sandre)
                     chemin_fichier_clean_hydroportail = Path(f"output/hydroportail/cleaned_data/clean-QmM-{code_sandre}-{annee_mois_filtre}.csv")

@@ -275,3 +275,4 @@ if __name__ == "__main__":
     #create_geojson_from_periode_de_retour("2026-04", "BSH001")
     create_geojson_from_periode_de_retour("2026-04", "BSH001")
     create_geojson_from_periode_de_retour("2026-05", "BSH001")
+    create_geojson_from_periode_de_retour("2026-05", "custom")

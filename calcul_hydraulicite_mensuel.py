@@ -26,7 +26,7 @@ def calcul_hydraulicite(annee_mois: str, code_sandre: str):
     # Si le calcul historique n'a pas été fait, on le réalise.
     if not data_moyenne_path.exists():
         print("Calcul du QmM_moyen de 1991 à 2020...")
-        calcul_hydraulicite_1991_2020.calcule_QmM_moyen_1991_2020()
+        calcul_hydraulicite_1991_2020.calcule_QmM_moyen_1991_2020(code_sandre)
         print("Calcul du QmM_moyen de 1991 à 2020 terminé.")
 
     df_moyenne = pd.read_csv(data_moyenne_path)
@@ -66,8 +66,9 @@ def calcul_et_plot_hydraulicite_mensuel(annee_mois: str, code_sandre: str):
 
 if __name__ == "__main__":
     #calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
-    calcul_et_plot_hydraulicite_mensuel("2026-05","BSH001")
-    calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
-    calcul_et_plot_hydraulicite_mensuel("2026-03","BSH001")
-    calcul_et_plot_hydraulicite_mensuel("2026-02","BSH001")
-    calcul_et_plot_hydraulicite_mensuel("2026-01","BSH001")
+    #calcul_et_plot_hydraulicite_mensuel("2026-05","BSH001")
+    #calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
+    #calcul_et_plot_hydraulicite_mensuel("2026-03","BSH001")
+    #calcul_et_plot_hydraulicite_mensuel("2026-02","BSH001")
+    #calcul_et_plot_hydraulicite_mensuel("2026-01","BSH001")
+    calcul_et_plot_hydraulicite_mensuel("2026-05","custom")

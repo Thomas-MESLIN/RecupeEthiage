@@ -86,4 +86,4 @@ if __name__ == "__main__":
     #create_geojson_from_hydraulicite("2026-04", "BSH101")
     #create_geojson_from_hydraulicite("2026-02", "BSH001")
     #create_geojson_from_vcn3("2025-07", "BSH001")
-    create_geojson_from_vcn3("2026-04", "BSH001")
+    create_geojson_from_vcn3("2026-05", "custom")

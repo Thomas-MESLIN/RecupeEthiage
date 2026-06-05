@@ -16,23 +16,11 @@ def create_geojson_from_stations(code_sandre:str, annee_mois:str|None=None):
     stations_path = Path("output/hubeau/downloaded_data/stations/stations.csv")
 
     # Le fichier contient une colonne WKT : POINT(...)
-    df_stations = pd.read_csv(stations_path)
+    df_stations = utils.get_stations(code_sandre, annee_mois)
 
-    # Filtre les stations pour avoir celle avec le bon code Sandre
-    df_stations_sandre = df_stations[df_stations["code_sandre_reseau_station"].astype(str).str.contains(code_sandre)]
-
-    # On filtre les stations ouvertes si une annee et un mois sont précisé
-    if annee_mois is not None:
-        df_stations_sandre_ouverte = df_stations_sandre[
-            (annee_mois < df_stations_sandre["date_fermeture_station"].astype(str)) &
-            (df_stations_sandre["date_ouverture_station"].astype(str) < annee_mois)
-        ]
-    else:
-        df_stations_sandre_ouverte = df_stations_sandre
-
-    # Conversion en GeoDataFrame
+        # Conversion en GeoDataFrame
     gdf_final = gpd.GeoDataFrame(
-        df_stations_sandre_ouverte,
+        df_stations,
         geometry=gpd.GeoSeries.from_wkt(df_stations["geometry"]),
         crs="EPSG:4326"
     )
@@ -69,3 +57,4 @@ def create_geojson_from_stations(code_sandre:str, annee_mois:str|None=None):
 if __name__ == "__main__":
     create_geojson_from_stations("BSH001", annee_mois="2026-04")
     create_geojson_from_stations("BSH001")
+    create_geojson_from_stations("custom")

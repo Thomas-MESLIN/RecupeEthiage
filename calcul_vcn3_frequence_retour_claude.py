@@ -401,5 +401,6 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
 
 if __name__ == "__main__":
     #ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=True)
-    ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=False)
-    ensure_frequence_non_depassement_periode_retour_calcule("2026-05","BSH001", is_result_plotted=False)
+    #ensure_frequence_non_depassement_periode_retour_calcule("2026-04","BSH001", is_result_plotted=False)
+    #ensure_frequence_non_depassement_periode_retour_calcule("2026-05","BSH001", is_result_plotted=False)
+    ensure_frequence_non_depassement_periode_retour_calcule("2026-05","custom", is_result_plotted=False)

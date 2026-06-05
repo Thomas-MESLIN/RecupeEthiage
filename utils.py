@@ -82,6 +82,9 @@ def get_paths_source_mensuel(grandeur:str, annee_mois:str) -> list[Path]:
     list_chemin = [get_path_stations(), get_path_sites(), get_path_mensuel_raw_csv(annee_mois,grandeur)]
     return list_chemin.copy()
 
+def get_path_liste_site_station_custom():
+    return Path("liste_site_et_station_custom.csv")
+
 # SELECTION DU PROXY
 
 PROXIES = {
@@ -169,8 +172,13 @@ def get_stations(code_sandre:str, annee_mois_active:str|None=None) -> pd.DataFra
     stations_path = get_path_stations()
     df_stations = pd.read_csv(stations_path)
 
-    # Filtre les stations pour avoir celle avec le bon code Sandre
-    df_stations_sandre = df_stations[df_stations["code_sandre_reseau_station"].astype(str).str.contains(code_sandre)]
+    if code_sandre == "custom":
+        df_liste_custom = pd.read_csv(get_path_liste_site_station_custom())
+        df_code_station = df_liste_custom["code_station"].drop_duplicates()
+        df_stations_sandre = df_stations.merge(df_code_station, on="code_station", how="inner")
+    else:
+        # Filtre les stations pour avoir celle avec le bon code Sandre
+        df_stations_sandre = df_stations[df_stations["code_sandre_reseau_station"].astype(str).str.contains(code_sandre)]
 
     # Si on a renseigné une date, on filtre uniquement les stations ouvertes à cette date là.
     if annee_mois_active is not None:
@@ -197,7 +205,7 @@ def is_path_valid_age(chemin:Path) -> bool:
     if not chemin.exists():
         raise FileNotFoundError(chemin)
     #one_year = timedelta(days=360) # 1 ans
-    one_year = timedelta(seconds=10)  # 101 seconde pour le test
+    one_year = timedelta(days=360)  # 101 seconde pour le test
     time_modification_fichier = chemin.stat().st_mtime
     date_modification_fichier = datetime.fromtimestamp(time_modification_fichier)
     date_actuelle = datetime.now()
@@ -250,12 +258,12 @@ def is_file_need_download(chemin:Path):
     Vérifie qu'un fichier doit être téléchargé.
     Demande à l'utilisateur de renouveler le fichier si celui-ci est trop vieux.
     :param chemin: Le fichier a potentiellement renouveler.
-    :return: Rien
+    :return: True si le fichier doit être téléchargé, False sinon.
     """
     if not chemin.exists():
         return True
-    elif chemin.exists() and is_path_valid_age(chemin):
-        return False
+    elif is_path_valid_age(chemin):
+        return False # On a pas besoin de télécharger le fichier car il est assez récent
     elif prompt_renew_old_data(chemin):
         print(f"\nLe fichier {chemin.name} va être re-téléchargé. \n"
               "si le temps d'attente est trop long, vous pouvez annuler la commande avec ctrl+c.\n"
@@ -287,3 +295,8 @@ def is_res_updated_with_source(chemin_source_list:list[Path], chemin_resultat:Pa
             is_resultat_plus_recent_que_source = False
             break
     return is_resultat_plus_recent_que_source
+
+if __name__ == "__main__":
+    res = get_stations("custom", "2026-04")
+    print(res)
+    print("miaou")
