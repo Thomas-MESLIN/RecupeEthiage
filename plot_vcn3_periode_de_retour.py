@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 import calcul_vcn3_frequence_retour_claude
-def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
+
+def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_result_plotted:bool=False):
     """
     Suppose que le fichier a déjà été calculé.
+    :param is_result_plotted: Génère les graphique station par station pour le calcul desp ériode de retour.
     :param code_sandre: Code Sandre à mettre en face des stations utilisées.
     :param annee_mois: AAAA-MM
     :return:
@@ -17,7 +19,7 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str):
     # ============================================================
     # 1. Chargement des données du vnc3
     # ============================================================
-    calcul_vcn3_frequence_retour_claude.ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, code_sandre)
+    calcul_vcn3_frequence_retour_claude.ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, code_sandre, is_result_plotted)
     data_hydro_path = utils.get_path_periode_de_retour(code_sandre, annee_mois)
 
     df_hydro = pd.read_csv(data_hydro_path)

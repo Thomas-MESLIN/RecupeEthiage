@@ -23,11 +23,12 @@ def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
     :param date_mois: L'annee et le mois au format AAAA-MM
     :return: Renvoie un Dataframe contenant les code des stations et les valeurs observés.
     """
+    # TODO, vérifier que ce fichier ne prend que des choses à jour.
     if code_sandre not in _cache_qmnj:
         _cache_qmnj[code_sandre] = {}
     if date_mois not in _cache_qmnj[code_sandre]:
         chemin_fichier = utils.get_path_clean_csv(code_sandre, date_mois, "QmnJ")
-        if utils.is_file_need_download(chemin_fichier):
+        if utils.is_file_need_download(chemin_fichier): # TODO, remplacer par une mise à jour par rapport aux sources.
             if utils.is_date_historique(date_mois):
                 clean_historic_data.clean_historic_data(code_sandre,"QmnJ")
             else:

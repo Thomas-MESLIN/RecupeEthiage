@@ -359,7 +359,8 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     :param code_sandre: Le code sandre des stations à explorer.
     :return: Un Dataframe contenant les périodes de retour
     """
-    if utils.get_path_periode_de_retour(code_sandre, annee_mois).exists():
+    path_periode_de_retour = utils.get_path_periode_de_retour(code_sandre, annee_mois)
+    if utils.is_res_updated_with_source(utils.get_path_sources(code_sandre, "QmnJ", annee_mois), path_periode_de_retour):
         return pd.DataFrame(pd.read_csv(utils.get_path_periode_de_retour(code_sandre, annee_mois)))
 
     print("Calcul des fréquences de non dépassement et des périodes de retour.")
@@ -378,6 +379,7 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
             #df_station_historique = pd.read_csv(utils.get_path_vcn3_station(station_code))
             #df_valeur = df_station_historique[df_station_historique["annee_mois"] == annee_mois]
             #valeur = df_valeur["vcn3_mensuel"].iloc[0] if not df_valeur.empty else pd.NA
+            # TODO, vérifier la fonction get_vcn3 si elle recalcul les données pas synchronisées
             valeur = calcul_vcn3_1991_2020.get_vcn3_station_mois(calcul_vcn3_1991_2020.get_df_moyenne_glissante(annee_mois, code_sandre),station_code, annee=annee, mois=mois)
             if not pd.isna(valeur):
                 row = get_result_station(station_code, mois_str, code_sandre, valeur, plot_resultat=is_result_plotted)

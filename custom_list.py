@@ -5,7 +5,9 @@ def clean_input_list():
     """
     Remove the duplicates entries from customs list, merge it with the custom site,
     rewrite it.
-
+    Fill the missing stations of every site. Check if sites exist or not.
+    If a site have mutiple stations candidate, they are all added.
+    To select the station that is added to the site, add it to the 'liste_station_custom.csv'
     :return: Rien
     """
     df_station = pd.read_csv("liste_station_custom.csv")
@@ -22,17 +24,17 @@ def clean_input_list():
     df_all_sites = df_site_no_duplicate.merge(df_all_code_site_from_station, on="code_site", how="outer")
     # df_sites_custom_full = df_site_no_duplicate.merge(df_all_station, on="code_site", how="left")
     print(f"Nombre de nouveaux sites : abs({len(df_site_no_duplicate)} - {len(df_all_sites)}) = {abs(len(df_site_no_duplicate) - len(df_all_sites))}")
-    print("pas mal")
 
     code_site_et_station = df_all_sites.merge(df_station_custom_full, on="code_site", how="outer")
     print(code_site_et_station)
     code_site_et_station_uniquement = code_site_et_station[["code_site","code_station"]].sort_values(by="code_site")
     print("Nettoyage terminé")
 
-    print("Récupération stations manquante.")
+    print("Sites sans station indiqués dans liste_station_custom.csv")
     code_site_station_manquante = code_site_et_station_uniquement[pd.isna(code_site_et_station_uniquement["code_station"])]
     list_site_station_manquante = code_site_station_manquante["code_site"].drop_duplicates().dropna().to_list()
     print(list_site_station_manquante)
+    print("Récupération des stations manquantes.")
     df_resultat = find_perfect_station(list_site_station_manquante)
 
     code_site_et_station_total = pd.concat([df_resultat, code_site_et_station_uniquement], ignore_index=True)

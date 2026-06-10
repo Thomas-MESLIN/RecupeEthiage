@@ -85,6 +85,19 @@ def get_paths_source_mensuel(grandeur:str, annee_mois:str) -> list[Path]:
 def get_path_liste_site_station_custom():
     return Path("liste_site_et_station_custom.csv")
 
+def get_path_sources(code_sandre: str, grandeur:str, annee_mois:str):
+    """
+    REnvoie le chemin des fichiers de stations, du fichier mensuel et des fichiers historiques associé à la grandeur.
+    :param code_sandre: Le code sandre utilisé
+    :param grandeur: La grandeur calculée
+    :param annee_mois: L'année et le mois du calcul actuel
+    :return: L'ensemble mensuel, historique et stations des sources utilisés
+    """
+    chemin_liste_station = get_path_stations()
+    if code_sandre == "custom":
+        chemin_liste_station = get_path_liste_site_station_custom()
+    return [chemin_liste_station] + get_paths_source_historique(grandeur) + get_paths_source_mensuel(grandeur, annee_mois)
+
 # SELECTION DU PROXY
 
 PROXIES = {
@@ -171,7 +184,7 @@ def get_stations(code_sandre:str, annee_mois_active:str|None=None) -> pd.DataFra
     # On charge toute les stations
     stations_path = get_path_stations()
     df_stations = pd.read_csv(stations_path)
-
+    # TODO vérifier que les stations existent et que les fichiers ne sont pas trop vieux.
     if code_sandre == "custom":
         df_liste_custom = pd.read_csv(get_path_liste_site_station_custom())
         df_code_station = df_liste_custom["code_station"].drop_duplicates()
@@ -281,7 +294,7 @@ def is_res_updated_with_source(chemin_source_list:list[Path], chemin_resultat:Pa
     Si la source n'existe pas, on renvoie False.
     :param chemin_source_list: Une liste de fichier qui sert à construire le résultat
     :param chemin_resultat: Le fichier résultat basé sur le fichier source.
-    :return: Renvoie True si le fichier résultat est plus ancien que le fichier source. False sinon.
+    :return: Renvoie True si le fichier résultat est plus récent que le fichier source. False sinon.
     """
     if not chemin_resultat.exists():
         return False

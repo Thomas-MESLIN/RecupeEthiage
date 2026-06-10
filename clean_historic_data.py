@@ -33,6 +33,7 @@ def clean_historic_data(code_sandre:str, grandeur:str):
 
                 pbar.update(1)
 
+# TODO, écrire cette fonction elle doit garantir que les données nettoyés sont a jour par rapport aux sources et que les sources sont bien téléchargé aussi quand on les utilises.
 def ensure_historic_data_cleaned(code_sandre:str, grandeur:str):
     """
     S'assure que les données historique de cette grandeur et pour ce code Sandre on été nettoyés et sont à jour
