@@ -1,9 +1,47 @@
-import pandas as pd
 from pathlib import Path
+import pandas as pd
 import clean
 import utils
 import logging
-# Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
+# Ce script sert à récupérer les données nettoyée et les exploiter pour calculer l'hydraulicité.
+# On a besoin pour cela de l'hydraulicité historique.
+
+def calcul_hydraulicite_mensuel(annee_mois: str, code_sandre: str):
+    """
+    Calcul l'hydraulicité à partir des données historiques et des données nettoyées
+    Le sauvegarde ensuite dans un .csv dans le dossier hydraulicité.
+    :param annee_mois: Année et mois de l'hydraulicité souhaité
+    :param code_sandre: Code Sandre de la liste à traiter
+    """
+    # On récupère les données nettoyés historique
+    clean.ensure_single_month_cleaned(annee_mois, code_sandre, "QmM")
+    chemin_data_du_mois_clean = utils.get_path_clean_csv(code_sandre, annee_mois,"QmM")
+    df_mois = pd.DataFrame(pd.read_csv(chemin_data_du_mois_clean))
+
+    # Récupération du QmM moyen historique.
+    ensure_QmM_moyen_historic_calculated(code_sandre)
+    chemin_qmm_moyen_historic = utils.get_path_qmm_moyen_historique(code_sandre)
+    df_qmm_moyen_historique = pd.DataFrame(pd.read_csv(chemin_qmm_moyen_historic))
+
+    mois_a_trouver = int(annee_mois[5:7])
+    df_moyenne = df_qmm_moyen_historique[df_qmm_moyen_historique["mois"] == mois_a_trouver]
+
+    # Fusion sur code_station
+    df_final = pd.merge(
+        df_mois,
+        df_moyenne,
+        on="code_station",
+        how="inner"
+    )
+
+    df_final["hydraulicite"] = (
+        df_final["resultat_obs_elab"] /
+        df_final["QmM_moyenne"]
+    )
+
+    chemin_save = utils.get_path_hydraulicite(code_sandre,annee_mois)
+    df_final.to_csv(chemin_save, index=False)
+    logging.info(f"Fichier sauvegardé dans {chemin_save}.")
 
 def get_qmm(code_sandre:str, date_mois:str) -> pd.DataFrame:
     """
@@ -12,16 +50,8 @@ def get_qmm(code_sandre:str, date_mois:str) -> pd.DataFrame:
     :param date_mois: L'annee et le mois au format AAAA-MM
     :return: Renvoie un Dataframe contenant les code des stations et les valeurs observés.
     """
-    nom_fichier = f"clean-QmM-{date_mois}.csv"
-    if code_sandre != '':
-        nom_fichier = f"clean-QmM-{code_sandre}-{date_mois}.csv"
-
-    chemin_fichier = Path(f"output/hubeau/cleaned_data/{nom_fichier}")
-    if utils.is_file_need_download(chemin_fichier):
-        clean.clean_historic_data(code_sandre,"QmM")
-
-    df_hubeau = pd.read_csv(chemin_fichier, )
-
+    chemin_fichier = utils.get_path_clean_csv(code_sandre, date_mois, "QmM")
+    df_hubeau = pd.DataFrame(pd.read_csv(chemin_fichier))
     return df_hubeau
 
 def get_all_qmm(code_sandre:str) -> pd.DataFrame:
@@ -31,21 +61,14 @@ def get_all_qmm(code_sandre:str) -> pd.DataFrame:
     :param code_sandre: code_sandre
     :return: Un dataframe contenant toute les données au même format que les extractions Hubeau
     """
-    all_df = get_qmm(code_sandre,"1991-01")
-    for annee in range(1991,2021):
-        for mois in range(1,13):
-            annee_mois = f"{annee}-{mois}"
-            if mois <= 9:
-                annee_mois = f"{annee}-0{mois}"
-
-            if annee_mois == "1991-01":
-                continue
-
-            df = get_qmm(code_sandre, annee_mois)
-            all_df = pd.concat([all_df, df], ignore_index=True)
-
-    return all_df
-
+    clean.ensure_historic_cleaned(code_sandre, "QmM")
+    all_df = []
+    for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
+        annee_mois = date.strftime("%Y-%m")
+        df = get_qmm(code_sandre, annee_mois)
+        all_df.append(df)
+    df_concat_all = pd.concat(all_df, ignore_index=True)
+    return df_concat_all
 
 def get_QmM_moyenne_station_mois_from_df_all(df_all:pd.DataFrame, station_code: str, mois: str):
     """
@@ -64,17 +87,16 @@ def get_QmM_moyenne_station_mois_from_df_all(df_all:pd.DataFrame, station_code: 
 
     return QmM_moyenne_station_mois_aggre
 
-# TODO, faire en sorte que cette fonctione accepte un code SANDRE en paramètre.
-def calcule_QmM_moyen_1991_2020(code_sandre:str):
+
+def calcule_QmM_moyen_historic(code_sandre:str):
     """
     Calcule le QmM moyen historique allant de 1991 à 2020.
     Sauvegarde le résultat dans QmM_moyennes_{code_sandre}_1991_2020.csv
     code_sandre: Le code Sandre de la liste à calculer la moyenne.
     """
-
+    logging.info(f"Calcul du QmM moyen historique - {code_sandre}")
     # On récupère et on aggrège toutes les années.
     df_all_qmm = get_all_qmm(code_sandre)
-    # print(df_all_qmm)
 
     # On va faire un gros tableau csv qui contient pour chaques stations, pour chaque mois [1-12]. La moyenne du débit moyen mensuel.
     # En essayant de garder le format des csv Hub'eau de préférence.
@@ -86,10 +108,8 @@ def calcule_QmM_moyen_1991_2020(code_sandre:str):
     # boucle sur chaque station
     rows = []
     for station_code in df_all_stations:
-
         # boucle sur les 12 mois
         for mois in range(1, 13):
-
             mois_str = f"{mois:02d}"
 
             # calcul moyenne QmM
@@ -107,20 +127,11 @@ def calcule_QmM_moyen_1991_2020(code_sandre:str):
 
             rows.append(row)
 
-    # ==========================================
-    # DATAFRAME FINAL
-    # ==========================================
 
     df_qmm_moyennes = pd.DataFrame(rows)
-
     logging.debug(df_qmm_moyennes)
 
-    # ==========================================
-    # EXPORT CSV
-    # ==========================================
-
-    output_file = Path(f"output/hubeau/QmM_moyen/QmM_moyennes_{code_sandre}_1991_2020.csv")
-
+    output_file = utils.get_path_qmm_moyen_historique(code_sandre)
     df_qmm_moyennes.to_csv(
         output_file,
         index=False,
@@ -128,3 +139,21 @@ def calcule_QmM_moyen_1991_2020(code_sandre:str):
     )
 
     logging.info(f"\nCSV sauvegardé : {output_file}")
+
+def ensure_QmM_moyen_historic_calculated(code_sandre):
+    """
+    S'assure que le QmM moyen est calculé et à jour pour ce code Sandre.
+    :param code_sandre: Le code Sandre du QmM moyen à calculer
+    :return: Rien
+    """
+    chemin_qmm_moyen_historic = utils.get_path_qmm_moyen_historique(code_sandre)
+    chemin_source_qmm_moyen = utils.get_paths_source_historique("QmM")
+    if not utils.is_res_updated_with_source(chemin_source_qmm_moyen, chemin_qmm_moyen_historic):
+        calcule_QmM_moyen_historic(code_sandre)
+
+if __name__ == "__main__":
+    #calcul_hydraulicite_mensuel("2026-04","BSH001")
+    #calcul_hydraulicite_mensuel("2026-05","BSH001")
+    #calcul_hydraulicite_mensuel("2026-04","custom")
+    calcul_hydraulicite_mensuel("2026-05","custom")
+    # calcul_hydraulicite_mensuel("2025-11","custom")

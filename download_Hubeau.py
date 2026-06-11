@@ -4,6 +4,8 @@ from pathlib import Path
 import os
 from datetime import datetime
 import calendar
+import logging
+
 import init_project
 import utils
 
@@ -18,9 +20,9 @@ def ensure_grandeur_mensuel_downloaded(annee_mois:str, grandeur:str):
     """
     complete_path = utils.get_path_mensuel_raw_csv(annee_mois,grandeur)
     if utils.is_file_need_download(complete_path):
-        print(f"Téléchargement du fichier en cours : {complete_path}")
+        logging.info(f"Téléchargement du fichier en cours : {complete_path}")
         download_hubeau_AURA_mois(annee_mois,grandeur)
-        print(f"Téléchargement du fichier terminé : {complete_path}")
+        logging.info(f"Téléchargement du fichier terminé : {complete_path}")
 
 
 def download_hubeau_AURA_mois(annee_mois : str, grandeur : str):

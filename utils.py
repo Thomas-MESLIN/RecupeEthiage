@@ -5,8 +5,11 @@ import pandas as pd
 import locale
 from datetime import datetime, timedelta
 from functools import cache
+import logging
 
 loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 GRANDEUR = {
     "QmM",
@@ -67,8 +70,10 @@ def get_paths_source_historique(grandeur:str) -> list[Path]:
         path_list.append(get_path_historique_raw_csv(grandeur))
     path_list.append(get_path_sites())
     path_list.append(get_path_stations())
+    path_list.append(get_path_liste_site_station_custom())
     return path_list.copy()
 
+@cache
 def get_paths_source_mensuel(grandeur:str, annee_mois:str) -> list[Path]:
     """
     Renvoie le chemin des fichiers contenant la source de donnée de la grandeur mis en paramètre et de la date
@@ -76,12 +81,18 @@ def get_paths_source_mensuel(grandeur:str, annee_mois:str) -> list[Path]:
     :param annee_mois: AAAA-MM
     :return: Une liste de chemin vers les sources des données mensuel.
     """
-    list_chemin = [get_path_stations(), get_path_sites(), get_path_mensuel_raw_csv(annee_mois,grandeur)]
+    list_chemin = [
+        get_path_stations(),
+        get_path_liste_site_station_custom(),
+        get_path_sites(),
+        get_path_mensuel_raw_csv(annee_mois,grandeur)
+    ]
     return list_chemin.copy()
 
 def get_path_liste_site_station_custom():
     return Path("liste_site_et_station_custom.csv")
 
+@cache
 def get_path_sources(code_sandre: str, grandeur:str, annee_mois:str):
     """
     REnvoie le chemin des fichiers de stations, du fichier mensuel et des fichiers historiques associé à la grandeur.

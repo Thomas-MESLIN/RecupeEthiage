@@ -2,7 +2,7 @@ import pandas as pd
 import geopandas as gpd
 from pathlib import Path
 import utils
-import calcul_hydraulicite_mensuel
+import hydraulicite
 
 def create_geojson_from_sites(code_sandre:str|None=None):
     """

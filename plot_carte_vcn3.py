@@ -1,7 +1,7 @@
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
-import calcul_hydraulicite_mensuel
+import hydraulicite
 
 def create_geojson_from_vcn3(annee_mois:str, code_sandre:str):
     """

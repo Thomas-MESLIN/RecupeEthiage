@@ -3,7 +3,7 @@ import geopandas as gpd
 from pathlib import Path
 import utils
 import station
-import calcul_hydraulicite_mensuel
+import hydraulicite
 
 def create_geojson_from_hydraulicite(annee_mois:str, code_sandre:str):
     """

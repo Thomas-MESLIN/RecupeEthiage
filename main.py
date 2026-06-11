@@ -3,7 +3,7 @@ from datetime import timedelta
 import calendar
 from functools import lru_cache
 
-import calcul_hydraulicite_mensuel
+import hydraulicite
 import plot_vcn3_periode_de_retour
 import custom_list
 
