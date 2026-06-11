@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import locale
 from datetime import datetime, timedelta
-import dateutil
+from functools import cache
 
 loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
 
@@ -51,25 +51,22 @@ def get_path_stations():
 def get_path_sites():
     return Path("output/hubeau/downloaded_data/sites/sites.csv")
 
-_cache_path_source_historique = {}
+@cache
 def get_paths_source_historique(grandeur:str) -> list[Path]:
     """
     Renvoie le chemin des fichiers contenant la source de donnée historique de la grandeur.
     :param grandeur: Une grandeur à spécifier
     :return: La liste des chemins nécessaire au calcul de cette grandeur
     """
-    if grandeur in _cache_path_source_historique:
-        return _cache_path_source_historique[grandeur].copy()
     path_list = []
     if grandeur == "QmnJ":
         for date in pd.date_range("1990-12", "2020-12", freq="MS"):
             annee_mois = date.strftime("%Y-%m")
-            path_list.append(Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-QmnJ-AURA-{annee_mois}.csv"))
+            path_list.append(get_path_mensuel_raw_csv(annee_mois, grandeur))
     elif grandeur == "QmM":
-        path_list.append(Path("output/hubeau/downloaded_data/observations_elaboree/observations-QmM-AURA-1991-2020.csv"))
+        path_list.append(get_path_historique_raw_csv(grandeur))
     path_list.append(get_path_sites())
     path_list.append(get_path_stations())
-    _cache_path_source_historique[grandeur] = path_list.copy()
     return path_list.copy()
 
 def get_paths_source_mensuel(grandeur:str, annee_mois:str) -> list[Path]:
@@ -172,41 +169,6 @@ def set_up_working_proxy():
         "Aucune connexion réseau disponible"
     )
 
-# Manipulation des listes de stations
-def get_stations(code_sandre:str, annee_mois_active:str|None=None) -> pd.DataFrame:
-    """
-    Renvoie toutes les stations associé au code sandre sous forme d'un DataFrame.
-    Si on renseigne annee_mois_active, ne renvoie que les stations qui sont actives à ce moment là.
-    :param code_sandre: Le code sandre de ces stations.
-    :param annee_mois_active: L'année et le mois actif.
-    :return: Un dataframe contenant toute les stations associé au code sandre, étant active à cette date (si date renseignée)
-    """
-    # On charge toute les stations
-    stations_path = get_path_stations()
-    df_stations = pd.read_csv(stations_path)
-    # TODO vérifier que les stations existent et que les fichiers ne sont pas trop vieux.
-    if code_sandre == "custom":
-        df_liste_custom = pd.read_csv(get_path_liste_site_station_custom())
-        df_code_station = df_liste_custom["code_station"].drop_duplicates()
-        df_stations_sandre = df_stations.merge(df_code_station, on="code_station", how="inner")
-    else:
-        # Filtre les stations pour avoir celle avec le bon code Sandre
-        df_stations_sandre = df_stations[df_stations["code_sandre_reseau_station"].astype(str).str.contains(code_sandre)]
-
-    # Si on a renseigné une date, on filtre uniquement les stations ouvertes à cette date là.
-    if annee_mois_active is not None:
-        # On filtre les stations qui sont ouverte à cette date là
-        df_stations_sandre_ouverte = df_stations_sandre[
-            (annee_mois_active < df_stations_sandre["date_fermeture_station"].astype(str)) &
-            (df_stations_sandre["date_ouverture_station"].astype(str) < annee_mois_active)
-        ]
-    else:
-        # Sinon on renvoie toute les stations
-        df_stations_sandre_ouverte = df_stations_sandre
-
-    return df_stations_sandre_ouverte
-
-
 
 # Vérification de l'ancienneté des données.
 def is_path_valid_age(chemin:Path) -> bool:
@@ -217,8 +179,8 @@ def is_path_valid_age(chemin:Path) -> bool:
     """
     if not chemin.exists():
         raise FileNotFoundError(chemin)
-    #one_year = timedelta(days=360) # 1 ans
-    one_year = timedelta(days=360)  # 101 seconde pour le test
+    one_year = timedelta(days=360) # 1 ans
+    #one_year = timedelta(seconds=1)  # 101 seconde pour le test
     time_modification_fichier = chemin.stat().st_mtime
     date_modification_fichier = datetime.fromtimestamp(time_modification_fichier)
     date_actuelle = datetime.now()
@@ -253,18 +215,6 @@ def prompt_renew_old_data(chemin:Path) -> bool:
         _cache_prompt["renouveler_rien"] = False
         print("\nAucun fichier ne sera renouvelé.\n")
         return False
-
-def is_file_renewed(chemin:Path) -> bool:
-    """
-    Effectue un check complet sur le fichier pointé,
-    Si celui ci est trop vieux, l'utilisateur est interrogé.
-    :param chemin: Le fichier a potentiellement renouveler.
-    :return: Renvoie True si l'utilisateur accepte de renouveler le fichier, False sinon.
-    """
-    if not is_path_valid_age(chemin):
-        return prompt_renew_old_data(chemin)
-    else:
-        return True
 
 def is_file_need_download(chemin:Path):
     """
@@ -308,8 +258,3 @@ def is_res_updated_with_source(chemin_source_list:list[Path], chemin_resultat:Pa
             is_resultat_plus_recent_que_source = False
             break
     return is_resultat_plus_recent_que_source
-
-if __name__ == "__main__":
-    res = get_stations("custom", "2026-04")
-    print(res)
-    print("miaou")

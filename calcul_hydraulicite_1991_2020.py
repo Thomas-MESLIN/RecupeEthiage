@@ -1,7 +1,8 @@
 import pandas as pd
 from pathlib import Path
-import clean_historic_data
+import clean
 import utils
+import logging
 # Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
 
 def get_qmm(code_sandre:str, date_mois:str) -> pd.DataFrame:
@@ -17,7 +18,7 @@ def get_qmm(code_sandre:str, date_mois:str) -> pd.DataFrame:
 
     chemin_fichier = Path(f"output/hubeau/cleaned_data/{nom_fichier}")
     if utils.is_file_need_download(chemin_fichier):
-        clean_historic_data.clean_historic_data(code_sandre,"QmM")
+        clean.clean_historic_data(code_sandre,"QmM")
 
     df_hubeau = pd.read_csv(chemin_fichier, )
 
@@ -112,7 +113,7 @@ def calcule_QmM_moyen_1991_2020(code_sandre:str):
 
     df_qmm_moyennes = pd.DataFrame(rows)
 
-    print(df_qmm_moyennes)
+    logging.debug(df_qmm_moyennes)
 
     # ==========================================
     # EXPORT CSV
@@ -126,4 +127,4 @@ def calcule_QmM_moyen_1991_2020(code_sandre:str):
         encoding="utf-8"
     )
 
-    print(f"\nCSV sauvegardé : {output_file}")
+    logging.info(f"\nCSV sauvegardé : {output_file}")

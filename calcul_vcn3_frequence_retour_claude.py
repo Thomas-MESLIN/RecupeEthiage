@@ -369,7 +369,7 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     mois_str = date.strftime("%m")
     annee = date.year
     mois = date.month
-    df_station = utils.get_stations(code_sandre, annee_mois)
+    df_station = station.get_stations(code_sandre, annee_mois)
     # On charge les données des stations du mois désiré.
 
     all_rows = []

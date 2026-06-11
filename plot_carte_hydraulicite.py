@@ -2,6 +2,7 @@ import pandas as pd
 import geopandas as gpd
 from pathlib import Path
 import utils
+import station
 import calcul_hydraulicite_mensuel
 
 def create_geojson_from_hydraulicite(annee_mois:str, code_sandre:str):
@@ -24,7 +25,7 @@ def create_geojson_from_hydraulicite(annee_mois:str, code_sandre:str):
     # ============================================================
 
     # Filtre les stations pour avoir celle avec le bon code Sandre
-    df_stations_sandre = utils.get_stations(code_sandre, annee_mois)
+    df_stations_sandre = station.get_stations(code_sandre, annee_mois)
 
     # Conversion en GeoDataFrame
     gdf_stations = gpd.GeoDataFrame(

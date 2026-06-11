@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import calcul_hydraulicite_1991_2020
-import clean_data
+import clean
 import plot_carte_hydraulicite
 import utils
 # Ce script sert à récupérer les données nettoyée et les exploiter pour calculer l'hydraulicité.
@@ -18,7 +18,7 @@ def calcul_hydraulicite(annee_mois: str, code_sandre: str):
     chemin_data_du_mois_clean = utils.get_path_clean_csv(code_sandre, annee_mois,"QmM")
     if not chemin_data_du_mois_clean.exists():
         print(f"Nettoyage du fichier en cours : {chemin_data_du_mois_clean}")
-        clean_data.clean_single_month(annee_mois,code_sandre, "QmM")
+        clean.clean_single_month(annee_mois,code_sandre, "QmM")
         print(f"Nettoyage du fichier terminé : {chemin_data_du_mois_clean}")
     df_mois = pd.read_csv(chemin_data_du_mois_clean)
 
@@ -66,8 +66,8 @@ def calcul_et_plot_hydraulicite_mensuel(annee_mois: str, code_sandre: str):
     plot_carte_hydraulicite.create_geojson_from_hydraulicite(annee_mois,code_sandre)
 
 if __name__ == "__main__":
-    calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
-    calcul_et_plot_hydraulicite_mensuel("2026-05","BSH001")
-    calcul_et_plot_hydraulicite_mensuel("2026-04","custom")
+    #calcul_et_plot_hydraulicite_mensuel("2026-04","BSH001")
+    #calcul_et_plot_hydraulicite_mensuel("2026-05","BSH001")
+    #calcul_et_plot_hydraulicite_mensuel("2026-04","custom")
     calcul_et_plot_hydraulicite_mensuel("2026-05","custom")
     # calcul_et_plot_hydraulicite_mensuel("2025-11","custom")

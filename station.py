@@ -1,7 +1,58 @@
 import utils
 import pandas as pd
+import download_Hubeau
+from pathlib import Path
 
-def clean_input_list():
+def get_stations(code_sandre:str, annee_mois_active:str|None=None) -> pd.DataFrame:
+    """
+    Renvoie toutes les stations associé au code sandre sous forme d'un DataFrame.
+    Si on renseigne annee_mois_active, ne renvoie que les stations qui sont actives à ce moment là.
+
+    S'assure que les listes de stations soient à jour.
+    :param code_sandre: Le code sandre de ces stations.
+    :param annee_mois_active: L'année et le mois actif.
+    :return: Un dataframe contenant toute les stations associé au code sandre, étant active à cette date (si date renseignée)
+    """
+    # On charge toute les stations
+    download_Hubeau.ensure_station_downloaded()
+    stations_path = utils.get_path_stations()
+    df_stations = pd.read_csv(stations_path)
+    if code_sandre == "custom":
+        ensure_custom_list_up_to_date()
+        df_liste_custom = pd.read_csv(utils.get_path_liste_site_station_custom())
+        df_code_station = df_liste_custom["code_station"].drop_duplicates()
+        df_stations_sandre = df_stations.merge(df_code_station, on="code_station", how="inner")
+    else:
+        # Filtre les stations pour avoir celle avec le bon code Sandre
+        df_stations_sandre = df_stations[df_stations["code_sandre_reseau_station"].astype(str).str.contains(code_sandre)]
+
+    # Si on a renseigné une date, on filtre uniquement les stations ouvertes à cette date là.
+    if annee_mois_active is not None:
+        # On filtre les stations qui sont ouverte à cette date là
+        df_stations_sandre_ouverte = df_stations_sandre[
+            (annee_mois_active < df_stations_sandre["date_fermeture_station"].astype(str)) &
+            (df_stations_sandre["date_ouverture_station"].astype(str) < annee_mois_active)
+        ]
+    else:
+        # Sinon on renvoie toute les stations
+        df_stations_sandre_ouverte = df_stations_sandre
+
+    return df_stations_sandre_ouverte
+
+def ensure_custom_list_up_to_date():
+    """
+    Assure que la liste custom est à jour et correctement généré.
+    :return:
+    """
+    chemin_liste_custom = utils.get_path_liste_site_station_custom()
+    if (
+        utils.is_file_need_download(chemin_liste_custom) or
+        not utils.is_res_updated_with_source([Path("liste_station_custom.csv"), Path("liste_site_custom.csv")] + [utils.get_path_stations()], chemin_liste_custom)
+    ):
+        clean_custom_input_list()
+
+
+def clean_custom_input_list():
     """
     Remove the duplicates entries from customs list, merge it with the custom site,
     rewrite it.
@@ -10,6 +61,8 @@ def clean_input_list():
     To select the station that is added to the site, add it to the 'liste_station_custom.csv'
     :return: Rien
     """
+    print("MISE A JOUR DE LA LISTE DE STATION ET SITES CUSTOM.")
+    print("=" * 50)
     df_station = pd.read_csv("liste_station_custom.csv")
     df_site = pd.read_csv("liste_site_custom.csv")
     df_station_no_duplicate = df_station.drop_duplicates()
@@ -41,6 +94,8 @@ def clean_input_list():
     code_site_et_station_total.sort_values(by="code_site", inplace=True)
     code_site_et_station_total.dropna(subset=["code_station"], inplace=True)
     code_site_et_station_total.to_csv("liste_site_et_station_custom.csv", index=False)
+    print("=" * 50)
+    print("MISE A JOUR DE LA LISTE DE STATION ET SITES TERMINEE.")
 
 
 def find_perfect_station(code_site_list:list[str]) -> pd.DataFrame:
@@ -89,5 +144,10 @@ def find_perfect_station(code_site_list:list[str]) -> pd.DataFrame:
     df_final = pd.DataFrame(data=list_correspondance)
     return df_final
 
+
 if __name__ == "__main__":
-    clean_input_list()
+    res = get_stations("custom", "2026-04")
+    print(res)
+    print("miaou")
+
+    clean_custom_input_list()
