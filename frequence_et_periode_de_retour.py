@@ -10,10 +10,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-import plot_vcn3_periode_de_retour
+import plot_grandeur
 from tqdm import tqdm
 import utils
-import calcul_vcn3_1991_2020
+import vcn3
+import station
 from lmoments3 import distr as lm_distr
 
 # ---------------------------------------------------------------------------
@@ -316,7 +317,7 @@ def get_result_station(code_station:str, mois:str, code_sandre:str, vcn3_observa
         'Periode_de_retour_interval_confiance_haut' : borne haute IC 95% sur T
     """
     mois_a_etudier = f"{mois:02}"
-    calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(code_station, code_sandre)
+    vcn3.ensure_calcul_vcn3_station(code_station, code_sandre)
     df_all_vcn3 = pd.read_csv(utils.get_path_vcn3_station(code_station))
     df_mois_precis = df_all_vcn3[df_all_vcn3["annee_mois"].astype(str).str.contains(f"-{mois_a_etudier}")]
     # On enlève les cases vide...
@@ -343,7 +344,7 @@ def get_result_station(code_station:str, mois:str, code_sandre:str, vcn3_observa
     resultat_periode_de_retour = get_period_from_flow(q_obs=vcn3_observation, res=resultats)
 
     if plot_resultat:
-        plot_vcn3_periode_de_retour.plot_result_station(code_station, mois_a_etudier, resultat_periode_de_retour, resultats)
+        plot_grandeur.plot_result_station(code_station, mois_a_etudier, resultat_periode_de_retour, resultats)
     return resultat_periode_de_retour
 
 # ---------------------------------------------------------------------------
@@ -375,12 +376,8 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     all_rows = []
     with tqdm(total=len(df_station)) as pbar:
         for station_code in df_station["code_station"]:
-            #calcul_vcn3_1991_2020.ensure_calcul_vcn3_station(station_code, code_sandre)
-            #df_station_historique = pd.read_csv(utils.get_path_vcn3_station(station_code))
-            #df_valeur = df_station_historique[df_station_historique["annee_mois"] == annee_mois]
-            #valeur = df_valeur["vcn3_mensuel"].iloc[0] if not df_valeur.empty else pd.NA
-            # TODO, vérifier la fonction get_vcn3 si elle recalcul les données pas synchronisées
-            valeur = calcul_vcn3_1991_2020.get_vcn3_station_mois(calcul_vcn3_1991_2020.get_df_moyenne_glissante(annee_mois, code_sandre),station_code, annee=annee, mois=mois)
+            vcn3.ensure_calcul_vcn3_station(station_code, code_sandre)
+            valeur = vcn3.get_vcn3_station_mois(vcn3.get_df_moyenne_glissante(annee_mois, code_sandre),station_code, annee=annee, mois=mois)
             if not pd.isna(valeur):
                 row = get_result_station(station_code, mois_str, code_sandre, valeur, plot_resultat=is_result_plotted)
                 row["code_station"] = station_code

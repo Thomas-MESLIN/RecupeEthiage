@@ -9,6 +9,7 @@ import logging
 
 loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
 
+# Permet de changer le niveau d'information DEBUG, INFO ou autre...
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 GRANDEUR = {

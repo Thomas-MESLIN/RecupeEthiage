@@ -6,30 +6,28 @@ import utils
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
-import calcul_vcn3_frequence_retour_claude
+import frequence_et_periode_de_retour as f_T
+import vcn3
+import station
+import download_Hubeau
+import hydraulicite
 
-def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_result_plotted:bool=False):
+
+def create_geojson_from_path(chemin_donees_csv:Path, output_path: Path, annee_mois:str, code_sandre:str):
     """
     Suppose que le fichier a déjà été calculé.
+    :param output_path: Chemin vers lequel le fichier sera écrit.
+    :param chemin_donees_csv: Un chemin vers des données contenant des stations.
     :param is_result_plotted: Génère les graphique station par station pour le calcul desp ériode de retour.
     :param code_sandre: Code Sandre à mettre en face des stations utilisées.
     :param annee_mois: AAAA-MM
     :return:
     """
-    # ============================================================
-    # 1. Chargement des données du vnc3
-    # ============================================================
-    calcul_vcn3_frequence_retour_claude.ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, code_sandre, is_result_plotted)
-    data_hydro_path = utils.get_path_periode_de_retour(code_sandre, annee_mois)
-
-    df_hydro = pd.read_csv(data_hydro_path)
-
-    # ============================================================
-    # 2. Chargement des stations
-    # ============================================================
-
+    df_hydro = pd.read_csv(chemin_donees_csv)
+    if "code_site" in df_hydro.columns:
+        df_hydro.drop(columns=["code_site"], inplace=True)
     # On charge toute les stations active ce mois là.
-    df_stations = utils.get_stations(code_sandre, annee_mois)
+    df_stations = station.get_stations(code_sandre, annee_mois)
 
     # Conversion en GeoDataFrame
     gdf_stations = gpd.GeoDataFrame(
@@ -38,10 +36,6 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_re
         crs="EPSG:4326"
     )
 
-    # ============================================================
-    # 3. Jointure sur code_station
-    # ============================================================
-
     gdf_final_avec_station = gdf_stations.merge(
         df_hydro,
         on="code_station",
@@ -49,23 +43,15 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_re
     )
 
     # On charge toute les sites
+    download_Hubeau.ensure_sites_downloaded()
     sites_path = utils.get_path_sites()
-    # Le fichier contient une colonne WKT : POINT(...)
     df_sites = pd.DataFrame(pd.read_csv(sites_path))
-
-    # ============================================================
-    # 3. Jointure sur code_station
-    # ============================================================
 
     gdf_final = gdf_final_avec_station.merge(
         df_sites,
         on="code_site",
         how="inner"
     )
-
-    # ============================================================
-    # 4. Nettoyage optionnel
-    # ============================================================
 
     # Suppression des colonnes inutiles créées automatiquement
     colonnes_a_supprimer = [
@@ -76,12 +62,7 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_re
         if col in gdf_final.columns:
             gdf_final = gdf_final.drop(columns=col)
 
-
-    # ============================================================
-    # 5. Export GeoJSON
-    # ============================================================
-
-    output_geojson = Path(f"output/QGIS/VCN3_periode_de_retour/periode-de-retour-{code_sandre}-{annee_mois}.geojson")
+    output_geojson = output_path
 
     gdf_final.to_file(
         output_geojson,
@@ -270,6 +251,23 @@ def plot_result_station(code_station: str, mois:str, result_station:dict, result
                           output_path=Path(f"output/VCN3/plot_stations/periode-de-retour-{code_station}-{mois:02}.png"))
 
 
+def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_result_plotted:bool=False):
+    chemin_periode_de_retour = utils.get_path_periode_de_retour(code_sandre, annee_mois)
+    f_T.ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, code_sandre, is_result_plotted)
+
+    output_path = Path(f"output/QGIS/frequence_periode_de_retour/periode-de-retour-{code_sandre}-{annee_mois}.geojson")
+
+    create_geojson_from_path(chemin_periode_de_retour, output_path, annee_mois, code_sandre)
+
+def create_geojson_from_hydraulicite(annee_mois:str, code_sandre:str):
+    chemin_hydraulicite = utils.get_path_hydraulicite(code_sandre, annee_mois)
+    hydraulicite.calcul_hydraulicite_mensuel(annee_mois, code_sandre)
+
+    output_path = Path(f"output/QGIS/hydraulicite/hydraulicite-{code_sandre}-{annee_mois}.geojson")
+
+    create_geojson_from_path(chemin_hydraulicite, output_path, annee_mois, code_sandre)
+
+
 if __name__ == "__main__":
     #create_geojson_from_hydraulicite("2026-04", "BSH001")
     #create_geojson_from_hydraulicite("2026-04", "BSH101")
@@ -277,6 +275,7 @@ if __name__ == "__main__":
     #create_geojson_from_periode_de_retour("2026-04", "BSH001")
     #create_geojson_from_periode_de_retour("2026-04", "BSH001")
     #create_geojson_from_periode_de_retour("2026-05", "BSH001")
+    create_geojson_from_hydraulicite("2026-05", "custom")
     create_geojson_from_periode_de_retour("2026-05", "BSH001")
     create_geojson_from_periode_de_retour("2026-04", "BSH001")
     create_geojson_from_periode_de_retour("2026-05", "custom")

@@ -1,41 +1,34 @@
 import datetime
 from datetime import timedelta
 import calendar
-
-import dateutil
 import numpy as np
 import pandas as pd
-from pathlib import Path
-import clean_historic_data
-import clean_data
-import download_Hubeau_1991_2020
+import clean
 import utils
 from dateutil.relativedelta import relativedelta
 from tqdm import tqdm
+from functools import cache
+import logging
 # Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
 
 
-_cache_qmnj = {}
+@cache
 def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
     """
     Renvoie les qmnj à partir des données nettoyés. clean-QmnJ-SANDRE_CODE-AAAA-MM.csv
+    En cas de données historiques, on suppose qu'un check clean.ensure_data_historic_clean a été fait en amont.
     :param code_sandre: Code sandre
     :param date_mois: L'annee et le mois au format AAAA-MM
     :return: Renvoie un Dataframe contenant les code des stations et les valeurs observés.
     """
-    # TODO, vérifier que ce fichier ne prend que des choses à jour.
-    if code_sandre not in _cache_qmnj:
-        _cache_qmnj[code_sandre] = {}
-    if date_mois not in _cache_qmnj[code_sandre]:
-        chemin_fichier = utils.get_path_clean_csv(code_sandre, date_mois, "QmnJ")
-        if utils.is_file_need_download(chemin_fichier): # TODO, remplacer par une mise à jour par rapport aux sources.
-            if utils.is_date_historique(date_mois):
-                clean_historic_data.clean_historic_data(code_sandre,"QmnJ")
-            else:
-                clean_data.clean_single_month(date_mois, code_sandre, "QmnJ")
-        df_hubeau = pd.read_csv(chemin_fichier)
-        _cache_qmnj[code_sandre][date_mois] = df_hubeau
-    return _cache_qmnj[code_sandre][date_mois]
+    chemin_fichier = utils.get_path_clean_csv(code_sandre, date_mois, "QmnJ")
+    if utils.is_date_historique(date_mois):
+        pass
+        # clean.ensure_historic_cleaned(code_sandre, "QmnJ")
+    else:
+        clean.ensure_single_month_cleaned(date_mois, code_sandre, "QmnJ")
+    df_hubeau = pd.DataFrame(pd.read_csv(chemin_fichier))
+    return df_hubeau
 
 def get_all_stations(code_sandre:str) -> pd.DataFrame:
     """
@@ -44,16 +37,17 @@ def get_all_stations(code_sandre:str) -> pd.DataFrame:
     :param code_sandre: code_sandre
     :return: Un dataframe contenant toute les données au même format que les extractions Hubeau
     """
-    all_df = get_qmnj(code_sandre,"1990-12")["code_station"].drop_duplicates()
-    for annee in range(1991,2021):
-        for mois in range(1,13):
-            annee_mois = f"{annee}-{mois}"
-            if mois <= 9:
-                annee_mois = f"{annee}-0{mois}"
-
-            df = get_qmnj(code_sandre, annee_mois)["code_station"].drop_duplicates()
-            all_df = pd.concat([all_df, df], ignore_index=True)
-    return all_df.drop_duplicates()
+    logging.info("Récupération du df pour le calcul de tous les VCN3.")
+    clean.ensure_historic_cleaned(code_sandre, "QmnJ")
+    all_df = []
+    for date in pd.date_range("1990-12-01","2020-12-01", freq="MS"):
+        annee_mois = date.strftime("%Y-%m")
+        logging.debug(f"Récupération des station de {annee_mois} en cours.")
+        df = get_qmnj(code_sandre, annee_mois)["code_station"].drop_duplicates()
+        all_df.append(df)
+    df_all_station = pd.concat(all_df, ignore_index=True)
+    logging.info("df de toutes les stations récupéré.")
+    return df_all_station.drop_duplicates()
 
 def get_df_moyenne_glissante(annee_mois:str, code_sandre:str):
     """
@@ -72,7 +66,6 @@ def get_df_moyenne_glissante(annee_mois:str, code_sandre:str):
     df_qmnj_mois_precedent = get_qmnj(code_sandre, format_annee_mois_precedent)
     df_qmnj_all = pd.concat([df_qmnj_mois_precedent,  df_qmnj_mois_actuel], ignore_index=True)
     return df_qmnj_all
-
 
 def get_vcn3_station_mois(df:pd.DataFrame, station_code: str, annee:int, mois: int):
     """
@@ -201,7 +194,6 @@ def calcule_minimum_glissant_moyen_1991_2020(code_sandre:str):
 
     print(f"\nCSV vcn mensuel sauvegardé.")
 
-
 def test():
 
     print("TESTS MOYENNE GLISSANTE GENTILLE : ")
@@ -259,11 +251,8 @@ def calcul_vcn3_station(code_station:str, all_df:pd.DataFrame) -> pd.DataFrame:
     df_vcn3_station.to_csv(utils.get_path_vcn3_station(code_station), index=False)
     return df_vcn3_station
 
-
-_cache_get_all_df_mensuel = {}
+@cache
 def get_all_df_mensuel(code_sandre:str):
-    if code_sandre in _cache_get_all_df_mensuel:
-        return _cache_get_all_df_mensuel[code_sandre]
     all_df = []
     for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
         annee_mois = date.strftime("%Y-%m")
@@ -275,10 +264,7 @@ def get_all_df_mensuel(code_sandre:str):
         all_df.append(df_mois)
 
     df_all_vcn3 = pd.concat(all_df, ignore_index=True)
-
-    _cache_get_all_df_mensuel[code_sandre] = df_all_vcn3.copy()
-    return _cache_get_all_df_mensuel[code_sandre]
-
+    return df_all_vcn3.copy()
 
 def ensure_calcul_vcn3_station(code_station:str, code_sandre:str):
     """
@@ -289,10 +275,10 @@ def ensure_calcul_vcn3_station(code_station:str, code_sandre:str):
     """
     path_vcn3_station = utils.get_path_vcn3_station(code_station)
     if not utils.is_res_updated_with_source(utils.get_paths_source_historique("QmnJ"), path_vcn3_station):
-        df_all_vcn3 = get_all_df_mensuel(code_sandre)
+        df_all_vcn3 = get_all_df_mensuel(code_sandre).copy()
         calcul_vcn3_station(code_station, df_all_vcn3)
 
 if __name__ == "__main__":
     #calcule_minimum_glissant_moyen_1991_2020()
     ensure_calcul_vcn3_station("U072401001", "BSH001")
-    ensure_calcul_vcn3_station("U072401001", "BSH001")
+    ensure_calcul_vcn3_station("U072401001", "custom")
