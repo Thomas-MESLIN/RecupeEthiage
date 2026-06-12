@@ -54,14 +54,26 @@ if __name__ == "__main__":
         reseaux_sandre = input_reseaux_sandre
     print(f"Réseau Sandre sélectionné : {reseaux_sandre}")
 
+    is_graphic_genere = False
+    if res_generation_carte in ["2", "3"]:
+        is_graphic_genere = prompt_for_graphic()
+
     logging.info("Génération en cours...")
+    # On génère les stations ouverte lors de date_annee_mois
+    plot_grandeur.create_geojson_from_stations(reseaux_sandre, date_annee_mois)
+    # On génère les sites correspondant au réseaux_sandre
+    plot_grandeur.create_geojson_from_sites(reseaux_sandre)
+    # On génère les stations du réseaux sandre, même celle qui ne sont pas ouverte
+    plot_grandeur.create_geojson_from_stations(reseaux_sandre, None)
+    # On génère toutes les stations et tous les sites que l'on a.
+    plot_grandeur.create_geojson_from_stations(None, None)
+    plot_grandeur.create_geojson_from_sites(None)
+
     if res_generation_carte == "1":
         plot_grandeur.create_geojson_from_hydraulicite(date_annee_mois, reseaux_sandre)
     elif res_generation_carte == "2":
-        is_graphic_genere = prompt_for_graphic()
         plot_grandeur.create_geojson_from_periode_de_retour(date_annee_mois, reseaux_sandre, is_graphic_genere)
     elif res_generation_carte == "3":
-        is_graphic_genere = prompt_for_graphic()
         plot_grandeur.create_geojson_from_hydraulicite(date_annee_mois, reseaux_sandre)
         plot_grandeur.create_geojson_from_periode_de_retour(date_annee_mois, reseaux_sandre, is_graphic_genere)
 

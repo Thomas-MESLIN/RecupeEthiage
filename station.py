@@ -3,7 +3,7 @@ import pandas as pd
 import download_Hubeau
 from pathlib import Path
 
-def get_stations(code_sandre:str, annee_mois_active:str|None=None) -> pd.DataFrame:
+def get_stations(code_sandre:str|None = None, annee_mois_active:str|None=None) -> pd.DataFrame:
     """
     Renvoie toutes les stations associé au code sandre sous forme d'un DataFrame.
     Si on renseigne annee_mois_active, ne renvoie que les stations qui sont actives à ce moment là.
@@ -17,7 +17,9 @@ def get_stations(code_sandre:str, annee_mois_active:str|None=None) -> pd.DataFra
     download_Hubeau.ensure_station_downloaded()
     stations_path = utils.get_path_stations()
     df_stations = pd.read_csv(stations_path)
-    if code_sandre == "custom":
+    if code_sandre is None:
+        df_stations_sandre = df_stations
+    elif code_sandre == "custom":
         ensure_custom_list_up_to_date()
         df_liste_custom = pd.read_csv(utils.get_path_liste_site_station_custom())
         df_code_station = df_liste_custom["code_station"].drop_duplicates()

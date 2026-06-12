@@ -72,6 +72,98 @@ def create_geojson_from_path(chemin_donees_csv:Path, output_path: Path, annee_mo
 
     logging.info(f"GeoJSON créé : {output_geojson}")
 
+def create_geojson_from_stations(code_sandre:str|None=None, annee_mois:str|None=None):
+    """
+    Suppose que le fichier a déjà été calculé.
+    :param annee_mois: AAAA-MM
+    :param code_sandre: Un code Sandre
+    :return:
+    """
+    # Le fichier contient une colonne WKT : POINT(...)
+    df_stations = station.get_stations(code_sandre, annee_mois)
+
+    # Conversion en GeoDataFrame
+    gdf_final = gpd.GeoDataFrame(
+        df_stations,
+        geometry=gpd.GeoSeries.from_wkt(df_stations["geometry"]),
+        crs="EPSG:4326"
+    )
+
+    # Suppression des colonnes inutiles créées automatiquement
+    colonnes_a_supprimer = [
+        "Unnamed: 0"
+    ]
+
+    for col in colonnes_a_supprimer:
+        if col in gdf_final.columns:
+            gdf_final = gdf_final.drop(columns=col)
+
+    if annee_mois is not None:
+        if code_sandre is not None:
+            output_geojson = Path(f"output/QGIS/stations/stations-ouverte-{code_sandre}-{annee_mois}.geojson")
+        else:
+            output_geojson = Path(f"output/QGIS/stations/stations-ouverte-{annee_mois}.geojson")
+    else:
+        if code_sandre is not None:
+            output_geojson = Path(f"output/QGIS/stations/stations-{code_sandre}.geojson")
+        else:
+            output_geojson = Path(f"output/QGIS/stations/stations.geojson")
+
+    gdf_final.to_file(
+        output_geojson,
+        driver="GeoJSON"
+    )
+
+    logging.info(f"GeoJSON créé : {output_geojson}")
+
+def create_geojson_from_sites(code_sandre:str|None=None):
+    """
+    Suppose que le fichier a déjà été calculé.
+    :param annee_mois: AAAA-MM
+    :param code_sandre: Un code Sandre
+    :return:
+    """
+    df_stations = station.get_stations(code_sandre, None)
+
+    # Conversion en GeoDataFrame
+    gdf_final = gpd.GeoDataFrame(
+        df_stations,
+        geometry=gpd.GeoSeries.from_wkt(df_stations["geometry"]),
+        crs="EPSG:4326"
+    )
+
+    # On charge toute les stations
+    download_Hubeau.ensure_sites_downloaded()
+    sites_path = utils.get_path_sites()
+    df_sites = pd.DataFrame(pd.read_csv(sites_path))
+
+    gdf_complet_sites_code_sandre = df_sites.merge(
+        gdf_final,
+        on="code_site",
+        how="left"
+    )
+
+    # Suppression des colonnes inutiles créées automatiquement
+    colonnes_a_supprimer = [
+        "Unnamed: 0"
+    ]
+
+    for col in colonnes_a_supprimer:
+        if col in gdf_complet_sites_code_sandre.columns:
+            gdf_complet_sites_code_sandre = gdf_complet_sites_code_sandre.drop(columns=col)
+
+    if code_sandre is not None:
+        output_geojson = Path(f"output/QGIS/sites/sites-{code_sandre}.geojson")
+    else:
+        output_geojson = Path(f"output/QGIS/sites/sites.geojson")
+
+    gdf_final.to_file(
+        output_geojson,
+        driver="GeoJSON"
+    )
+
+    logging.info(f"GeoJSON créé : {output_geojson}")
+
 def print_results(res: dict) -> None:
     print("=" * 65)
     print("  Loi : Log-Normale  |  Estimateur : L-moments  |  IC : PBOOT")
@@ -269,3 +361,5 @@ if __name__ == "__main__":
     create_geojson_from_periode_de_retour("2026-04", "BSH001")
     create_geojson_from_periode_de_retour("2026-05", "custom")
     create_geojson_from_periode_de_retour("2026-04", "custom")
+    create_geojson_from_stations(None, None)
+    create_geojson_from_sites(None)
