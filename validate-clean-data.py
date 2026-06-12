@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
+import utils
 
 output_folder = Path("output")
 # TODO, reecrire au propre ce fichier...
@@ -21,16 +22,15 @@ def get_clean_df_hubeau(date_a_filtrer: str, sandre_code: str) -> pd.DataFrame:
     """
     Charge les données nettoyé importé via l'API Hub'Eau
     :param sandre_code: Code sandre correspondant à une liste de station hydroportail
-    :param date_a_filtrer: La date qui servira de filtre au format YYYY-MM-DD
+    :param date_a_filtrer: La date qui servira de filtre au format YYYY-MM
     :return: Renvoie un pd.DataFrame représentant le QmM sur de la date YYYY-MM-DD via l'API Hubeau
     """
     # Récupération df hubeau
-    nom_fichier_hubeau = get_nom_fichier_import(sandre_code, date_a_filtrer)
-    chemin_fichier_hydroportail = output_folder / "hubeau" / "cleaned_data" / nom_fichier_hubeau
+    chemin_fichier_hubeau = utils.get_path_clean_csv(sandre_code, date_a_filtrer, "QmM")
 
-    df_hubeau = pd.read_csv(chemin_fichier_hydroportail)
+    df_hubeau = pd.read_csv(chemin_fichier_hubeau)
 
-    return df_hubeau
+    return pd.DataFrame(df_hubeau)
 
 def get_clean_df_hydroportail(annee_mois_a_filtrer: str, sandre_code: str) -> pd.DataFrame:
     """
@@ -134,11 +134,6 @@ with tqdm(total=total_iterations, desc="Progression dates") as pbar:
             elt = find_difference_hubeau_hydroportail_filtre("BSH001", annee_mois_filtre)
             elt["annee_mois"] = annee_mois_filtre
             total.append(elt)
-            #print("\n\n\n---------------------------\n\n\n")
-            elt = find_difference_hubeau_hydroportail_filtre("BSH101", annee_mois_filtre)
-            elt["annee_mois"] = annee_mois_filtre
-            total.append(elt)
-            #print("\n\n\n---------------------------\n\n\n")
             pbar.update(1)
 
 
@@ -186,22 +181,6 @@ for dico_donnee in total:
                 date_station_unique_hubeau_BSH001[station_hubeau] = []
             date_station_unique_hubeau_BSH001[station_hubeau].append(date_mois)
 
-    if dico_donnee["code_sandre"] == "BSH101":
-        for station_hydro in list_hydro_data:
-            if not station_hydro in station_unique_hydroportail_BSH101:
-                station_unique_hydroportail_BSH101[station_hydro] = 0
-            station_unique_hydroportail_BSH101[station_hydro] += 1
-            if not station_hydro in date_station_unique_hydroportail_BSH101:
-                date_station_unique_hydroportail_BSH101[station_hydro] = []
-            date_station_unique_hydroportail_BSH101[station_hydro].append(date_mois)
-
-        for station_hubeau in list_hubeau_data:
-            if not station_hubeau in station_unique_hubeau_BSH101:
-                station_unique_hubeau_BSH101[station_hubeau] = 0
-            station_unique_hubeau_BSH101[station_hubeau] += 1
-            if not station_hubeau in date_station_unique_hubeau_BSH101:
-                date_station_unique_hubeau_BSH101[station_hubeau] = []
-            date_station_unique_hubeau_BSH101[station_hubeau].append(date_mois)
 
 def convert_anne_mois_list_to_intervalle(list_anne_mois:list[str]) -> list:
     if not list_anne_mois:
@@ -236,13 +215,7 @@ print(station_unique_hubeau_BSH001)
 print(station_unique_hubeau_BSH001)
 #print(date_station_unique_hydroportail_BSH001)
 
-print("\n")
-print("Station uniquement dans le BSH101 avec des données")
-print("Uniquement dans hubeau puis uniquement dans hydroportail")
-print(station_unique_hubeau_BSH101)
-print(station_unique_hydroportail_BSH101)
-
-list_total_station = list(station_unique_hubeau_BSH001.keys()) + list(station_unique_hubeau_BSH101.keys()) + list(station_unique_hydroportail_BSH001.keys()) + list(station_unique_hydroportail_BSH101.keys())
+list_total_station = list(station_unique_hubeau_BSH001.keys()) + list(station_unique_hydroportail_BSH001.keys())
 list_total_station_unique = list(set(list_total_station))
 
 list_total_station_unique.sort()
@@ -250,10 +223,6 @@ list_total_station_unique.sort()
 total_list = []
 for code_station in list_total_station_unique:
     arr = [
-        station_unique_hubeau_BSH101[code_station] if code_station in station_unique_hubeau_BSH101 else None,
-        convert_anne_mois_list_to_intervalle(date_station_unique_hubeau_BSH101[code_station]) if code_station in date_station_unique_hubeau_BSH101 else None,
-        station_unique_hydroportail_BSH101[code_station] if code_station in station_unique_hydroportail_BSH101 else None,
-        convert_anne_mois_list_to_intervalle(date_station_unique_hydroportail_BSH101[code_station]) if code_station in date_station_unique_hydroportail_BSH101 else None,
         station_unique_hubeau_BSH001[code_station] if code_station in station_unique_hubeau_BSH001 else None,
         convert_anne_mois_list_to_intervalle(date_station_unique_hubeau_BSH001[code_station]) if code_station in date_station_unique_hubeau_BSH001 else None,
         station_unique_hydroportail_BSH001[code_station] if code_station in station_unique_hydroportail_BSH001 else None,
@@ -267,10 +236,6 @@ for code_station in list_total_station_unique:
 dataframe_dico = pd.DataFrame(
     total_list,
     columns=pd.array([
-        'nombre_occurence_unique_hubeau_BSH101',
-        'intervalle_apparition_station_unique_hubeau_BSH101',
-        'nombre_occurence_unique_hydroportailBSH101',
-        'intervalle_apparition_station_unique_hydroportail_BSH101',
         'nombre_occurence_unique_hubeau_BSH001',
         'intervalle_apparition_station_unique_hubeau_BSH001',
         'nombre_occurence_unique_hydroportailBSH001',
