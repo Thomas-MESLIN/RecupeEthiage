@@ -91,7 +91,7 @@ def get_paths_source_mensuel(grandeur:str, annee_mois:str) -> list[Path]:
     return list_chemin.copy()
 
 def get_path_liste_site_station_custom():
-    return Path("liste_site_et_station_custom.csv")
+    return Path("output/site_station_custom/liste_site_et_station_custom.csv")
 
 @cache
 def get_path_sources(code_sandre: str, grandeur:str, annee_mois:str):

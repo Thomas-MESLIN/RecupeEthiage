@@ -95,7 +95,7 @@ def clean_custom_input_list():
     code_site_et_station_total = pd.concat([df_resultat, code_site_et_station_uniquement], ignore_index=True)
     code_site_et_station_total.sort_values(by="code_site", inplace=True)
     code_site_et_station_total.dropna(subset=["code_station"], inplace=True)
-    code_site_et_station_total.to_csv("liste_site_et_station_custom.csv", index=False)
+    code_site_et_station_total.to_csv(utils.get_path_liste_site_station_custom(), index=False)
     print("=" * 50)
     print("MISE A JOUR DE LA LISTE DE STATION ET SITES TERMINEE.")
 

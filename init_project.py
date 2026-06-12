@@ -41,6 +41,7 @@ result_folder = [
     Path("VCN3/analyse_frequence_periode"),
     Path("VCN3/mensuel"),
     Path("VCN3/moyenne_historique"),
+    Path("site_station_custom"),
 ]
 
 for folder in result_folder:
