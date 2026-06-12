@@ -1,6 +1,12 @@
 # Automatisation Récupération données hydrologiques
 Ces scripts Python ont pour vocations de récupérer les données hydrologiques via l'API de Hub'eau en passant par le client Python cl_hubeau.
 
+## Installation
+Vous avez besoin d'avoir accès à internet normal, le temps de télécharger les paquets.
+
+Une fois que les paquets sont téléchargé, utiliser le script depuis le réseau interne ou sans le réseau interne sans problème.
+
+Le script est fait pour fonctionner dans les deux cas.
 ## main.py
 Le fichier main sert à lancer tout le reste des fichiers.
 
