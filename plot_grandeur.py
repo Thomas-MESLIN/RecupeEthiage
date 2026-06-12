@@ -11,6 +11,7 @@ import vcn3
 import station
 import download_Hubeau
 import hydraulicite
+import logging
 
 
 def create_geojson_from_path(chemin_donees_csv:Path, output_path: Path, annee_mois:str, code_sandre:str):
@@ -69,12 +70,7 @@ def create_geojson_from_path(chemin_donees_csv:Path, output_path: Path, annee_mo
         driver="GeoJSON"
     )
 
-    print(f"GeoJSON créé : {output_geojson}")
-
-
-# ---------------------------------------------------------------------------
-# 5. Affichage console
-# ---------------------------------------------------------------------------
+    logging.info(f"GeoJSON créé : {output_geojson}")
 
 def print_results(res: dict) -> None:
     print("=" * 65)
@@ -89,11 +85,6 @@ def print_results(res: dict) -> None:
     for T, p, qv, ic_l, ic_h in zip(q["T"], q["p"], q["q"], q["IC_low"], q["IC_high"]):
         print(f"{T:>10.0f}  {p:>12.4f}  {qv:>14.4f}  {ic_l:>10.4f}  {ic_h:>10.4f}")
     print()
-
-
-# ---------------------------------------------------------------------------
-# 6. Tracé
-# ---------------------------------------------------------------------------
 
 def plot_results(res: dict, output_path: str|Path, title: str = "Analyse fréquentielle VCN3",
                  ) -> None:
@@ -183,8 +174,6 @@ def plot_results(res: dict, output_path: str|Path, title: str = "Analyse fréque
     plt.close()
     # plt.show()
     print(f"Graphique sauvegardé : {output_path}")
-
-
 
 def plot_period_from_flow(q_obs: float, res_station:dict, res_estimation: dict, code_station: str,
                           output_path: str|Path) -> None:
