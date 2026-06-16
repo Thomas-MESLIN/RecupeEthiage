@@ -42,6 +42,11 @@ result_folder = [
     Path("VCN3/mensuel"),
     Path("VCN3/moyenne_historique"),
     Path("site_station_custom"),
+    Path("meteoFrance"),
+    Path("meteoFrance/departement_id_datagouv"),
+    Path("meteoFrance/downloaded_data"),
+    Path("meteoFrance/downloaded_data/mens_historique"),
+    Path("meteoFrance/downloaded_data/mens_historique_archive"),
 ]
 
 for folder in result_folder:

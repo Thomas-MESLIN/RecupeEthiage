@@ -107,6 +107,9 @@ def get_path_sources(code_sandre: str, grandeur:str, annee_mois:str):
         chemin_liste_station = get_path_liste_site_station_custom()
     return [chemin_liste_station] + get_paths_source_historique(grandeur) + get_paths_source_mensuel(grandeur, annee_mois)
 
+def get_path_meteofrance_correspondance_departement_id_datagouv_mens_historique() -> Path:
+    return Path("output/meteoFrance/departement_id_datagouv/MENS_departement_id_datagouv_historique.csv")
+
 # SELECTION DU PROXY
 
 PROXIES = {
@@ -144,15 +147,14 @@ def test_connection(
     except requests.RequestException:
         return False
 
-_cache_proxy = {}
+@cache
 def set_up_working_proxy():
     """
     Détermine automatiquement si le proxy doit être utilisé.
 
     Le proxy sert à accéder à internet sur le réseau interne de la DREAL.
+    Il est éxécuté une seule fois, même si plusieurs appels arrivent.
     """
-    if "proxy_set_up" in _cache_proxy:
-        return _cache_proxy["proxy_set_up"]
     print("Configuration du proxy...\n")
     print("Test avec proxy...")
 
@@ -162,7 +164,6 @@ def set_up_working_proxy():
         os.environ['HTTP_PROXY'] = PROXIES['HTTP']
         os.environ['https_proxy'] = PROXIES['https']
         os.environ['HTTPS_PROXY'] = PROXIES['HTTPS']
-        _cache_proxy["proxy_set_up"] = PROXIES
         return PROXIES
 
     print("Proxy KO")
@@ -174,7 +175,6 @@ def set_up_working_proxy():
         os.environ['HTTP_PROXY'] = ""
         os.environ['https_proxy'] = ""
         os.environ['HTTPS_PROXY'] = ""
-        _cache_proxy["proxy_set_up"] = None
         return None
 
     raise RuntimeError(
