@@ -3,23 +3,12 @@ from pathlib import Path
 import gzip
 import shutil
 import calendar
-
+from functools import cache
 import utils
 import re
 import pandas as pd
-from datetime import datetime
-
-# TODO Téléchargerl es données de météofrance d'une manière ou d'une autre
-# Pour l'instant on passe par data gouv, mais on pourrait passer dans l'avenir par l'API de météoFrance directement.
-# L'api de météoFrance est un peu plus capricieuse malheursement. car il n'u a pas de Python sympathique déjà fait.
-
-# Néanmoins, passer par data gouv semble sympathique et à l'air de pas si mal fonctionner,
-# en plus ils indiquent facilement si les données sont à jour ou non,
-# On peut donc facilement mettre en cache les données et invalider le cache si besoin.
-# Le problème est qu'il va falloir faire la liste exhaustive de tous les couples
-# [Département] : [Lien vers le département]
-# Car le dataset contient des centaines de fichiers et télécharger ne serait-ce que juste leur métadonnées est trop lent.
-
+import geopandas as gpd
+from datetime import datetime, timezone
 
 departement_list = [
     1,
@@ -76,17 +65,12 @@ def download_and_extract_departement(numero_departement:int, correspondance_depa
         raise KeyError("Département ID non disponible !")
     print(f"Téléchargements des données du département : {numero_departement}")
     id_ressource_data_gouv = correspondance_departement_id[numero_departement]
-    ressource = Resource(id_ressource_data_gouv)
 
     chemin_telechargement = Path(
         f"output/meteoFrance/downloaded_data/mens_historique_archive/MENS_departement_{numero_departement}_historique.csv.gz")
-    ressource.download(chemin_telechargement)
-
     chemin_extrait = Path(f"output/meteoFrance/downloaded_data/mens_historique/MENS_departement_{numero_departement}_historique.csv")
 
-    with gzip.open(chemin_telechargement, "rb") as archive:
-        with open(chemin_extrait, "wb") as final:
-            shutil.copyfileobj(archive, final)
+    download_and_extract(id_ressource_data_gouv, chemin_telechargement, chemin_extrait)
 
 
 def retrieve_all_dataset_ressource_id():
@@ -212,11 +196,28 @@ def retrieve_sim_quot_decenie_ressource_id():
     df_decennie_id.to_csv(chemin_decennie_id, index=False)
 
 
-def get_df_decennie_to_id_datagouv():
+def get_quot_df_decennie_to_id_datagouv():
     chemin_decennie_id = Path("output/meteoFrance/QUOT_decennie_to_id_datagouv.csv")
     df_decennie_to_id = pd.read_csv(chemin_decennie_id)
     return df_decennie_to_id
 
+def update_quot_decennie_to_id_datagouv():
+    """
+    Met a jour l'index décenie -> id datagouv.
+    Supprime les fichiers qui n'apparaissent plus dedans.
+    :return: Rien
+    """
+    old_df_decennie_to_id_datagouv = get_quot_df_decennie_to_id_datagouv()
+    # Télécharger le nouveau
+    retrieve_sim_quot_decenie_ressource_id()
+    new_df_decennie_to_id_datagouv = get_quot_df_decennie_to_id_datagouv()
+    # On cherche les différences entre les deux df.
+    df_difference = pd.concat([old_df_decennie_to_id_datagouv,new_df_decennie_to_id_datagouv]).drop_duplicates(keep=False)
+    if df_difference.empty:
+        print("Pas de différence entre les dataframe")
+    else:
+        print("Des choses on changé !")
+        print(df_difference)
 
 def get_quot_sim2_data_in_range(date_debut: datetime, date_end: datetime) -> pd.DataFrame:
     """
@@ -226,38 +227,173 @@ def get_quot_sim2_data_in_range(date_debut: datetime, date_end: datetime) -> pd.
     :param date_end:  La date de fin de la fenêtre à récupérer
     :return: Un dataframe contenant toutes les données quotidiennes de SIM2 entre date_debut et date_fin inclus.
     """
-    # Faire une première selection mois par mois.
-    # On parcours décénnie par décénnie les données, on récupère les fichiers associés, on fiat une grosse query dessus pour enlever toute ambiguité.
     if date_end < date_debut:
         raise ValueError("La date de fin est plut tot que la date de début !")
 
-    df_decenie_to_id = get_df_decennie_to_id_datagouv()
+    df_decenie_to_id = get_quot_df_decennie_to_id_datagouv()
     dico_decennie_to_id = df_decenie_to_id.to_dict(orient="index")
     file_to_gather = []
+    # On parcours les décénnies connues et on les sauvegardes.
     for row in dico_decennie_to_id:
+        # On récupère les données du dictionnaire.
         date_debut_row = datetime.strptime(dico_decennie_to_id[row]["debut_decennie"],"%Y-%m-%d")
         date_fin_row = datetime.strptime(dico_decennie_to_id[row]["fin_decennie"],"%Y-%m-%d")
         id = dico_decennie_to_id[row]["id_ressource_datagouv"]
+        # Si la date correspond à notre intervalle d'extraction, on la récupère.
         if is_date_overlapping(date_debut_row, date_fin_row, date_debut, date_end):
             file_to_gather.append((date_debut_row, date_fin_row, id))
 
     print(file_to_gather)
+    print("Loading files...")
+    all_df = []
+    for date_debut_fichier, date_fin_fichier, id_datagouv in file_to_gather:
+        all_df.append(get_df_decennie_quot_sim2(date_debut_fichier, date_fin_fichier, id_datagouv))
+    df_complet = pd.concat(all_df, ignore_index=True)
+    print("Files loaded successfully...")
+    print(df_complet)
 
+    int_date_debut = int(date_debut.strftime("%Y%m%d"))
+    int_date_end = int(date_end.strftime("%Y%m%d"))
 
+    # Filtre les df pour qu'ils soient entre la date début et la date fin.
+    df_reduit_bonne_date =  df_complet[(int_date_debut <= df_complet["DATE"]) & (df_complet["DATE"] <= int_date_end)]
+    return df_reduit_bonne_date
 
+@cache
+def get_gouv_ressource(id_gouv_data:str) -> Resource:
+    """
+    Permet de récupérer les ressources sur data.gouv en gardant en mémoir les requetes déjà faite !
+    :param id_gouv_data: L'id à récupérer.
+    :return: La ressource correspondante.
+    """
+    return Resource(id_gouv_data)
+
+def is_path_updated_with_datagouv(chemin_fichier:Path, id_gouv_data:str) -> bool:
+    """
+    Compare la date de dernière modification du fichier avec la date de dernière modification sur data.gouv
+    Si la date de modification du fichier est plus récente que celle de data.gouv on renvoie True, sinon False
+    :param chemin_fichier: Le chemin vers le fichier dont il faut comparer la date avec sa source sur data.gouv
+    :param id_gouv_data: L'id de data.gouv pour aller chercher la date de dernière modification de la ressource.
+    :return: Un booléen, True si le fichier est plus récent que data.gouv, false sinon.
+    """
+    nb_seconde_depuis_1991_modification = chemin_fichier.stat().st_mtime
+    derniere_modification_fichier = datetime.fromtimestamp(nb_seconde_depuis_1991_modification, tz=timezone.utc)
+    res = get_gouv_ressource(id_gouv_data)
+    derniere_modification_gouv = datetime.fromisoformat(res.last_modified)
+    return derniere_modification_gouv <= derniere_modification_fichier
+
+def get_df_decennie_quot_sim2(start_date: datetime,end_date: datetime,id_gouv_data: str) -> pd.DataFrame:
+    """
+    Renvoie le dataframe contenant toutes les infosd du fichier de cette décénie.
+    :param start_date:
+    :param end_date:
+    :param id_gouv_data:
+    :return:
+    """
+    chemin = Path(f"output/meteoFrance/downloaded_data/quot_sim2/QUOT_SIM2_{start_date.strftime('%Y%m%d')}-{end_date.strftime('%Y%m%d')}.csv")
+    chemin_archive = Path(f"output/meteoFrance/downloaded_data/quot_sim2_archive/QUOT_SIM2_{start_date.strftime('%Y%m%d')}-{end_date.strftime('%Y%m%d')}.csv.gz")
+    print(f"Loading : {chemin}")
+    if not chemin.exists():
+        download_and_extract(id_gouv_data, chemin_archive, chemin)
+    elif not is_path_updated_with_datagouv(chemin, id_gouv_data):
+        # On met a jour nos indices et on supprimes les fichiers qui n'existent plus.
+        # On vérifie que le fichier est à jour par rapport au métadonnées du site.
+        download_and_extract(id_gouv_data, chemin_archive, chemin)
+
+    df = pd.read_csv(chemin, delimiter=";")
+    return df
+
+def download_and_extract(id_datagouv:str, chemin_archive:Path,chemin_final:Path):
+    utils.set_up_working_proxy()
+    r = Resource(id_datagouv)
+    r.download(chemin_archive)
+    with gzip.open(chemin_archive, "rb") as archive:
+        with open(chemin_final, "wb") as final:
+            shutil.copyfileobj(archive, final)
 
 def is_date_overlapping(debut_1: datetime, fin_1: datetime, debut_2: datetime, fin_2: datetime):
-    return debut_2 <=  debut_1 <= fin_2 or debut_2 <= fin_1 <= fin_2
+    return debut_2 <=  debut_1 <= fin_2 or debut_2 <= fin_1 <= fin_2 or (debut_1 <= debut_2 and fin_2 <= fin_1)
 
+def plot_geojson_from_lambert2(chemin_a_plot: Path):
+    """
+    Convertis le fichier pointé vers un fichier geojson dont les coordonnées sont au format EPSG:27572. (lambert2 étendu).
+    :param chemin_a_plot: Le chemin vers le fichier csv à convertir en geojson.
+    :return: Rien
+    """
+    if not chemin_a_plot.exists():
+        raise ValueError("Le chemin n'existe pas.")
+
+    nom_fichier_sans_extension = chemin_a_plot.stem
+    chemin_fichier_converti = Path(f"output/QGIS/meteoFrance/{nom_fichier_sans_extension}.geojson")
+    res = pd.read_csv(chemin_a_plot)
+    # Les coordonnées sont ne Lambert2 étendue et en hm, on les convertis donc en m.
+    gdf = gpd.GeoDataFrame(
+        res, geometry=gpd.points_from_xy(res.LAMBX * 100, res.LAMBY * 100), crs="EPSG:27572"
+    )
+
+    geojson = gdf.to_json(to_wgs84=False)
+
+    with open(str(chemin_fichier_converti), "w") as f:
+        f.write(geojson)
+
+
+def get_chemin_quot_sim2(debut_decenie:datetime,fin_decenie:datetime,is_archive: bool)->Path:
+    """
+    Renvoie le chemin vers le fichier contenant les données téléchargé pour la simulation quotidienne.
+    :param debut_decenie: AAAA-MM-JJ
+    :param fin_decenie: AAAA-MM-JJ
+    :param is_archive: Si True, renvoie un .csv.gz, si faut, renvoie un .csv
+    :return: Chemin vers le fichier sim2
+    """
+    if is_archive:
+        return Path(f"output/meteoFrance/downloaded_data/quot_sim2_archive/QUOT_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz")
+    else:
+        return Path(f"output/meteoFrance/downloaded_data/quot_sim2/QUOT_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
 
 # print(is_departement_dico_complet())
 if __name__ == "__main__":
-    # download_and_extract_departement(2)
-    # dico_departement_id = get_dico_departement_id()
-    # print(is_departement_dico_complet(dico_departement_id))
-    # for departement_code in departement_list:
-    #     download_and_extract_departement(departement_code, dico_departement_id)
+    # annee = 2026
+    # mois = 5
+    # nombre_de_jour = calendar.monthrange(annee, mois)[1]
+    #
+    # res = get_quot_sim2_data_in_range(
+    #     datetime(year=annee, month=mois, day=1),
+    #     datetime(year=annee, month=mois, day=nombre_de_jour))
+    # print(res)
+    # is_it = is_path_updated_with_datagouv(Path("output\meteoFrance\downloaded_data\quot_sim2\QUOT_SIM2_20200101-20260531.csv"), "92065ec0-ea6f-4f5e-8827-4344179c0a7f")
+    # print(is_it)
+    # chemin = Path("output/test/df_reduit_quot_sim2_mois_precedent.csv")
+    # plot_geojson_from_lambert2(chemin)
+    #
     pass
-    #retrieve_sim_quot_decenie_ressource_id()
-    res = get_quot_sim2_data_in_range(datetime.strptime("1952-03-25", "%Y-%m-%d"), datetime.strptime("2026-06-14", "%Y-%m-%d"))
-    print(res)
+
+    df_origine = pd.DataFrame({
+        "debut_decennie": ["1958-01-01", "1960-01-01", "2020-01-01"],
+        "fin_decennie": ["1959-12-31", "1969-12-31", "2026-05-31"],
+        "id_ressource_datagouv": ["5dfb33b3-fae5-4d0e-882d-7db74142bcae", "eb0d6e42-cee6-4d7c-bc5b-646be4ced72e", "92065ec0-ea6f-4f5e-8827-4344179c0a7f"],
+    })
+    df_origine = df_origine.sort_values(by="debut_decennie")
+    df_nouveau = pd.DataFrame({
+        "debut_decennie": ["1958-01-01", "1960-01-01", "2020-01-01"],
+        "fin_decennie": ["1959-12-31", "1969-12-31", "2026-06-31"],
+        "id_ressource_datagouv": ["5dfb33b3-fae5-4d0e-882d-7db74142bcae", "eb0d6e42-cee6-4d7c-bc5b-646be4ced72e", "92065ec0-ea6f-4f5e-8827-4344179c0a7f"],
+    })
+    df_nouveau = df_nouveau.sort_values(by="debut_decennie")
+
+    df_comparison = df_origine.compare(df_nouveau)
+    if df_comparison.empty:
+        print("Pas de différence entre les dataframe")
+    else:
+        print("Des choses on changé !")
+        print(df_comparison)
+
+    for i in df_comparison.index:
+        print(i)
+        row_a_supprimer = df_origine.loc[i]
+        print(row_a_supprimer)
+        date_debut = datetime.strptime(row_a_supprimer["debut_decennie"], "%Y-%m-%d")
+        date_fin = datetime.strptime(row_a_supprimer["fin_decennie"], "%Y-%m-%d")
+        chemin_a_supprimer_csv = get_chemin_quot_sim2(date_debut, date_fin, False)
+        chemin_a_supprimer_gz = get_chemin_quot_sim2(date_debut, date_fin, True)
+        print(chemin_a_supprimer_csv)
+        print(chemin_a_supprimer_gz)
