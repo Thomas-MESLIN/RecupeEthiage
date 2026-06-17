@@ -5,3 +5,4 @@ tqdm
 datetime
 lmoments3
 datagouv-client
+geopandas
