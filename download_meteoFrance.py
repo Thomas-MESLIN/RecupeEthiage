@@ -178,8 +178,6 @@ def retrieve_sim_quot_decenie_ressource_id():
     for res in dataset_complet.resources:
         titre_ressource = res.title
         if pattern.match(titre_ressource):
-            print("Matching titre pattern : ")
-            print(titre_ressource)
             debut_fin_decenie = titre_ressource.split("_")[-1]
             date_debut = debut_fin_decenie.split("-")[0]
             date_fin = debut_fin_decenie.split("-")[1]
@@ -193,6 +191,7 @@ def retrieve_sim_quot_decenie_ressource_id():
 
     df_decennie_id = pd.DataFrame(data=tous_les_couples)
     chemin_decennie_id = Path("output/meteoFrance/QUOT_decennie_to_id_datagouv.csv")
+    print(f"Index decennie -> id_datagouv updated : {chemin_decennie_id}")
     df_decennie_id.to_csv(chemin_decennie_id, index=False)
 
 
@@ -201,10 +200,41 @@ def get_quot_df_decennie_to_id_datagouv():
     df_decennie_to_id = pd.read_csv(chemin_decennie_id)
     return df_decennie_to_id
 
+
+def delete_old_quot_file(df_origine:pd.DataFrame, df_nouveau:pd.DataFrame):
+    """
+    Supprime les fichiers qui n'apparaissent plus dans le df_nouveau.
+    :param df_origine: Le df avant la mise à jour de l'index.
+    :param df_nouveau: Le df après la mise à jour de l'index.
+    :return: Rien
+    """
+    df_comparison = df_origine.compare(df_nouveau)
+    if df_comparison.empty:
+        return
+    else:
+        print("Des choses on changé !")
+        print(df_comparison)
+
+    for i in df_comparison.index:
+        row_a_supprimer = df_origine.loc[i]
+        date_debut = datetime.strptime(row_a_supprimer["debut_decennie"], "%Y-%m-%d")
+        date_fin = datetime.strptime(row_a_supprimer["fin_decennie"], "%Y-%m-%d")
+        chemin_a_supprimer_csv = get_chemin_quot_sim2(date_debut, date_fin, False)
+        chemin_a_supprimer_gz = get_chemin_quot_sim2(date_debut, date_fin, True)
+        chemin_a_supprimer_csv.unlink()
+        chemin_a_supprimer_gz.unlink()
+        print("Les vieux fichiers : ")
+        print(chemin_a_supprimer_csv)
+        print(chemin_a_supprimer_gz)
+        print("On été supprimé.")
+
+@cache
 def update_quot_decennie_to_id_datagouv():
     """
     Met a jour l'index décenie -> id datagouv.
     Supprime les fichiers qui n'apparaissent plus dedans.
+
+    Cette fonction est mise en cache de tel sorte qu'une mise à jour ne puisse s'effectuer qu'une fois par exécution.
     :return: Rien
     """
     old_df_decennie_to_id_datagouv = get_quot_df_decennie_to_id_datagouv()
@@ -212,12 +242,7 @@ def update_quot_decennie_to_id_datagouv():
     retrieve_sim_quot_decenie_ressource_id()
     new_df_decennie_to_id_datagouv = get_quot_df_decennie_to_id_datagouv()
     # On cherche les différences entre les deux df.
-    df_difference = pd.concat([old_df_decennie_to_id_datagouv,new_df_decennie_to_id_datagouv]).drop_duplicates(keep=False)
-    if df_difference.empty:
-        print("Pas de différence entre les dataframe")
-    else:
-        print("Des choses on changé !")
-        print(df_difference)
+    delete_old_quot_file(old_df_decennie_to_id_datagouv, new_df_decennie_to_id_datagouv)
 
 def get_quot_sim2_data_in_range(date_debut: datetime, date_end: datetime) -> pd.DataFrame:
     """
@@ -230,18 +255,26 @@ def get_quot_sim2_data_in_range(date_debut: datetime, date_end: datetime) -> pd.
     if date_end < date_debut:
         raise ValueError("La date de fin est plut tot que la date de début !")
 
+    # On met à jour les correspondance decennie -> id_datagouv.
+    update_quot_decennie_to_id_datagouv()
+
+    # On récupère les correspondance.
     df_decenie_to_id = get_quot_df_decennie_to_id_datagouv()
-    dico_decennie_to_id = df_decenie_to_id.to_dict(orient="index")
     file_to_gather = []
     # On parcours les décénnies connues et on les sauvegardes.
-    for row in dico_decennie_to_id:
+    for i in df_decenie_to_id.index:
+        row = df_decenie_to_id.loc[i]
         # On récupère les données du dictionnaire.
-        date_debut_row = datetime.strptime(dico_decennie_to_id[row]["debut_decennie"],"%Y-%m-%d")
-        date_fin_row = datetime.strptime(dico_decennie_to_id[row]["fin_decennie"],"%Y-%m-%d")
-        id = dico_decennie_to_id[row]["id_ressource_datagouv"]
+        date_debut_row = datetime.strptime(row["debut_decennie"],"%Y-%m-%d")
+        date_fin_row = datetime.strptime(row["fin_decennie"],"%Y-%m-%d")
+        id = row["id_ressource_datagouv"]
         # Si la date correspond à notre intervalle d'extraction, on la récupère.
         if is_date_overlapping(date_debut_row, date_fin_row, date_debut, date_end):
             file_to_gather.append((date_debut_row, date_fin_row, id))
+
+    if not file_to_gather:
+        print("Range vide. Données absente.")
+        return pd.DataFrame()
 
     print(file_to_gather)
     print("Loading files...")
@@ -366,34 +399,19 @@ if __name__ == "__main__":
     # plot_geojson_from_lambert2(chemin)
     #
     pass
+    get_quot_sim2_data_in_range(datetime(2026, 6, 1), datetime(2026, 6, 30))
 
-    df_origine = pd.DataFrame({
-        "debut_decennie": ["1958-01-01", "1960-01-01", "2020-01-01"],
-        "fin_decennie": ["1959-12-31", "1969-12-31", "2026-05-31"],
-        "id_ressource_datagouv": ["5dfb33b3-fae5-4d0e-882d-7db74142bcae", "eb0d6e42-cee6-4d7c-bc5b-646be4ced72e", "92065ec0-ea6f-4f5e-8827-4344179c0a7f"],
-    })
-    df_origine = df_origine.sort_values(by="debut_decennie")
-    df_nouveau = pd.DataFrame({
-        "debut_decennie": ["1958-01-01", "1960-01-01", "2020-01-01"],
-        "fin_decennie": ["1959-12-31", "1969-12-31", "2026-06-31"],
-        "id_ressource_datagouv": ["5dfb33b3-fae5-4d0e-882d-7db74142bcae", "eb0d6e42-cee6-4d7c-bc5b-646be4ced72e", "92065ec0-ea6f-4f5e-8827-4344179c0a7f"],
-    })
-    df_nouveau = df_nouveau.sort_values(by="debut_decennie")
+    get_quot_sim2_data_in_range(datetime(2026, 6, 1), datetime(2026, 6, 30))
 
-    df_comparison = df_origine.compare(df_nouveau)
-    if df_comparison.empty:
-        print("Pas de différence entre les dataframe")
-    else:
-        print("Des choses on changé !")
-        print(df_comparison)
-
-    for i in df_comparison.index:
-        print(i)
-        row_a_supprimer = df_origine.loc[i]
-        print(row_a_supprimer)
-        date_debut = datetime.strptime(row_a_supprimer["debut_decennie"], "%Y-%m-%d")
-        date_fin = datetime.strptime(row_a_supprimer["fin_decennie"], "%Y-%m-%d")
-        chemin_a_supprimer_csv = get_chemin_quot_sim2(date_debut, date_fin, False)
-        chemin_a_supprimer_gz = get_chemin_quot_sim2(date_debut, date_fin, True)
-        print(chemin_a_supprimer_csv)
-        print(chemin_a_supprimer_gz)
+    # df_origine = pd.DataFrame({
+    #     "debut_decennie": ["1958-01-01", "1960-01-01", "2020-01-01"],
+    #     "fin_decennie": ["1959-12-31", "1969-12-31", "2026-05-31"],
+    #     "id_ressource_datagouv": ["5dfb33b3-fae5-4d0e-882d-7db74142bcae", "eb0d6e42-cee6-4d7c-bc5b-646be4ced72e", "92065ec0-ea6f-4f5e-8827-4344179c0a7f"],
+    # })
+    # df_origine = df_origine.sort_values(by="debut_decennie")
+    # df_nouveau = pd.DataFrame({
+    #     "debut_decennie": ["1958-01-01", "1960-01-01", "2020-01-01"],
+    #     "fin_decennie": ["1959-12-31", "1969-12-31", "2026-06-31"],
+    #     "id_ressource_datagouv": ["5dfb33b3-fae5-4d0e-882d-7db74142bcae", "eb0d6e42-cee6-4d7c-bc5b-646be4ced72e", "92065ec0-ea6f-4f5e-8827-4344179c0a7f"],
+    # })
+    # df_nouveau = df_nouveau.sort_values(by="debut_decennie")
