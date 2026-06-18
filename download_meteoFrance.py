@@ -242,8 +242,8 @@ def delete_old_file(freq_data:MeteoFranceDataType, df_origine:pd.DataFrame, df_n
         row_a_supprimer = df_origine.loc[i]
         date_debut = datetime.strptime(row_a_supprimer["debut_decennie"], "%Y-%m-%d")
         date_fin = datetime.strptime(row_a_supprimer["fin_decennie"], "%Y-%m-%d")
-        chemin_a_supprimer_csv = get_chemin(freq_data, date_debut, date_fin, False)
-        chemin_a_supprimer_gz = get_chemin(freq_data, date_debut, date_fin, True)
+        chemin_a_supprimer_csv = get_chemin_data_downloaded(freq_data, date_debut, date_fin, False)
+        chemin_a_supprimer_gz = get_chemin_data_downloaded(freq_data, date_debut, date_fin, True)
         chemin_a_supprimer_csv.unlink()
         chemin_a_supprimer_gz.unlink()
         print("Les vieux fichiers : ")
@@ -252,7 +252,7 @@ def delete_old_file(freq_data:MeteoFranceDataType, df_origine:pd.DataFrame, df_n
         print("On été supprimé.")
 
 @cache
-def update_mens_decennie_to_id_datagouv(freq_data:MeteoFranceDataType):
+def update_decennie_to_id_datagouv(freq_data:MeteoFranceDataType):
     """
     Met a jour l'index décenie -> id datagouv.
     Supprime les fichiers qui n'apparaissent plus dedans.
@@ -283,7 +283,7 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
         raise ValueError("La date de fin est plut tot que la date de début !")
 
     # On met à jour les correspondance decennie -> id_datagouv.
-    update_mens_decennie_to_id_datagouv(data_freq)
+    update_decennie_to_id_datagouv(data_freq)
 
     # On récupère les correspondance.
     df_decenie_to_id = get_df_decennie_to_id_datagouv(data_freq)
@@ -316,14 +316,18 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
         case MeteoFranceDataType.SIM2_QUOT:
             int_date_debut = int(date_debut.strftime("%Y%m%d"))
             int_date_end = int(date_end.strftime("%Y%m%d"))
+            format_to_catch = "%Y%m%d"
         case MeteoFranceDataType.SIM2_MENS:
             int_date_debut = int(date_debut.strftime("%Y%m"))
             int_date_end = int(date_end.strftime("%Y%m"))
+            format_to_catch = "%Y%m"
         case _:
             raise NotImplementedError
 
     # Filtre les df pour qu'ils soient entre la date début et la date fin.
     df_reduit_bonne_date =  df_complet[(int_date_debut <= df_complet["DATE"]) & (df_complet["DATE"] <= int_date_end)]
+    df_reduit_bonne_date["DATE_DATETIME"] = df_reduit_bonne_date["DATE"].apply(lambda x: datetime.strptime(str(x), format_to_catch))
+
     return df_reduit_bonne_date
 
 @cache
@@ -349,6 +353,7 @@ def is_path_updated_with_datagouv(chemin_fichier:Path, id_gouv_data:str) -> bool
     derniere_modification_gouv = datetime.fromisoformat(res.last_modified)
     return derniere_modification_gouv <= derniere_modification_fichier
 
+@cache
 def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date: datetime,id_gouv_data: str) -> pd.DataFrame:
     """
     Renvoie le dataframe contenant toutes les infosd du fichier de cette décénie.
@@ -358,8 +363,8 @@ def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date
     :param id_gouv_data:
     :return:
     """
-    chemin = get_chemin(freq_data, start_date, end_date, False)
-    chemin_archive = get_chemin(freq_data, start_date, end_date, True)
+    chemin = get_chemin_data_downloaded(freq_data, start_date, end_date, False)
+    chemin_archive = get_chemin_data_downloaded(freq_data, start_date, end_date, True)
 
     print(f"Loading : {chemin}")
     if not chemin.exists():
@@ -383,29 +388,7 @@ def download_and_extract(id_datagouv:str, chemin_archive:Path,chemin_final:Path)
 def is_date_overlapping(debut_1: datetime, fin_1: datetime, debut_2: datetime, fin_2: datetime):
     return debut_2 <=  debut_1 <= fin_2 or debut_2 <= fin_1 <= fin_2 or (debut_1 <= debut_2 and fin_2 <= fin_1)
 
-def plot_geojson_from_lambert2(chemin_a_plot: Path):
-    """
-    Convertis le fichier pointé vers un fichier geojson dont les coordonnées sont au format EPSG:27572. (lambert2 étendu).
-    :param chemin_a_plot: Le chemin vers le fichier csv à convertir en geojson.
-    :return: Rien
-    """
-    if not chemin_a_plot.exists():
-        raise ValueError("Le chemin n'existe pas.")
-
-    nom_fichier_sans_extension = chemin_a_plot.stem
-    chemin_fichier_converti = Path(f"output/QGIS/meteoFrance/{nom_fichier_sans_extension}.geojson")
-    res = pd.read_csv(chemin_a_plot)
-    # Les coordonnées sont ne Lambert2 étendue et en hm, on les convertis donc en m.
-    gdf = gpd.GeoDataFrame(
-        res, geometry=gpd.points_from_xy(res.LAMBX * 100, res.LAMBY * 100), crs="EPSG:27572"
-    )
-
-    geojson = gdf.to_json(to_wgs84=False)
-
-    with open(str(chemin_fichier_converti), "w") as f:
-        f.write(geojson)
-
-def get_chemin(freq_data:MeteoFranceDataType, debut_decenie:datetime,fin_decenie:datetime,is_archive: bool)->Path:
+def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:datetime,fin_decenie:datetime,is_archive: bool)->Path:
     """
     Renvoie le chemin vers le fichier contenant les données téléchargé pour le type de données souhaitée..
     :param freq_data: Le type de donnée
@@ -443,15 +426,13 @@ if __name__ == "__main__":
     # chemin = Path("output/test/df_reduit_quot_sim2_mois_precedent.csv")
     # plot_geojson_from_lambert2(chemin)
     #
-    pass
+
     res_sim_quot_1 = get_data_in_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 5, 1), datetime(2026, 5, 30))
     res_sim_quot_1.to_csv(Path("output/test/res_quot_sim_1.csv"), index=False)
-    res_sim_quot_2 = get_data_in_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 1), datetime(2026, 6, 30))
-    res_sim_quot_2.to_csv(Path("output/test/res_quot_sim_2.csv"), index=False)
+
     res_sim_mens_1 = get_data_in_range(MeteoFranceDataType.SIM2_MENS, datetime(2026, 5, 1), datetime(2026, 5, 30))
     res_sim_mens_1.to_csv(Path("output/test/res_mens_sim_1.csv"), index=False)
-    res_sim_mens_2 = get_data_in_range(MeteoFranceDataType.SIM2_MENS, datetime(2026, 6, 1), datetime(2026, 6, 30))
-    res_sim_mens_2.to_csv(Path("output/test/res_mens_sim_2.csv"), index=False)
+
     # df_origine = pd.DataFrame({
     #     "debut_decennie": ["1958-01-01", "1960-01-01", "2020-01-01"],
     #     "fin_decennie": ["1959-12-31", "1969-12-31", "2026-05-31"],

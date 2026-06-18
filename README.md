@@ -16,6 +16,13 @@ Il génère aussi les cartes des différentes stations et sites qui existent.
 ## Scripts
 Nous avons différents scripts permettant d'obtenir plusieurs types d'informations différentes : 
 
+## MétéoFrance interprétation
+Les données extraite via MétéoFrance fournissent des indicateurs : 
+ - SSWI (Standardized Soil Wetness Index) -> mesurer la sécheresse du sol (https://www.drias-eau.fr/accompagnement/sections/383)
+ - SPI (Standardized Precipitation Index) -> mesurer la sécheresse météorologique (https://www.drias-climat.fr/accompagnement/sections/348)
+
+Les légendes des templates QGIS utilisent ces indicateurs et les légende pré-remplie de ces sites.
+
 ### Analyser les données nettoyées
 Les données téléchargées et nettoyées peuvent être comparés avec les données d'Hydroportail, 
 pour savoir la quantité de différence entre les deux sources de données et les divergences qui existent.
