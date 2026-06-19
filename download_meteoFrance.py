@@ -1,3 +1,4 @@
+from zipfile import ZipFile
 from datagouv import Dataset, Resource
 from pathlib import Path
 import gzip
@@ -7,44 +8,62 @@ from functools import cache
 import utils
 import re
 import pandas as pd
-import geopandas as gpd
 from datetime import datetime, timezone
 from enum import Enum
+import init_project
 
-departement_list = [
-    1,
-    4,
-    5,
-    6,
-    7,
-    9,
-    11,
-    12,
-    13,
-    21,
-    25,
-    26,
-    30,
-    34,
-    38,
-    39,
-    42,
-    43,
-    48,
-    52,
-    66,
-    69,
-    70,
-    71,
-    73,
-    74,
-    81,
-    83,
-    84,
-    88,
-    90,
+region_list_metropole = [
+    "11",
+    "24",
+    "27",
+    "28",
+    "32",
+    "44",
+    "52",
+    "53",
+    "75",
+    "76",
+    "84",
+    "93",
 ]
 
+departement_list = [
+    "01",
+    "04",
+    "05",
+    "06",
+    "07",
+    "09",
+    "11",
+    "12",
+    "13",
+    "21",
+    "25",
+    "26",
+    "30",
+    "34",
+    "38",
+    "39",
+    "42",
+    "43",
+    "48",
+    "52",
+    "66",
+    "69",
+    "70",
+    "71",
+    "73",
+    "74",
+    "81",
+    "83",
+    "84",
+    "88",
+    "90",
+]
+
+code_bassin_versant_list = [
+    "06"
+]
 
 # Différentes sources de données.
 class MeteoFranceDataType(Enum):
@@ -179,7 +198,7 @@ def retrieve_decennie_ressource_id(data_freq:MeteoFranceDataType):
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT:
             id_dataset = "6569b27598256cc583c917a7"
-            pattern = re.compile("QUOT_SIM2_....-....")
+            pattern = re.compile("(QUOT_SIM2_....-....)|(QUOT_SIM2_........-........)")
             chemin_decennie_id = Path("output/meteoFrance/QUOT_decennie_to_id_datagouv.csv")
         case MeteoFranceDataType.SIM2_MENS:
             id_dataset = "65e040c50a5c6872ebebc711"
@@ -309,6 +328,7 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
     for date_debut_fichier, date_fin_fichier, id_datagouv in file_to_gather:
         all_df.append(get_df_decennie(data_freq, date_debut_fichier, date_fin_fichier, id_datagouv))
     df_complet = pd.concat(all_df, ignore_index=True)
+    df_complet.drop_duplicates(subset=["LAMBX","LAMBY","DATE"],inplace=True)
     print("Files loaded successfully...")
     print(df_complet)
 
@@ -380,11 +400,16 @@ def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date
 
 def download_and_extract(id_datagouv:str, chemin_archive:Path,chemin_final:Path):
     utils.set_up_working_proxy()
-    r = Resource(id_datagouv)
+    r = get_gouv_ressource(id_datagouv)
     r.download(chemin_archive)
-    with gzip.open(chemin_archive, "rb") as archive:
-        with open(chemin_final, "wb") as final:
-            shutil.copyfileobj(archive, final)
+    try:
+        with gzip.open(chemin_archive, "rb") as archive:
+            with open(chemin_final, "wb") as final:
+                shutil.copyfileobj(archive, final)
+    except gzip.BadGzipFile:
+        with ZipFile(chemin_archive, "r") as archive:
+            archive.extractall(path=chemin_final.parent)
+
 
 def is_date_overlapping(debut_1: datetime, fin_1: datetime, debut_2: datetime, fin_2: datetime):
     return debut_2 <=  debut_1 <= fin_2 or debut_2 <= fin_1 <= fin_2 or (debut_1 <= debut_2 and fin_2 <= fin_1)
@@ -412,37 +437,9 @@ def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:date
         case _:
             raise NotImplementedError
 
-# print(is_departement_dico_complet())
 if __name__ == "__main__":
-    # annee = 2026
-    # mois = 5
-    # nombre_de_jour = calendar.monthrange(annee, mois)[1]
-    #
-    # res = get_quot_sim2_data_in_range(
-    #     datetime(year=annee, month=mois, day=1),
-    #     datetime(year=annee, month=mois, day=nombre_de_jour))
-    # print(res)
-    # is_it = is_path_updated_with_datagouv(Path("output\meteoFrance\downloaded_data\quot_sim2\QUOT_SIM2_20200101-20260531.csv"), "92065ec0-ea6f-4f5e-8827-4344179c0a7f")
-    # print(is_it)
-    # chemin = Path("output/test/df_reduit_quot_sim2_mois_precedent.csv")
-    # plot_geojson_from_lambert2(chemin)
-    #
-
     res_sim_quot_1 = get_data_in_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 5, 1), datetime(2026, 5, 30))
     res_sim_quot_1.to_csv(Path("output/test/res_quot_sim_1.csv"), index=False)
 
     res_sim_mens_1 = get_data_in_range(MeteoFranceDataType.SIM2_MENS, datetime(2026, 5, 1), datetime(2026, 5, 30))
     res_sim_mens_1.to_csv(Path("output/test/res_mens_sim_1.csv"), index=False)
-
-    # df_origine = pd.DataFrame({
-    #     "debut_decennie": ["1958-01-01", "1960-01-01", "2020-01-01"],
-    #     "fin_decennie": ["1959-12-31", "1969-12-31", "2026-05-31"],
-    #     "id_ressource_datagouv": ["5dfb33b3-fae5-4d0e-882d-7db74142bcae", "eb0d6e42-cee6-4d7c-bc5b-646be4ced72e", "92065ec0-ea6f-4f5e-8827-4344179c0a7f"],
-    # })
-    # df_origine = df_origine.sort_values(by="debut_decennie")
-    # df_nouveau = pd.DataFrame({
-    #     "debut_decennie": ["1958-01-01", "1960-01-01", "2020-01-01"],
-    #     "fin_decennie": ["1959-12-31", "1969-12-31", "2026-06-31"],
-    #     "id_ressource_datagouv": ["5dfb33b3-fae5-4d0e-882d-7db74142bcae", "eb0d6e42-cee6-4d7c-bc5b-646be4ced72e", "92065ec0-ea6f-4f5e-8827-4344179c0a7f"],
-    # })
-    # df_nouveau = df_nouveau.sort_values(by="debut_decennie")

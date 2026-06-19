@@ -35,6 +35,10 @@ result_folder = [
     Path("QGIS/VCN3_periode_de_retour"),
     Path("QGIS/hydraulicite"),
     Path("QGIS/sites"),
+    Path("QGIS/meteoFrance"),
+    Path("QGIS/meteoFrance/bassin"),
+    Path("QGIS/meteoFrance/departement"),
+    Path("QGIS/meteoFrance/region_administrative"),
     Path("VCN3"),
     Path("VCN3/stations"),
     Path("VCN3/plot_stations"),
@@ -47,6 +51,12 @@ result_folder = [
     Path("meteoFrance/downloaded_data"),
     Path("meteoFrance/downloaded_data/mens_historique"),
     Path("meteoFrance/downloaded_data/mens_historique_archive"),
+    Path("meteoFrance/downloaded_data/mens_sim2"),
+    Path("meteoFrance/downloaded_data/mens_sim2_archive"),
+    Path("meteoFrance/downloaded_data/quot_sim2"),
+    Path("meteoFrance/downloaded_data/quot_sim2_archive"),
+    Path("meteoFrance/downloaded_data/delimitation_qgis"),
+    Path("meteoFrance/downloaded_data/delimitation_qgis_archive"),
 ]
 
 for folder in result_folder:
