@@ -325,7 +325,8 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
             raise NotImplementedError
 
     # Filtre les df pour qu'ils soient entre la date début et la date fin.
-    df_reduit_bonne_date =  df_complet[(int_date_debut <= df_complet["DATE"]) & (df_complet["DATE"] <= int_date_end)]
+    df_reduit_bonne_date =  df_complet[(int_date_debut <= df_complet["DATE"]) & (df_complet["DATE"] <= int_date_end)].copy()
+
     df_reduit_bonne_date["DATE_DATETIME"] = df_reduit_bonne_date["DATE"].apply(lambda x: datetime.strptime(str(x), format_to_catch))
 
     return df_reduit_bonne_date
