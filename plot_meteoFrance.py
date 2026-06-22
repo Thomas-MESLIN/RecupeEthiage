@@ -6,7 +6,9 @@ import calendar
 import pandas as pd
 import geopandas as gpd
 import meteoFrance_aggregation_donnee as MeteoAgg
+from meteoFrance_aggregation_donnee import GroupByMethod
 from functools import cache
+import matplotlib.pyplot as plt
 
 def plot_geojson_from_lambert2(output_path:Path, chemin_a_plot: Path|None = None,df_ready: pd.DataFrame|None = None, clip_mask: gpd.GeoDataFrame|None = None):
     """
@@ -119,7 +121,14 @@ def export_geojson_range(data_freq:MeteoFranceDataType, start_date:datetime, end
         return
 
     if is_data_aggregated:
-        df_intervalle = MeteoAgg.aggregate_range(data_freq, df_intervalle)
+        df_intervalle = MeteoAgg.aggregate_range(data_freq, df_intervalle, GroupByMethod.BY_POSITION)
+    else:
+        df_intervalle_zone_aggregated = MeteoAgg.aggregate_range(data_freq, df_intervalle, GroupByMethod.BY_DATE)
+        plot_dataframe(df_intervalle_zone_aggregated.sort_values(by=["DATE"])["SSWI_10J"],
+                       df_intervalle_zone_aggregated.sort_values(by=["DATE"])["DATE_DATETIME"],
+                       f"Standardized Soil Wetness Index : {start_date:%Y%m%d} {end_date:%Y%m%d}",
+                       normale_value=0,
+                       output_path=Path("output/testte_tste_tst.jpg"))
 
     chemin_sauvegarde = get_chemin_sauvegarde(data_freq, start_date, end_date, is_data_aggregated)
     chemin_sauvegarde.parent.mkdir(exist_ok=True)
@@ -155,6 +164,10 @@ def export_geojson_day(day_date:datetime):
 
 @cache
 def get_all_region_geodf():
+    """
+    Renvoie le dataframe contenant toutes les régions, les télécharge si besoin.
+    :return: Un Dataframe contenant toute les régions de France dans la liste DMeteoFrance.region_list_metropole.
+    """
     chemin_archive = Path("output/meteoFrance/downloaded_data/delimitation_qgis_archive/regions-100m.geojson.gz")
     chemin = Path("output/meteoFrance/downloaded_data/delimitation_qgis/regions-100m.geojson")
     id_data_gouv = "aa76860a-51af-4744-a593-4c19af2570b8"
@@ -200,8 +213,45 @@ def get_bassin_versant(code:str):
     df_bassin = df[df["CdBH"] == code]
     return df_bassin
 
-def clip_by_region(code:str):
-    pass
+def plot_dataframe(
+    series_to_plot: pd.Series,
+    series_date: pd.Series,
+    plot_name: str,
+    normale_value: float = None,
+    output_path: Path = None
+):
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Barres de la série
+    ax.bar(
+        [date.strftime("%Y-%m-%d") for date in series_date],
+        series_to_plot.values,
+        label=series_to_plot.name or "Valeurs"
+    )
+
+    # Ligne de normale
+    if normale_value is not None:
+        ax.axhline(
+            y=normale_value,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            label=f"Normale 1991-2020 : {normale_value:.2f}"
+        )
+
+    ax.tick_params(axis='x', rotation=45)
+    ax.set_title(plot_name)
+    ax.set_xlabel(series_date.name or "")
+    ax.set_ylabel(series_to_plot.name or "Valeur")
+    ax.legend()
+
+    plt.tight_layout()
+
+    plt.show()
+    if output_path is not None:
+        fig.savefig(output_path, dpi=300)
+
+
 
 if __name__ == "__main__":
     print("Plotting !")
@@ -215,26 +265,22 @@ if __name__ == "__main__":
     # departement = get_departement("71")
     # print(departement)
     # SWI d'aujourd'hui
-    export_geojson_day(datetime(2026,6,17))
+    # export_geojson_day(datetime(2026,6,17))
 
     # Donnée MENS aggrégé de 2025 à 2026.
     # export_geojson_range(MeteoFranceDataType.SIM2_MENS, datetime(2025, 1, 1), datetime(2025, 12, 31), False)
     # Cumul depuis le dernier bulletin 10 juin et nombre de jour où la temptérature est au-dessus de la normale.
-    today = datetime.today()
-    export_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 10), today, True)
+    #today = datetime.today()
+    #export_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 10), today, True)
 
-    # SWI du 10 juin
-    export_geojson_day(datetime(2026,6,10))
+    # SWI du 14 juin
+    # export_geojson_day(datetime(2026,6,14))
 
-
-
-
-    #
     # # Données pour 1 seul jour
     # plot_day(datetime(2026,5,18))
     #
     # # Données non-aggrégé sur 1 mois.
-    # plot_month(MeteoFranceDataType.SIM2_QUOT, datetime(2026,5,1))
+    export_geojson_month(MeteoFranceDataType.SIM2_QUOT, datetime(2026,5,1))
     #
     # # Données aggrégé de base sur 1 mois.
     # plot_month(MeteoFranceDataType.SIM2_MENS, datetime(2026,5,1))

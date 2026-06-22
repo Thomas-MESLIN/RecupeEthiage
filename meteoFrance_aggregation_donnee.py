@@ -3,10 +3,17 @@ from download_meteoFrance import MeteoFranceDataType
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
+from enum import Enum
 
-def aggregate_range(data_freq:MeteoFranceDataType, df_to_aggregate:pd.DataFrame):
+
+class GroupByMethod(Enum):
+    BY_POSITION = 0
+    BY_DATE = 1
+
+def aggregate_range(data_freq:MeteoFranceDataType, df_to_aggregate:pd.DataFrame, aggregation_method : GroupByMethod):
     """
     Prend un df en argument, aggrège selon chaque paramètre, en fonction de si on à une somme ou une moyenne à faire
+    :param aggregation_method: La manière dont les données sont aggrégé, cela peut-être fait par la position géographique ou par la DATE
     :param data_freq: Le type de donnée présent dans le Dataframe
     :param df_to_aggregate: Le Dataframe à aggréger
     :return: Un DataFrame, contenant les données aggrégé.
@@ -24,26 +31,38 @@ def aggregate_range(data_freq:MeteoFranceDataType, df_to_aggregate:pd.DataFrame)
             columns_to_mean = ["T", "SWI","SPI1", "SPI3", "SPI6", "SPI12", "SSWI1", "SSWI3", "SSWI6", "SSWI12"]
         case _:
             raise NotImplementedError
-    df_grouped_by = df_to_aggregate.groupby(by=group_by_columns)
 
     dico_operation = {}
+    match aggregation_method:
+        case GroupByMethod.BY_POSITION:
+            df_grouped_by = df_to_aggregate.groupby(by=group_by_columns)
+            dico_operation["DATE"] = ["min", "max"]
+            dico_operation["DATE_DATETIME"] = ["min", "max"]
+        case GroupByMethod.BY_DATE:
+            df_grouped_by = df_to_aggregate.groupby(by=["DATE"])
+            dico_operation["DATE_DATETIME"] = ["mean"]
+
     for column in columns_to_sum:
         dico_operation[column] = ["sum"]
     for column in columns_to_mean:
         dico_operation[column] = ["mean"]
 
-    dico_operation["DATE"] = ["min","max"]
-    dico_operation["DATE_DATETIME"] = ["min","max"]
 
     df_grouped_by_aggregated = df_grouped_by.agg(dico_operation)
 
     # On enlève LAMBX et LAMBY des index pour qu'ils redeviennent des colonnes "normales".
     df_grouped_by_aggregated.reset_index(inplace=True)
 
-    df_grouped_by_aggregated.columns = [
-        f"{col1}_{col2}" if "DATE" in col1 else col1
-        for col1, col2 in df_grouped_by_aggregated.columns
-    ]
+    match aggregation_method:
+        case GroupByMethod.BY_POSITION:
+            df_grouped_by_aggregated.columns = [
+                f"{col1}_{col2}" if "DATE" in col1 else col1
+                for col1, col2 in df_grouped_by_aggregated.columns
+            ]
+        case GroupByMethod.BY_DATE:
+            df_grouped_by_aggregated.columns = [
+                col1 for col1, _ in df_grouped_by_aggregated.columns
+            ]
 
     return df_grouped_by_aggregated
 
