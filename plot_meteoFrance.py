@@ -43,18 +43,18 @@ def get_chemin_sauvegarde(data_freq:MeteoFranceDataType, start_date:datetime, en
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT if start_date.date() != end_date.date():
             if is_data_aggregated:
-                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson")
+                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}/QUOT-SIM2-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson")
             else:
-                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson")
+                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-{start_date:%Y%m%d}-{end_date:%Y%m%d}/QUOT-SIM2-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson")
         case MeteoFranceDataType.SIM2_QUOT:
-            chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-{start_date:%Y%m%d}.geojson")
+            chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-{start_date:%Y%m%d}/QUOT-SIM2-{start_date:%Y%m%d}.geojson")
         case MeteoFranceDataType.SIM2_MENS if start_date.strftime("%Y%m") != end_date.strftime("%Y%m"):
             if is_data_aggregated:
-                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-SIM2-aggregated-{start_date:%Y%m}-{end_date:%Y%m}.geojson")
+                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-SIM2-aggregated-{start_date:%Y%m}-{end_date:%Y%m}/MENS-SIM2-aggregated-{start_date:%Y%m}-{end_date:%Y%m}.geojson")
             else:
-                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-SIM2-{start_date:%Y%m}-{end_date:%Y%m}.geojson")
+                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-SIM2-{start_date:%Y%m}-{end_date:%Y%m}/MENS-SIM2-{start_date:%Y%m}-{end_date:%Y%m}.geojson")
         case MeteoFranceDataType.SIM2_MENS:
-            chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-SIM2-{start_date:%Y%m}.geojson")
+            chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-SIM2-{start_date:%Y%m}/MENS-SIM2-{start_date:%Y%m}.geojson")
         case _:
             raise NotImplementedError
     return chemin_sauvegarde
@@ -69,8 +69,9 @@ def export_to_every_departement(df:pd.DataFrame, chemin_save_original:Path):
     print("Export de tous les département en cours...")
     for code in DMeteo.departement_list:
         gdf_departement = get_departement(code)
-        plot_geojson_from_lambert2(get_chemin_sauvegarde_departement(chemin_save_original,code), df_ready=df,
-                                   clip_mask=gdf_departement)
+        chemin_save = get_chemin_sauvegarde_departement(chemin_save_original,code)
+        chemin_save.parent.mkdir(exist_ok=True)
+        plot_geojson_from_lambert2(chemin_save, df_ready=df, clip_mask=gdf_departement)
     print("Export de tous les département terminés")
 
 def get_chemin_sauvegarde_region(chemin_sauvegarde_original:Path, code_region:str):
@@ -83,8 +84,9 @@ def export_to_every_region(df:pd.DataFrame, chemin_save_original:Path):
     print("Export de toutes les régions en cours...")
     for code in DMeteo.region_list_metropole:
         gdf_region = get_region(code)
-        plot_geojson_from_lambert2(get_chemin_sauvegarde_region(chemin_save_original, code), df_ready=df,
-                                   clip_mask=gdf_region)
+        chemin_save = get_chemin_sauvegarde_region(chemin_save_original, code)
+        chemin_save.parent.mkdir(exist_ok=True)
+        plot_geojson_from_lambert2(chemin_save, df_ready=df, clip_mask=gdf_region)
     print("Export de toutes les régions terminées")
 
 def get_chemin_sauvegarde_bassin(chemin_sauvegarde_original:Path, code_bassin:str):
@@ -97,8 +99,9 @@ def export_to_every_bassin(df:pd.DataFrame, chemin_save_original:Path):
     print("Export de tous les bassins en cours...")
     for code in DMeteo.code_bassin_versant_list:
         gdf_bassin = get_bassin_versant(code)
-        plot_geojson_from_lambert2(get_chemin_sauvegarde_bassin(chemin_save_original, code), df_ready=df,
-                                   clip_mask=gdf_bassin)
+        chemin_save = get_chemin_sauvegarde_bassin(chemin_save_original, code)
+        chemin_save.parent.mkdir(exist_ok=True)
+        plot_geojson_from_lambert2(chemin_save, df_ready=df, clip_mask=gdf_bassin)
     print("Export de toutes les bassins terminées")
 
 def export_geojson_range(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool):
@@ -119,7 +122,7 @@ def export_geojson_range(data_freq:MeteoFranceDataType, start_date:datetime, end
         df_intervalle = MeteoAgg.aggregate_range(data_freq, df_intervalle)
 
     chemin_sauvegarde = get_chemin_sauvegarde(data_freq, start_date, end_date, is_data_aggregated)
-
+    chemin_sauvegarde.parent.mkdir(exist_ok=True)
     # On export ele geojson qui a toute les données de la France.
     plot_geojson_from_lambert2(chemin_sauvegarde, df_ready=df_intervalle)
 
@@ -212,7 +215,7 @@ if __name__ == "__main__":
     # departement = get_departement("71")
     # print(departement)
     # SWI d'aujourd'hui
-    export_geojson_day(datetime(2026,6,14))
+    export_geojson_day(datetime(2026,6,17))
 
     # Donnée MENS aggrégé de 2025 à 2026.
     # export_geojson_range(MeteoFranceDataType.SIM2_MENS, datetime(2025, 1, 1), datetime(2025, 12, 31), False)
