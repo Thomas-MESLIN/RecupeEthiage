@@ -21,15 +21,21 @@ class GeographicScaleClip(StrEnum):
     REGION_BASSIN = "REGION_BASSIN"
     DEPARTEMENT_BASSIN = "DEPARTEMENT_BASSIN"
 
-def to_geodataframe(df_to_convert:pd.DataFrame) -> gpd.GeoDataFrame:
+def to_lambert2_geodataframe(data_freq:MeteoFranceDataType, df_to_convert:pd.DataFrame) -> gpd.GeoDataFrame:
     """
     Convertis le DataFrame en GeoDataFrame, doit avoir les colonne LAMBX et LAMBY et être en coordonnées EPSG:27572
     :param df_to_convert: Le DataFrame a convertir ne GeoDataFrame.
     :return: Le GeoDataFrame convertis.
     """
-    return gpd.GeoDataFrame(df_to_convert,
-                            geometry=gpd.points_from_xy(df_to_convert.LAMBX * 100, df_to_convert.LAMBY * 100),
-                            crs="EPSG:27572")
+    match data_freq:
+        case MeteoFranceDataType.SIM2_QUOT | MeteoFranceDataType.SIM2_MENS:
+            return gpd.GeoDataFrame(df_to_convert,
+                                    geometry=gpd.points_from_xy(df_to_convert.LAMBX * 100, df_to_convert.LAMBY * 100),
+                                    crs="EPSG:27572")
+        case MeteoFranceDataType.QUOT | MeteoFranceDataType.MENS:
+            return gpd.GeoDataFrame(df_to_convert,
+                                    geometry=gpd.points_from_xy(df_to_convert.LON, df_to_convert.LAT),
+                                    crs="EPSG:4326").to_crs("EPSG:27572")
 
 def clip_with_distance(gdf_to_clip : gpd.GeoDataFrame, clip_mask:gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """
@@ -71,6 +77,7 @@ def plot_geojson_from_lambert2(output_path:Path, chemin_a_plot: Path|None = None
 
 def get_chemin_sauvegarde(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool) -> Path:
     match data_freq:
+        # SIM2_QUOT
         case MeteoFranceDataType.SIM2_QUOT if start_date.date() != end_date.date():
             if is_data_aggregated:
                 chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}/QUOT-SIM2-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson")
@@ -78,6 +85,7 @@ def get_chemin_sauvegarde(data_freq:MeteoFranceDataType, start_date:datetime, en
                 chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-{start_date:%Y%m%d}-{end_date:%Y%m%d}/QUOT-SIM2-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson")
         case MeteoFranceDataType.SIM2_QUOT:
             chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-{start_date:%Y%m%d}/QUOT-SIM2-{start_date:%Y%m%d}.geojson")
+        # SIM2_MENS
         case MeteoFranceDataType.SIM2_MENS if start_date.strftime("%Y%m") != end_date.strftime("%Y%m"):
             if is_data_aggregated:
                 chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-SIM2-aggregated-{start_date:%Y%m}-{end_date:%Y%m}/MENS-SIM2-aggregated-{start_date:%Y%m}-{end_date:%Y%m}.geojson")
@@ -85,6 +93,22 @@ def get_chemin_sauvegarde(data_freq:MeteoFranceDataType, start_date:datetime, en
                 chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-SIM2-{start_date:%Y%m}-{end_date:%Y%m}/MENS-SIM2-{start_date:%Y%m}-{end_date:%Y%m}.geojson")
         case MeteoFranceDataType.SIM2_MENS:
             chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-SIM2-{start_date:%Y%m}/MENS-SIM2-{start_date:%Y%m}.geojson")
+        # QUOT
+        case MeteoFranceDataType.QUOT if start_date.strftime("%Y%m%d") != end_date.strftime("%Y%m%d"):
+            if is_data_aggregated:
+                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}/QUOT-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson")
+            else:
+                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-{start_date:%Y%m%d}-{end_date:%Y%m%d}/QUOT-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson")
+        case MeteoFranceDataType.QUOT:
+            chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/QUOT-{start_date:%Y%m%d}/QUOT-{start_date:%Y%m%d}.geojson")
+        # MENS
+        case MeteoFranceDataType.MENS if start_date.strftime("%Y%m") != end_date.strftime("%Y%m"):
+            if is_data_aggregated:
+                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-aggregated-{start_date:%Y%m}-{end_date:%Y%m}/MENS-aggregated-{start_date:%Y%m}-{end_date:%Y%m}.geojson")
+            else:
+                chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-{start_date:%Y%m}-{end_date:%Y%m}/MENS-{start_date:%Y%m}-{end_date:%Y%m}.geojson")
+        case MeteoFranceDataType.MENS:
+            chemin_sauvegarde = Path(f"output/QGIS/meteoFrance/MENS-{start_date:%Y%m}/MENS-{start_date:%Y%m}.geojson")
         case _:
             raise NotImplementedError
     return chemin_sauvegarde
@@ -136,7 +160,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
     print(f"Export de tous les region géographique en cours : {geographic_scale}...")
     # Conversion des coordonnées du dataframe
     print("Conversion des coordonnées")
-    gdf = to_geodataframe(df)
+    gdf = to_lambert2_geodataframe(data_freq, df)
     chemin_save_plot = chemin_save_original.parent / "plots"
     # De manière générale, sauf nationale et bassin le masque doit être redécoupé.
     is_bassin_clip_required = True
@@ -223,25 +247,26 @@ def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str
     # On crée le dossier où tout est sauvegardé.
     chemin_de_base.mkdir(exist_ok=True)
 
-    dataframe_trie_par_date = df_aggregated.sort_values(by=["DATE"])
+    dataframe_trie_par_date = df_aggregated.sort_values(by=["DATE_DATETIME"])
     dataframe_date = dataframe_trie_par_date["DATE_DATETIME"]
     # SSWI_10J
-    max_value = max(2, dataframe_trie_par_date["SSWI_10J"].max()) + 0.2
-    min_value = min(-2, dataframe_trie_par_date["SSWI_10J"].min()) - 0.2
-    plot_bar_dataframe(dataframe_trie_par_date["SSWI_10J"],
-                       dataframe_date,
-                       normale_value=0,
-                       plot_title=f"Standardized Soil Wetness Index : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
-                       output_path=chemin_de_base / "SSWI_10J.png",
-                       reference_lines={
-                           "Extrêmement humide" : (1.75,max_value ,"midnightblue"),
-                           "Très humide" : (1.28,1.75,"royalblue"),
-                           "Modérément humide" : (0.84,1.28,"turquoise"),
-                           "Autour de la Normale" : (-0.84, 0.84, "lime"),
-                           "Modérément sec" : (-1.28,-0.84,"yellow"),
-                           "Très sec" : (-1.75, -1.28,"darkorange"),
-                           "Extrêmement sec" : (min_value, -1.75,"darkred"),
-                       })
+    if "SSWI_10J" in dataframe_trie_par_date.columns:
+        max_value = max(2, dataframe_trie_par_date["SSWI_10J"].max()) + 0.2
+        min_value = min(-2, dataframe_trie_par_date["SSWI_10J"].min()) - 0.2
+        plot_bar_dataframe(dataframe_trie_par_date["SSWI_10J"],
+                           dataframe_date,
+                           normale_value=0,
+                           plot_title=f"Standardized Soil Wetness Index : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
+                           output_path=chemin_de_base / "SSWI_10J.png",
+                           reference_lines={
+                               "Extrêmement humide" : (1.75,max_value ,"midnightblue"),
+                               "Très humide" : (1.28,1.75,"royalblue"),
+                               "Modérément humide" : (0.84,1.28,"turquoise"),
+                               "Autour de la Normale" : (-0.84, 0.84, "lime"),
+                               "Modérément sec" : (-1.28,-0.84,"yellow"),
+                               "Très sec" : (-1.75, -1.28,"darkorange"),
+                               "Extrêmement sec" : (min_value, -1.75,"darkred"),
+                           })
 
 def export_all_format_geojson_range(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool):
     """
@@ -284,15 +309,16 @@ def export_geojson_month(data_freq:MeteoFranceDataType, month_date:datetime):
     end_date = datetime(month_date.year, month_date.month, calendar.monthrange(month_date.year, month_date.month)[1])
     export_all_format_geojson_range(data_freq, start_date, end_date, False)
 
-def export_geojson_day(day_date:datetime):
+def export_geojson_day(data_freq:MeteoFranceDataType, day_date:datetime):
     """
     Plot un unique jour de données.
+    :param data_freq:
     :param day_date: La date correspondant au jour choisi.
     :return: Rien
     """
     start_date = datetime(day_date.year, day_date.month, day_date.day)
     end_date = datetime(day_date.year, day_date.month, day_date.day)
-    export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, start_date, end_date, False)
+    export_all_format_geojson_range(data_freq, start_date, end_date, False)
 
 @cache
 def get_all_region_geodf():
@@ -447,7 +473,8 @@ if __name__ == "__main__":
     #
     # # Données non-aggrégé sur 1 mois.
     #export_geojson_month(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 5, 1))
-    export_geojson_month(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 1))
+    #export_geojson_day(MeteoFranceDataType.QUOT, datetime(2026, 6, 1))
+    export_geojson_month(MeteoFranceDataType.MENS, datetime(2026, 5, 1))
 
 #
     # # Données aggrégé de base sur 1 mois.

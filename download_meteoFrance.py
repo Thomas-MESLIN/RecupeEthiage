@@ -188,7 +188,7 @@ def convert_chaine_to_date(chaine:str, is_start:bool) -> datetime:
         return datetime.strptime(chaine, "%Y%m%d")
 
 
-def retrieve_decennie_ressource_id(data_freq:MeteoFranceDataType):
+def fetch_and_update_decennie_ressource_id(data_freq:MeteoFranceDataType):
     """
     Va récupérer à partir de l'id du dataset donnees-changement-climatique-sim-quotidienne
     Tous les id des décénies de chaque ressources associé.
@@ -199,14 +199,18 @@ def retrieve_decennie_ressource_id(data_freq:MeteoFranceDataType):
         case MeteoFranceDataType.SIM2_QUOT:
             id_dataset = "6569b27598256cc583c917a7"
             pattern = re.compile("(QUOT_SIM2_....-....)|(QUOT_SIM2_........-........)")
-            chemin_decennie_id = Path("output/meteoFrance/QUOT_decennie_to_id_datagouv.csv")
         case MeteoFranceDataType.SIM2_MENS:
             id_dataset = "65e040c50a5c6872ebebc711"
             pattern = re.compile("MENS_SIM2_....-....")
-            chemin_decennie_id = Path("output/meteoFrance/MENS_decennie_to_id_datagouv.csv")
+        case MeteoFranceDataType.QUOT:
+            id_dataset = "6569b51ae64326786e4e8e1a"
+            pattern = re.compile('|'.join(f"(QUOT_departement_{str_dep}_periode_....-...._.*)" for str_dep in departement_list))
+        case MeteoFranceDataType.MENS:
+            id_dataset = "6569b3d7d193b4daf2b43edc"
+            pattern = re.compile('|'.join(f"(MENS_departement_{str_dep}_periode_....-....)" for str_dep in departement_list))
         case _:
             raise NotImplementedError
-
+    chemin_decennie_id = get_path_decennie_to_id_datagouv(data_freq)
     utils.set_up_working_proxy()
     # Dataset contenant toutes les données météoFrance correspondant sur data.gouv.fr
     dataset_complet = Dataset(id_dataset)
@@ -216,6 +220,8 @@ def retrieve_decennie_ressource_id(data_freq:MeteoFranceDataType):
         titre_ressource = res.title
         if pattern.match(titre_ressource):
             debut_fin_decenie = titre_ressource.split("_")[-1]
+            if "autres" in debut_fin_decenie  or "RR-T" in debut_fin_decenie:
+                debut_fin_decenie = titre_ressource.split("_")[-2]
             date_debut = debut_fin_decenie.split("-")[0]
             date_fin = debut_fin_decenie.split("-")[1]
             tous_les_couples.append(
@@ -229,15 +235,21 @@ def retrieve_decennie_ressource_id(data_freq:MeteoFranceDataType):
     print(f"Index decennie -> id_datagouv updated : {chemin_decennie_id}")
     df_decennie_id.to_csv(chemin_decennie_id, index=False)
 
-
-def get_df_decennie_to_id_datagouv(data_freq:MeteoFranceDataType):
+def get_path_decennie_to_id_datagouv(data_freq:MeteoFranceDataType):
     match data_freq:
         case MeteoFranceDataType.SIM2_MENS:
-            chemin_decennie_id = Path("output/meteoFrance/MENS_decennie_to_id_datagouv.csv")
+            return Path("output/meteoFrance/MENS_SIM2_decennie_to_id_datagouv.csv")
         case MeteoFranceDataType.SIM2_QUOT:
-            chemin_decennie_id = Path("output/meteoFrance/QUOT_decennie_to_id_datagouv.csv")
+            return Path("output/meteoFrance/QUOT_SIM2_decennie_to_id_datagouv.csv")
+        case MeteoFranceDataType.QUOT:
+            return Path("output/meteoFrance/QUOT_decennie_to_id_datagouv.csv")
+        case MeteoFranceDataType.MENS:
+            return Path("output/meteoFrance/MENS_decennie_to_id_datagouv.csv")
         case _:
             raise NotImplementedError
+
+def get_df_decennie_to_id_datagouv(data_freq:MeteoFranceDataType):
+    chemin_decennie_id = get_path_decennie_to_id_datagouv(data_freq)
     if not chemin_decennie_id.exists():
         return pd.DataFrame()
     df_decennie_to_id = pd.read_csv(chemin_decennie_id)
@@ -251,24 +263,33 @@ def delete_old_file(freq_data:MeteoFranceDataType, df_origine:pd.DataFrame, df_n
     :param df_nouveau: Le df après la mise à jour de l'index.
     :return: Rien
     """
-    df_comparison = df_origine.compare(df_nouveau)
-    if df_comparison.empty:
+    df_origine_reindex = df_origine.set_index(["debut_decennie","fin_decennie"])
+    df_nouveau_reindex = df_nouveau.set_index(["debut_decennie","fin_decennie"])
+    df_comparison = df_origine_reindex[~df_origine_reindex.isin(df_nouveau_reindex)].dropna()
+    df_comparison_reseted = df_comparison.reset_index()
+    if df_comparison_reseted.empty:
         return
     else:
         print("Des choses on changé !")
         print(df_comparison)
-    for i in df_comparison.index:
+    for i in df_comparison_reseted.index:
         row_a_supprimer = df_origine.loc[i]
         date_debut = datetime.strptime(row_a_supprimer["debut_decennie"], "%Y-%m-%d")
         date_fin = datetime.strptime(row_a_supprimer["fin_decennie"], "%Y-%m-%d")
-        chemin_a_supprimer_csv = get_chemin_data_downloaded(freq_data, date_debut, date_fin, False)
-        chemin_a_supprimer_gz = get_chemin_data_downloaded(freq_data, date_debut, date_fin, True)
+        id_datagouv = row_a_supprimer["id_ressource_datagouv"]
+        chemin_a_supprimer_csv = get_chemin_data_downloaded(freq_data, date_debut, date_fin, id_datagouv, False)
+        chemin_a_supprimer_gz = get_chemin_data_downloaded(freq_data, date_debut, date_fin, id_datagouv, True)
         chemin_a_supprimer_csv.unlink()
         chemin_a_supprimer_gz.unlink()
         print("Les vieux fichiers : ")
         print(chemin_a_supprimer_csv)
         print(chemin_a_supprimer_gz)
         print("On été supprimé.")
+
+@cache
+def is_user_want_update_data():
+    res = input("Souhaitez vous mettre à jour les données ? N/y")
+    return 'y' in res.lower()
 
 @cache
 def update_decennie_to_id_datagouv(freq_data:MeteoFranceDataType):
@@ -280,10 +301,11 @@ def update_decennie_to_id_datagouv(freq_data:MeteoFranceDataType):
     :param freq_data: Le type de donnée qui est affecté.
     :return: Rien
     """
-
+    if not is_user_want_update_data():
+        return
     old_df_decennie_to_id_datagouv = get_df_decennie_to_id_datagouv(freq_data)
     # Télécharger le nouveau
-    retrieve_decennie_ressource_id(freq_data)
+    fetch_and_update_decennie_ressource_id(freq_data)
     new_df_decennie_to_id_datagouv = get_df_decennie_to_id_datagouv(freq_data)
     # On cherche les différences entre les deux df.
     if not old_df_decennie_to_id_datagouv.empty:
@@ -328,26 +350,39 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
     for date_debut_fichier, date_fin_fichier, id_datagouv in file_to_gather:
         all_df.append(get_df_decennie(data_freq, date_debut_fichier, date_fin_fichier, id_datagouv))
     df_complet = pd.concat(all_df, ignore_index=True)
-    df_complet.drop_duplicates(subset=["LAMBX","LAMBY","DATE"],inplace=True)
+    match data_freq:
+        case MeteoFranceDataType.SIM2_QUOT | MeteoFranceDataType.SIM2_MENS:
+            df_complet.drop_duplicates(subset=["LAMBX","LAMBY","DATE"],inplace=True)
+        case MeteoFranceDataType.QUOT | MeteoFranceDataType.MENS:
+            df_complet.drop_duplicates(subset=["LAT","LON","AAAAMMJJ"],inplace=True)
+        case _:
+            raise NotImplementedError
     print("Files loaded successfully...")
     print(df_complet)
 
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT:
-            int_date_debut = int(date_debut.strftime("%Y%m%d"))
-            int_date_end = int(date_end.strftime("%Y%m%d"))
             format_to_catch = "%Y%m%d"
+            nom_colonne_date = "DATE"
         case MeteoFranceDataType.SIM2_MENS:
-            int_date_debut = int(date_debut.strftime("%Y%m"))
-            int_date_end = int(date_end.strftime("%Y%m"))
             format_to_catch = "%Y%m"
+            nom_colonne_date = "DATE"
+        case MeteoFranceDataType.QUOT:
+            format_to_catch = "%Y%m%d"
+            nom_colonne_date = "AAAAMMJJ"
+        case MeteoFranceDataType.MENS:
+            format_to_catch = "%Y%m"
+            nom_colonne_date = "AAAAMMJJ"
         case _:
             raise NotImplementedError
 
-    # Filtre les df pour qu'ils soient entre la date début et la date fin.
-    df_reduit_bonne_date =  df_complet[(int_date_debut <= df_complet["DATE"]) & (df_complet["DATE"] <= int_date_end)].copy()
+    int_date_debut = int(date_debut.strftime(format_to_catch))
+    int_date_end = int(date_end.strftime(format_to_catch))
 
-    df_reduit_bonne_date["DATE_DATETIME"] = df_reduit_bonne_date["DATE"].apply(lambda x: datetime.strptime(str(x), format_to_catch))
+    # Filtre les df pour qu'ils soient entre la date début et la date fin.
+    df_reduit_bonne_date =  df_complet[(int_date_debut <= df_complet[nom_colonne_date]) & (df_complet[nom_colonne_date] <= int_date_end)].copy()
+
+    df_reduit_bonne_date["DATE_DATETIME"] = df_reduit_bonne_date[nom_colonne_date].apply(lambda x: datetime.strptime(str(x), format_to_catch))
 
     return df_reduit_bonne_date
 
@@ -384,13 +419,13 @@ def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date
     :param id_gouv_data:
     :return:
     """
-    chemin = get_chemin_data_downloaded(freq_data, start_date, end_date, False)
-    chemin_archive = get_chemin_data_downloaded(freq_data, start_date, end_date, True)
+    chemin = get_chemin_data_downloaded(freq_data, start_date, end_date, id_gouv_data, False)
+    chemin_archive = get_chemin_data_downloaded(freq_data, start_date, end_date, id_gouv_data, True)
 
     print(f"Loading : {chemin}")
     if not chemin.exists():
         download_and_extract(id_gouv_data, chemin_archive, chemin)
-    elif not is_path_updated_with_datagouv(chemin, id_gouv_data):
+    elif is_user_want_update_data() and not is_path_updated_with_datagouv(chemin, id_gouv_data):
         # On met a jour nos indices et on supprimes les fichiers qui n'existent plus.
         # On vérifie que le fichier est à jour par rapport au métadonnées du site.
         download_and_extract(id_gouv_data, chemin_archive, chemin)
@@ -415,12 +450,13 @@ def download_and_extract(id_datagouv:str, chemin_archive:Path,chemin_final:Path)
 def is_date_overlapping(debut_1: datetime, fin_1: datetime, debut_2: datetime, fin_2: datetime):
     return debut_2 <=  debut_1 <= fin_2 or debut_2 <= fin_1 <= fin_2 or (debut_1 <= debut_2 and fin_2 <= fin_1)
 
-def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:datetime,fin_decenie:datetime,is_archive: bool)->Path:
+def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:datetime,fin_decenie:datetime, id_gouv_data:str, is_archive: bool)->Path:
     """
     Renvoie le chemin vers le fichier contenant les données téléchargé pour le type de données souhaitée..
     :param freq_data: Le type de donnée
     :param debut_decenie: AAAA-MM-JJ
     :param fin_decenie: AAAA-MM-JJ
+    :param id_gouv_data: L'identifiant unique par fichier indiquant le id datagouv.
     :param is_archive: Si True, renvoie un .csv.gz, si faut, renvoie un .csv
     :return: Chemin vers le fichier sim2
     """
@@ -432,9 +468,25 @@ def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:date
                 return Path(f"output/meteoFrance/downloaded_data/quot_sim2/QUOT_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
         case MeteoFranceDataType.SIM2_MENS:
             if is_archive:
-                return Path(f"output/meteoFrance/downloaded_data/mens_sim2_archive/MENS_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz")
+                return Path(
+                    f"output/meteoFrance/downloaded_data/mens_sim2_archive/MENS_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz")
             else:
-                return Path(f"output/meteoFrance/downloaded_data/mens_sim2/MENS_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
+                return Path(
+                    f"output/meteoFrance/downloaded_data/mens_sim2/MENS_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
+        case MeteoFranceDataType.QUOT:
+            if is_archive:
+                return Path(
+                    f"output/meteoFrance/downloaded_data/quot_archive/QUOT_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz")
+            else:
+                return Path(
+                    f"output/meteoFrance/downloaded_data/quot/QUOT_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
+        case MeteoFranceDataType.MENS:
+            if is_archive:
+                return Path(
+                    f"output/meteoFrance/downloaded_data/mens_archive/MENS_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz")
+            else:
+                return Path(
+                    f"output/meteoFrance/downloaded_data/mens/MENS_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
         case _:
             raise NotImplementedError
 
