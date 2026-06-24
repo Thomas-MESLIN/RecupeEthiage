@@ -1,5 +1,6 @@
 from pathlib import Path
 # USAGE : The script sert à créer l'arborescence de dossier utilisé par les différents scritps
+print("Initialisation projet")
 
 output_folder = Path("output")
 output_folder.mkdir(exist_ok=True)
@@ -58,3 +59,5 @@ result_folder = [
 
 for folder in result_folder:
     ("output" / folder).mkdir(exist_ok=True)
+
+print("Initialisation projet terminé !")

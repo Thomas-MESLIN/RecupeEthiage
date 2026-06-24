@@ -8,20 +8,20 @@ from functools import cache
 import utils
 import re
 import pandas as pd
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 import init_project
 
 region_list_metropole = [
-    "11",
-    "24",
+#    "11",
+#    "24",
     "27",
-    "28",
-    "32",
+#    "28",
+#    "32",
     "44",
-    "52",
-    "53",
-    "75",
+#    "52",
+#    "53",
+#    "75",
     "76",
     "84",
     "93",
@@ -399,6 +399,7 @@ def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date
     return df
 
 def download_and_extract(id_datagouv:str, chemin_archive:Path,chemin_final:Path):
+    print(f"Downloading {chemin_final.name}...")
     utils.set_up_working_proxy()
     r = get_gouv_ressource(id_datagouv)
     r.download(chemin_archive)

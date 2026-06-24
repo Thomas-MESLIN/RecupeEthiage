@@ -89,12 +89,6 @@ def get_chemin_sauvegarde(data_freq:MeteoFranceDataType, start_date:datetime, en
             raise NotImplementedError
     return chemin_sauvegarde
 
-def get_chemin_sauvegarde_departement(chemin_sauvegarde_original:Path, code_departement:str)->Path:
-    nouveau_chemin = chemin_sauvegarde_original
-    nouveau_chemin = nouveau_chemin.with_stem(f"{chemin_sauvegarde_original.stem}-D{code_departement}")
-    nouveau_chemin = nouveau_chemin.parent / "departement" / nouveau_chemin.name
-    return nouveau_chemin
-
 def get_chemin_sauvegarde_geographie(geographic_scale:GeographicScaleClip, chemin_sauvegarde_original:Path, code_geographique:str|None="")->Path:
     """
     Renvoie le chemin de sauvegarde pour chaque niveau geographique en se basant sur le dossier de sauvegarde actuel.
@@ -127,51 +121,72 @@ def get_chemin_sauvegarde_geographie(geographic_scale:GeographicScaleClip, chemi
     nouveau_chemin = nouveau_chemin.parent / dossier / nouveau_chemin.name
     return nouveau_chemin
 
-def export_to_every_geographic_element(geographic_scale:GeographicScaleClip, df:pd.DataFrame, chemin_save_original:Path):
+def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographic_scale:GeographicScaleClip, df:pd.DataFrame, chemin_save_original:Path, is_data_aggregated:bool):
+    """
+    Export en géojson le df à toute les échelles.
+
+    Génère des plots si associés à chaque zone géographique, si les données ne sont pas aggrégé.
+    :param is_data_aggregated: Si les données sont aggrégé, ne génère pas les plots.
+    :param data_freq:
+    :param geographic_scale:
+    :param df:
+    :param chemin_save_original:
+    :return:
+    """
     print(f"Export de tous les region géographique en cours : {geographic_scale}...")
     # Conversion des coordonnées du dataframe
     print("Conversion des coordonnées")
     gdf = to_geodataframe(df)
-
+    chemin_save_plot = chemin_save_original.parent / "plots"
     # De manière générale, sauf nationale et bassin le masque doit être redécoupé.
-    is_mask_clip_required = True
+    is_bassin_clip_required = True
     match geographic_scale:
         case GeographicScaleClip.NATIONAL:
             plot_geojson_from_lambert2(chemin_save_original, gdf_ready=gdf)
             return
         case GeographicScaleClip.BASSIN:
-            is_mask_clip_required = False
+            is_bassin_clip_required = False
             element_list = DMeteo.code_bassin_versant_list
         case GeographicScaleClip.DEPARTEMENT_BASSIN:
-            is_mask_clip_required = True
+            is_bassin_clip_required = True
             element_list = DMeteo.departement_list
         case GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
-            is_mask_clip_required = False
+            is_bassin_clip_required = False
             element_list = DMeteo.departement_list
         case GeographicScaleClip.REGION_BASSIN:
-            is_mask_clip_required = True
+            is_bassin_clip_required = True
             element_list = DMeteo.region_list_metropole
         case GeographicScaleClip.REGION_ADMINISTRATIVE:
-            is_mask_clip_required = False
+            is_bassin_clip_required = False
             element_list = DMeteo.region_list_metropole
 
+    start_date = gdf["DATE_DATETIME"].min()
+    end_date = gdf["DATE_DATETIME"].max()
+
+    chemin_zone_geographique = chemin_save_plot / geographic_scale
     print("Récupération Mask bassin versant")
     # Récupération du bassin versant
-    gdf_bassin = get_bassin_versant(BASSIN_VERSANT_DECOUPAGE)
+    gdf_bassin_mask = get_bassin_versant(BASSIN_VERSANT_DECOUPAGE)
     for code in element_list:
+        print(f"code : {code}")
         print("Récupération Mask")
         gdf_geographie_mask = get_geographic_element(geographic_scale, code)
-        # Si on doit prendre l'échelle bassin, on découpe le masque pour qu'il y rentre.
-
-        print("Clipping Mask")
-        if is_mask_clip_required:
-            gdf_mask_recoupe = gpd.GeoDataFrame(gpd.tools.clip(gdf_geographie_mask, gdf_bassin, keep_geom_type=True))
-        else:
-            gdf_mask_recoupe = gdf_geographie_mask
 
         # On procède au clipping du gdf d'origine.
         print("Clipping gdf")
-        gdf_to_plot = clip_with_distance(gdf, gdf_mask_recoupe)
+        gdf_first_clip = clip_with_distance(gdf, gdf_geographie_mask)
+
+        # Si on doit prendre l'échelle bassin, on découpe les données restantes avec le masque du bassin.
+        print("Clipping with Bassin")
+        if is_bassin_clip_required:
+            gdf_second_clip = clip_with_distance(gdf_first_clip, gdf_bassin_mask)
+        else:
+            gdf_second_clip = gdf_first_clip
+
+        if len(gdf_second_clip) == 0:
+            print("Les données se sont fait supprimé par la découpe sur bassin et la géographie !")
+            print("Passage à l'élément suivant !")
+            continue
 
         # On récupère le chemin de sauvegarde.
         chemin_save = get_chemin_sauvegarde_geographie(geographic_scale, chemin_save_original,code)
@@ -179,41 +194,19 @@ def export_to_every_geographic_element(geographic_scale:GeographicScaleClip, df:
 
         # On plot le résultat
         print("Sauvegarde gdf")
-        plot_geojson_from_lambert2(chemin_save, gdf_ready=gdf_to_plot)
+        plot_geojson_from_lambert2(chemin_save, gdf_ready=gdf_second_clip)
+
+        # On crée les plots matplotlib associé à cette zone gégraphique.
+        if not is_data_aggregated:
+            print("Créations des plots pour la zone géographique.")
+            gdf_aggrege_by_datetime = MeteoAgg.aggregate_range(data_freq ,gdf_second_clip, GroupByMethod.BY_DATE)
+            #Créer le dossier de cahque zone geographiique et faire a l'interieur un dossier par code.
+            chemin_code = chemin_zone_geographique / code
+            chemin_code.mkdir(parents=True, exist_ok=True)
+            nom_echelle = f"{geographic_scale}-{code}"
+            create_all_plot_for_unique_scale(gdf_aggrege_by_datetime, nom_echelle, start_date,end_date, chemin_code)
 
     print(f"Export de tous les {geographic_scale} terminés.")
-
-def get_chemin_sauvegarde_region(chemin_sauvegarde_original:Path, code_region:str):
-    nouveau_chemin = chemin_sauvegarde_original
-    nouveau_chemin = nouveau_chemin.with_stem(f"{chemin_sauvegarde_original.stem}-R{code_region}")
-    nouveau_chemin = nouveau_chemin.parent / "region_administrative" / nouveau_chemin.name
-    return nouveau_chemin
-
-def export_to_every_region(df:pd.DataFrame, chemin_save_original:Path):
-    print("Export de toutes les régions en cours...")
-    gdf_bassin = get_bassin_versant(BASSIN_VERSANT_DECOUPAGE)
-    for code in DMeteo.region_list_metropole:
-        gdf_region = get_region(code)
-        chemin_save = get_chemin_sauvegarde_region(chemin_save_original, code)
-        chemin_save.parent.mkdir(exist_ok=True)
-        gdf_region_recoupee_bassin = gpd.GeoDataFrame(gpd.tools.clip(gdf_region, gdf_bassin))
-        plot_geojson_from_lambert2(chemin_save, df_ready=df, clip_mask=gdf_region_recoupee_bassin)
-    print("Export de toutes les régions terminées")
-
-def get_chemin_sauvegarde_bassin(chemin_sauvegarde_original:Path, code_bassin:str):
-    nouveau_chemin = chemin_sauvegarde_original
-    nouveau_chemin = nouveau_chemin.with_stem(f"{chemin_sauvegarde_original.stem}-B{code_bassin}")
-    nouveau_chemin = nouveau_chemin.parent / "bassin" / nouveau_chemin.name
-    return nouveau_chemin
-
-def export_to_every_bassin(df:pd.DataFrame, chemin_save_original:Path):
-    print("Export de tous les bassins en cours...")
-    for code in DMeteo.code_bassin_versant_list:
-        gdf_bassin = get_bassin_versant(code)
-        chemin_save = get_chemin_sauvegarde_bassin(chemin_save_original, code)
-        chemin_save.parent.mkdir(exist_ok=True)
-        plot_geojson_from_lambert2(chemin_save, df_ready=df, clip_mask=gdf_bassin)
-    print("Export de toutes les bassins terminées")
 
 def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str, start_date:datetime, end_date:datetime, chemin_de_base:Path):
     """
@@ -233,42 +226,22 @@ def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str
     dataframe_trie_par_date = df_aggregated.sort_values(by=["DATE"])
     dataframe_date = dataframe_trie_par_date["DATE_DATETIME"]
     # SSWI_10J
+    max_value = max(2, dataframe_trie_par_date["SSWI_10J"].max()) + 0.2
+    min_value = min(-2, dataframe_trie_par_date["SSWI_10J"].min()) - 0.2
     plot_bar_dataframe(dataframe_trie_par_date["SSWI_10J"],
                        dataframe_date,
                        normale_value=0,
                        plot_title=f"Standardized Soil Wetness Index : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
-                       output_path=chemin_de_base / "SSWI_10J.png")
-
-
-def plot_all_scale(data_freq:MeteoFranceDataType, df_intervalle_aggregated:pd.DataFrame, start_date:datetime, end_date:datetime):
-    """
-    Exporte le Dataframe passé en paramètre vers des plots, réalisé aux échelles nationales, bassins, régionales et départementales.
-    :param data_freq: Les données ne doivent pas être aggrégé, sinon on a une seule barre sur chaque plot !
-    :param df_intervalle_aggregated:
-    :param start_date:
-    :param end_date:
-    :return:
-    """
-    base_path = get_chemin_sauvegarde(data_freq, start_date, end_date, False)
-    dossier_racine_plots = base_path.parent / "plots"
-    dossier_racine_plots.mkdir(exist_ok=True)
-
-    # Exporter à l'échelle nationale.
-    print("Créations des plots - échelle nationale")
-    create_all_plot_for_unique_scale(df_intervalle_aggregated,
-                                     "Nationale",
-                                     start_date,
-                                     end_date,
-                                     dossier_racine_plots / "nationale")
-
-    # Exporter à l'échelle bassin,
-    print("Créations des plots - échelle bassin")
-
-    # Exporter à l'échelle Régionale,
-    print("Créations des plots - échelle régionale")
-
-    # Exporter à l'échelle Départementale.
-    print("Créations des plots - échelle départementale")
+                       output_path=chemin_de_base / "SSWI_10J.png",
+                       reference_lines={
+                           "Extrêmement humide" : (1.75,max_value ,"midnightblue"),
+                           "Très humide" : (1.28,1.75,"royalblue"),
+                           "Modérément humide" : (0.84,1.28,"turquoise"),
+                           "Autour de la Normale" : (-0.84, 0.84, "lime"),
+                           "Modérément sec" : (-1.28,-0.84,"yellow"),
+                           "Très sec" : (-1.75, -1.28,"darkorange"),
+                           "Extrêmement sec" : (min_value, -1.75,"darkred"),
+                       })
 
 def export_all_format_geojson_range(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool):
     """
@@ -289,17 +262,14 @@ def export_all_format_geojson_range(data_freq:MeteoFranceDataType, start_date:da
 
     if is_data_aggregated:
         df_intervalle = MeteoAgg.aggregate_range(data_freq, df_intervalle, GroupByMethod.BY_POSITION)
-    else:
-        df_intervalle_aggregated_by_date = MeteoAgg.aggregate_range(data_freq, df_intervalle, GroupByMethod.BY_DATE)
-        plot_all_scale(data_freq, df_intervalle_aggregated_by_date, start_date, end_date)
 
     chemin_sauvegarde = get_chemin_sauvegarde(data_freq, start_date, end_date, is_data_aggregated)
     chemin_sauvegarde.parent.mkdir(exist_ok=True)
 
-    export_to_every_geographic_element(GeographicScaleClip.NATIONAL, df_intervalle, chemin_sauvegarde)
-    export_to_every_geographic_element(GeographicScaleClip.BASSIN, df_intervalle, chemin_sauvegarde)
-    export_to_every_geographic_element(GeographicScaleClip.REGION_BASSIN, df_intervalle, chemin_sauvegarde)
-    export_to_every_geographic_element(GeographicScaleClip.DEPARTEMENT_BASSIN, df_intervalle, chemin_sauvegarde)
+    export_to_every_geographic_element(data_freq, GeographicScaleClip.DEPARTEMENT_BASSIN, df_intervalle, chemin_sauvegarde, is_data_aggregated)
+    export_to_every_geographic_element(data_freq, GeographicScaleClip.NATIONAL, df_intervalle, chemin_sauvegarde, is_data_aggregated)
+    export_to_every_geographic_element(data_freq, GeographicScaleClip.BASSIN, df_intervalle, chemin_sauvegarde, is_data_aggregated)
+    export_to_every_geographic_element(data_freq, GeographicScaleClip.REGION_BASSIN, df_intervalle, chemin_sauvegarde, is_data_aggregated)
 
 
 def export_geojson_month(data_freq:MeteoFranceDataType, month_date:datetime):
@@ -364,25 +334,18 @@ def get_geographic_element(geographic_scale:GeographicScaleClip, code:str):
     match geographic_scale:
         case GeographicScaleClip.BASSIN:
             df = get_all_bassin_versant()
+            nom_colonne = "CdBH"
         case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
             df = get_all_departement_geodf()
+            nom_colonne = "code"
         case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
             df = get_all_region_geodf()
+            nom_colonne = "code"
         case _:
             raise NotImplementedError
-    df_departement = df[df["code"] == code]
+
+    df_departement = df[df[nom_colonne] == code]
     return df_departement
-
-
-def get_departement(code:str):
-    df = get_all_departement_geodf()
-    df_departement = df[df["code"] == code]
-    return df_departement
-
-def get_region(code:str):
-    df = get_all_region_geodf()
-    df_region = df[df["code"] == code]
-    return df_region
 
 def get_bassin_versant(code:str):
     df = get_all_bassin_versant()
@@ -394,6 +357,7 @@ def plot_bar_dataframe(
     series_date: pd.Series,
     normale_value: float = None,
     plot_title: str = "",
+    reference_lines: dict[str, tuple[float,float,str]] = None,
     output_path: Path = None
 ):
     """
@@ -406,10 +370,25 @@ def plot_bar_dataframe(
     :param series_date:La série de datetime correspondant aux valeurs
     :param normale_value: La valeur normale pour cette série.
     :param plot_title:Le titre du plot
+    :param reference_lines: Un ensemble de ligne horizontale traversant le graphique
     :param output_path: Chemin vers lequel le plot est enregistré.
     :return: Rien
     """
     fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Zone horizontale de référence.
+    if reference_lines is not None:
+        for key_label in reference_lines.keys():
+            start_range, end_range, color = reference_lines[key_label]
+            ax.axhspan(
+                ymin=start_range,
+                ymax=end_range,
+                alpha=0.3,
+                color=color,
+                linestyle="--",
+                linewidth=1,
+                label=f"{key_label} [{start_range:.2f}:{end_range:.2f}]"
+            )
 
     # Barres de la série
     ax.bar(
@@ -435,7 +414,6 @@ def plot_bar_dataframe(
 
     plt.tight_layout()
 
-    plt.show()
     if output_path is not None:
         fig.savefig(output_path, dpi=300)
 
@@ -468,8 +446,10 @@ if __name__ == "__main__":
     # plot_day(datetime(2026,5,18))
     #
     # # Données non-aggrégé sur 1 mois.
-    export_geojson_month(MeteoFranceDataType.SIM2_QUOT, datetime(2026,5,1))
-    #
+    #export_geojson_month(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 5, 1))
+    export_geojson_month(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 1))
+
+#
     # # Données aggrégé de base sur 1 mois.
     # plot_month(MeteoFranceDataType.SIM2_MENS, datetime(2026,5,1))
     #
