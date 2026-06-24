@@ -259,14 +259,43 @@ def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str
                            plot_title=f"Standardized Soil Wetness Index : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
                            output_path=chemin_de_base / "SSWI_10J.png",
                            reference_lines={
-                               "Extrêmement humide" : (1.75,max_value ,"midnightblue"),
-                               "Très humide" : (1.28,1.75,"royalblue"),
-                               "Modérément humide" : (0.84,1.28,"turquoise"),
-                               "Autour de la Normale" : (-0.84, 0.84, "lime"),
-                               "Modérément sec" : (-1.28,-0.84,"yellow"),
-                               "Très sec" : (-1.75, -1.28,"darkorange"),
-                               "Extrêmement sec" : (min_value, -1.75,"darkred"),
+                               "Extrêmement humide": (1.75, max_value, "midnightblue"),
+                               "Très humide": (1.28, 1.75, "royalblue"),
+                               "Modérément humide": (0.84, 1.28, "turquoise"),
+                               "Autour de la Normale": (-0.84, 0.84, "lime"),
+                               "Modérément sec": (-1.28, -0.84, "yellow"),
+                               "Très sec": (-1.75, -1.28, "darkorange"),
+                               "Extrêmement sec": (min_value, -1.75, "darkred"),
                            })
+
+    if "PE" in dataframe_trie_par_date.columns:
+        plot_bar_dataframe(dataframe_trie_par_date["PE"],
+                           dataframe_date,
+                           plot_title=f"Pluie Efficace : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
+                           output_path=chemin_de_base / "PE.png")
+
+    if "RR" in dataframe_trie_par_date.columns:
+        plot_bar_dataframe(dataframe_trie_par_date["RR"],
+                           dataframe_date,
+                           plot_title=f"Cumul de pluie : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
+                           output_path=chemin_de_base / "RR.png")
+
+    if "SPI1" in dataframe_trie_par_date.columns:
+        max_value = max(2, dataframe_trie_par_date["SPI1"].max()) + 0.2
+        min_value = min(-2, dataframe_trie_par_date["SPI1"].min()) - 0.2
+        plot_bar_dataframe(dataframe_trie_par_date["SPI1"],
+                           dataframe_date,
+                           normale_value=0,
+                           plot_title=f"Cumul de pluie : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
+                           output_path=chemin_de_base / "SPI1.png",
+                           reference_lines={
+                               "Extrêmement humide": (2.0, max_value, "midnightblue"),
+                               "Modérément humide": (1.0, 2.0, "turquoise"),
+                               "Autour de la Normale": (-1.0, 1.0, "lime"),
+                               "Modérément sec": (-2.0, -1.0, "yellow"),
+                               "Extrêmement sec": (min_value, -2, "darkred"),
+                           }
+                           )
 
 def export_all_format_geojson_range(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool):
     """
@@ -442,6 +471,7 @@ def plot_bar_dataframe(
 
     if output_path is not None:
         fig.savefig(output_path, dpi=300)
+    plt.close(fig)
 
 
 
@@ -485,3 +515,8 @@ if __name__ == "__main__":
     #
     # # Donnée MENS non-aggrégé de 2020 à 2026.
     # export_geojson_range(MeteoFranceDataType.SIM2_MENS, datetime(2020, 1, 1), datetime(2026, 5, 1), False)
+
+    # CUMUL des quantités d'eau depuis le début de l'année hydrologique.
+    today = datetime.today()
+    export_all_format_geojson_range(MeteoFranceDataType.SIM2_MENS, datetime(2025, 9, 1), today, False)
+    export_all_format_geojson_range(MeteoFranceDataType.MENS, datetime(2025, 9, 1), today, False)

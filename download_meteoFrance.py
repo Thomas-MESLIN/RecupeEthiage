@@ -263,8 +263,10 @@ def delete_old_file(freq_data:MeteoFranceDataType, df_origine:pd.DataFrame, df_n
     :param df_nouveau: Le df après la mise à jour de l'index.
     :return: Rien
     """
-    df_origine_reindex = df_origine.set_index(["debut_decennie","fin_decennie"])
-    df_nouveau_reindex = df_nouveau.set_index(["debut_decennie","fin_decennie"])
+    df_origine_reindex = df_origine.set_index(["debut_decennie","fin_decennie","id_ressource_datagouv"])
+    df_origine_reindex["col_with_random_data_so_delete_isin_can_work"] = 1
+    df_nouveau_reindex = df_nouveau.set_index(["debut_decennie","fin_decennie","id_ressource_datagouv"])
+    df_nouveau_reindex["col_with_random_data_so_delete_isin_can_work"] = 1
     df_comparison = df_origine_reindex[~df_origine_reindex.isin(df_nouveau_reindex)].dropna()
     df_comparison_reseted = df_comparison.reset_index()
     if df_comparison_reseted.empty:
@@ -279,8 +281,8 @@ def delete_old_file(freq_data:MeteoFranceDataType, df_origine:pd.DataFrame, df_n
         id_datagouv = row_a_supprimer["id_ressource_datagouv"]
         chemin_a_supprimer_csv = get_chemin_data_downloaded(freq_data, date_debut, date_fin, id_datagouv, False)
         chemin_a_supprimer_gz = get_chemin_data_downloaded(freq_data, date_debut, date_fin, id_datagouv, True)
-        chemin_a_supprimer_csv.unlink()
-        chemin_a_supprimer_gz.unlink()
+        chemin_a_supprimer_csv.unlink(missing_ok=True)
+        chemin_a_supprimer_gz.unlink(missing_ok=True)
         print("Les vieux fichiers : ")
         print(chemin_a_supprimer_csv)
         print(chemin_a_supprimer_gz)
@@ -353,8 +355,10 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT | MeteoFranceDataType.SIM2_MENS:
             df_complet.drop_duplicates(subset=["LAMBX","LAMBY","DATE"],inplace=True)
-        case MeteoFranceDataType.QUOT | MeteoFranceDataType.MENS:
+        case MeteoFranceDataType.QUOT:
             df_complet.drop_duplicates(subset=["LAT","LON","AAAAMMJJ"],inplace=True)
+        case MeteoFranceDataType.MENS:
+            df_complet.drop_duplicates(subset=["LAT", "LON", "AAAAMM"], inplace=True)
         case _:
             raise NotImplementedError
     print("Files loaded successfully...")
@@ -372,7 +376,7 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
             nom_colonne_date = "AAAAMMJJ"
         case MeteoFranceDataType.MENS:
             format_to_catch = "%Y%m"
-            nom_colonne_date = "AAAAMMJJ"
+            nom_colonne_date = "AAAAMM"
         case _:
             raise NotImplementedError
 
@@ -491,8 +495,10 @@ def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:date
             raise NotImplementedError
 
 if __name__ == "__main__":
-    res_sim_quot_1 = get_data_in_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 5, 1), datetime(2026, 5, 30))
-    res_sim_quot_1.to_csv(Path("output/test/res_quot_sim_1.csv"), index=False)
-
-    res_sim_mens_1 = get_data_in_range(MeteoFranceDataType.SIM2_MENS, datetime(2026, 5, 1), datetime(2026, 5, 30))
-    res_sim_mens_1.to_csv(Path("output/test/res_mens_sim_1.csv"), index=False)
+    date_freq = MeteoFranceDataType.MENS
+    delete_old_file(date_freq, get_df_decennie_to_id_datagouv(date_freq), get_df_decennie_to_id_datagouv(date_freq))
+    # res_sim_quot_1 = get_data_in_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 5, 1), datetime(2026, 5, 30))
+    # res_sim_quot_1.to_csv(Path("output/test/res_quot_sim_1.csv"), index=False)
+    #
+    # res_sim_mens_1 = get_data_in_range(MeteoFranceDataType.SIM2_MENS, datetime(2026, 5, 1), datetime(2026, 5, 30))
+    # res_sim_mens_1.to_csv(Path("output/test/res_mens_sim_1.csv"), index=False)
