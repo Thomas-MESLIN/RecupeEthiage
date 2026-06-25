@@ -1,9 +1,10 @@
-import datetime
-from datetime import timedelta
+from datetime import timedelta, datetime
 import calendar
 import plot_grandeur
 import station
 import logging
+import plot_meteoFrance
+from plot_meteoFrance import MeteoFranceDataType
 
 def prompt_for_graphic() -> bool:
     print("Souhaitez vous générer les graphiques associées au stations individuel pour le calcul des périodes de retour ? (N/o)")
@@ -15,19 +16,7 @@ def prompt_for_graphic() -> bool:
         logging.info("Les graphiques individuels ne seront pas générés.")
     return res_graphic
 
-if __name__ == "__main__":
-    print("Bienvenue dans le client de génération de cartes, que souhaitez vous faire ?")
-
-    # Selection de la carte à générer
-    print("1 : Générer une carte d'hydraulicité")
-    print("2 : Générer une carte de vcn3/période de retour")
-    print("3 : Générer les deux (défaut)")
-    input_carte_a_generer = input(" -> ")
-    res_generation_carte = "3"
-    if input_carte_a_generer in ["1", "2"]:
-        res_generation_carte = input_carte_a_generer
-    print(f"Choix de génération de carte : {res_generation_carte}")
-
+def generer_hubeau_graph(res_prompt:str):
     # Selection de la date de la carte à générer.
     date_today = datetime.datetime.now()
     date_mois_precedent = date_today - timedelta(date_today.day)
@@ -76,5 +65,100 @@ if __name__ == "__main__":
     elif res_generation_carte == "3":
         plot_grandeur.create_geojson_from_hydraulicite(date_annee_mois, reseaux_sandre)
         plot_grandeur.create_geojson_from_periode_de_retour(date_annee_mois, reseaux_sandre, is_graphic_genere)
+
+def generer_meteo_carte(res_generation_carte:str):
+    print("Vous souhaitez générer des carte à partir de données météo.")
+    print()
+    print("Quel échelle temporelle souhaitez vous ?")
+    print("(1) MENSUELLE")
+    print("(2) QUOTIDIENNE (défaut)")
+    res_prompt = input(" -> ")
+    choix_res = "2"
+    if res_prompt in ["1", "2"]:
+        choix_res = res_prompt
+
+    is_mens_generated = False
+    is_quot_generated = False
+    if choix_res == "1":
+        is_mens_generated = True
+    if choix_res == "2":
+        is_quot_generated = True
+
+    print()
+    print("Quel type de données voulez vous ?")
+    print("(1) Données sans pré-calcul")
+    print("(2) SIM2 (défaut)")
+    res_prompt = input(" -> ")
+    choix_res = "2"
+    if res_prompt in ["1", "2"]:
+        choix_res = res_prompt
+
+    is_sim2_generated = False
+    is_classic_generated = False
+    if choix_res == "1":
+        is_classic_generated = True
+    if choix_res == "2":
+        is_sim2_generated = True
+
+
+    print("Souhaitez vous aggréger les données dans cet intervalle ? O/n")
+    print("Si vous n'aggrégez pas les données, des graphiques jour par jour seront générés en plus.")
+    res_prompt = input(" -> ")
+    is_data_aggregated = True
+    if "n" in res_prompt.lower():
+        is_data_aggregated = False
+
+    if is_quot_generated:
+        print("Quelles date de début souhaitez vous ? (AAAAMMJJ)")
+        res_prompt = input(" -> ")
+        date_start = datetime.strptime(res_prompt, "%Y%m%d")
+        print(f"Date de départ : {date_start}")
+
+        print("Quelles date de fin souhaitez vous (inclus dans l'intervalle) ? (AAAAMMJJ)")
+        res_prompt = input(" -> ")
+        date_end = datetime.strptime(res_prompt, "%Y%m%d")
+        print(f"Date de fin : {date_end}")
+
+        if is_classic_generated:
+            print("Génération des données quotidiennes ")
+            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.QUOT, date_start, date_end, is_data_aggregated)
+        if is_sim2_generated:
+            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, date_start, date_end, is_data_aggregated)
+
+    if is_mens_generated:
+        print("Quelles date de début souhaitez vous ? (AAAAMM)")
+        res_prompt = input(" -> ")
+        date_start = datetime.strptime(res_prompt, "%Y%m")
+        print(f"Date de départ : {date_start}")
+
+        print("Quelles date de fin souhaitez vous (inclus dans l'intervalle) ? (AAAAMM)")
+        res_prompt = input(" -> ")
+        date_end = datetime.strptime(res_prompt, "%Y%m")
+        print(f"Date de fin : {date_end}")
+
+        if is_classic_generated:
+            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.MENS, date_start, date_end, is_data_aggregated)
+        if is_sim2_generated:
+            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_MENS, date_start, date_end, is_data_aggregated)
+
+
+if __name__ == "__main__":
+    print("Bienvenue dans le client de génération de cartes, que souhaitez vous faire ?")
+
+    # Selection de la carte à générer
+    print("1 : Générer une carte d'hydraulicité")
+    print("2 : Générer une carte de vcn3/période de retour")
+    print("3 : Générer les deux (lent au premier lancement)")
+    print("4 : Générer des extraits MétéoFrance (défaut)")
+    input_carte_a_generer = input(" -> ")
+    res_generation_carte = "4"
+    if input_carte_a_generer in ["1", "2", "3", "4"]:
+        res_generation_carte = input_carte_a_generer
+    print(f"Choix de génération de carte : {res_generation_carte}")
+
+    if res_generation_carte in ["1", "2", "3"]:
+        generer_hubeau_graph(res_generation_carte)
+    else:
+        generer_meteo_carte(res_generation_carte)
 
     logging.info("\nGénération terminée.")

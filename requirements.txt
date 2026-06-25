@@ -1,4 +1,4 @@
-cl-hubeau~=0.12.0
+cl-hubeau
 pathlib
 pandas
 tqdm
@@ -6,3 +6,5 @@ datetime
 lmoments3
 datagouv-client
 geopandas
+matplotlib
+python-dotenv

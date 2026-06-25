@@ -9,7 +9,7 @@ import utils
 import re
 import pandas as pd
 from datetime import datetime, timezone, timedelta
-from enum import Enum
+from enum import Enum, StrEnum
 import init_project
 
 region_list_metropole = [
@@ -71,6 +71,32 @@ class MeteoFranceDataType(Enum):
     SIM2_MENS = 2
     QUOT = 3
     MENS = 4
+
+class GeographicScaleClip(StrEnum):
+    NATIONAL = "NATIONAL"
+    BASSIN = "BASSIN"
+    REGION_ADMINISTRATIVE = "REGION_ADMINISTRATIVE"
+    DEPARTEMENT_ADMINISTRATIF = "DEPARTEMENT_ADMINISTRATIF"
+    REGION_BASSIN = "REGION_BASSIN"
+    DEPARTEMENT_BASSIN = "DEPARTEMENT_BASSIN"
+
+def get_geographic_list(geographic_scale: GeographicScaleClip):
+    match geographic_scale:
+        case GeographicScaleClip.NATIONAL:
+            return []
+        case GeographicScaleClip.BASSIN:
+            file_to_read = Path("liste_bassin.csv")
+        case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
+            file_to_read = Path("liste_region.csv")
+        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
+            file_to_read = Path("liste_departement.csv")
+        case _:
+            raise NotImplementedError
+    liste = []
+    if file_to_read.exists():
+        df_liste = pd.read_csv(file_to_read, dtype={"code":str})
+        liste = df_liste[df_liste.columns[0]].to_list()
+    return liste
 
 def convert_chaine_to_date(chaine:str, is_start:bool) -> datetime:
     """
@@ -410,8 +436,17 @@ def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:date
             raise NotImplementedError
 
 if __name__ == "__main__":
-    date_freq = MeteoFranceDataType.MENS
-    delete_old_file(date_freq, get_df_decennie_to_id_datagouv(date_freq), get_df_decennie_to_id_datagouv(date_freq))
+    liste = get_geographic_list(GeographicScaleClip.BASSIN)
+    print(liste)
+
+    liste = get_geographic_list(GeographicScaleClip.REGION_BASSIN)
+    print(liste)
+
+    liste = get_geographic_list(GeographicScaleClip.DEPARTEMENT_BASSIN)
+    print(liste)
+
+    #date_freq = MeteoFranceDataType.MENS
+    #delete_old_file(date_freq, get_df_decennie_to_id_datagouv(date_freq), get_df_decennie_to_id_datagouv(date_freq))
     # res_sim_quot_1 = get_data_in_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 5, 1), datetime(2026, 5, 30))
     # res_sim_quot_1.to_csv(Path("output/test/res_quot_sim_1.csv"), index=False)
     #

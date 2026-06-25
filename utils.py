@@ -6,6 +6,7 @@ import locale
 from datetime import datetime, timedelta
 from functools import cache
 import logging
+from dotenv import load_dotenv
 
 loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
 
@@ -110,31 +111,16 @@ def get_path_sources(code_sandre: str, grandeur:str, annee_mois:str):
 def get_path_meteofrance_correspondance_departement_id_datagouv_mens_historique() -> Path:
     return Path("output/meteoFrance/departement_id_datagouv/MENS_departement_id_datagouv_historique.csv")
 
-# SELECTION DU PROXY
-
-PROXIES = {
-    "http": "http://pfrie-std.proxy.e2.rie.gouv.fr:8080",
-    "https": "http://pfrie-std.proxy.e2.rie.gouv.fr:8080",
-    "HTTP": "http://pfrie-std.proxy.e2.rie.gouv.fr:8080",
-    "HTTPS": "http://pfrie-std.proxy.e2.rie.gouv.fr:8080",
-}
-
-TEST_URL = "http://www.google.com"
-
-
 def test_connection(
     url: str,
-    proxies: dict | None = None,
     timeout: int = 5,
 ) -> bool:
     """
     Retourne True si la connexion fonctionne.
     """
-
     try:
         response = requests.get(
             url,
-            proxies=proxies,
             timeout=timeout,
             verify=False,
             allow_redirects=True,
@@ -147,6 +133,9 @@ def test_connection(
     except requests.RequestException:
         return False
 
+# URL de test du Proxy
+TEST_URL = "https://hubeau.eaufrance.fr/api/v2/hydrometrie/referentiel/sites.xml?size=20"
+
 @cache
 def set_up_working_proxy():
     """
@@ -156,26 +145,19 @@ def set_up_working_proxy():
     Il est éxécuté une seule fois, même si plusieurs appels arrivent.
     """
     print("Configuration du proxy...\n")
-    print("Test avec proxy...")
 
-    if test_connection(TEST_URL, proxies=PROXIES):
-        print("Proxy OK")
-        os.environ['http_proxy'] = PROXIES['http']
-        os.environ['HTTP_PROXY'] = PROXIES['HTTP']
-        os.environ['https_proxy'] = PROXIES['https']
-        os.environ['HTTPS_PROXY'] = PROXIES['HTTPS']
-        return PROXIES
-
-    print("Proxy KO")
     print("Test sans proxy...")
-
     if test_connection(TEST_URL):
         print("Connexion directe OK")
-        os.environ['http_proxy'] = ""
-        os.environ['HTTP_PROXY'] = ""
-        os.environ['https_proxy'] = ""
-        os.environ['HTTPS_PROXY'] = ""
-        return None
+        return
+
+    print("Test avec proxy...")
+    load_dotenv()
+    if test_connection(TEST_URL):
+        print("Proxy OK")
+        return
+
+    print("Proxy KO")
 
     raise RuntimeError(
         "Aucune connexion réseau disponible"

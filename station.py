@@ -71,6 +71,7 @@ def clean_custom_input_list():
     df_site_no_duplicate = df_site.drop_duplicates()
 
     # Load the huge station list.
+    download_Hubeau.ensure_station_downloaded()
     df_all_station = pd.DataFrame(pd.read_csv(utils.get_path_stations()))
 
     df_station_custom_full = df_station_no_duplicate.merge(df_all_station, on="code_station", how="left")
@@ -106,6 +107,8 @@ def find_perfect_station(code_site_list:list[str]) -> pd.DataFrame:
     :param code_site_list: Une liste de code site où il faut trouver la station correspondante
     :return: Renvoie un dataframe qui associe a un code_site une station
     """
+    download_Hubeau.ensure_station_downloaded()
+    download_Hubeau.ensure_sites_downloaded()
     df_all_site = pd.DataFrame(pd.read_csv(utils.get_path_sites()))
     df_all_station = pd.DataFrame(pd.read_csv(utils.get_path_stations()))
     df_all_station = df_all_station[df_all_station["en_service"]]

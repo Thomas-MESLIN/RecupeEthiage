@@ -1,4 +1,5 @@
-from download_meteoFrance import MeteoFranceDataType
+import download_meteoFrance
+from download_meteoFrance import MeteoFranceDataType, GeographicScaleClip
 import download_meteoFrance as DMeteo
 from datetime import datetime
 from pathlib import Path
@@ -9,17 +10,6 @@ import meteoFrance_aggregation_donnee as MeteoAgg
 from meteoFrance_aggregation_donnee import GroupByMethod
 from functools import cache
 import matplotlib.pyplot as plt
-from enum import StrEnum
-
-BASSIN_VERSANT_DECOUPAGE = "06"
-
-class GeographicScaleClip(StrEnum):
-    NATIONAL = "NATIONAL"
-    BASSIN = "BASSIN"
-    REGION_ADMINISTRATIVE = "REGION_ADMINISTRATIVE"
-    DEPARTEMENT_ADMINISTRATIF = "DEPARTEMENT_ADMINISTRATIF"
-    REGION_BASSIN = "REGION_BASSIN"
-    DEPARTEMENT_BASSIN = "DEPARTEMENT_BASSIN"
 
 def to_lambert2_geodataframe(data_freq:MeteoFranceDataType, df_to_convert:pd.DataFrame) -> gpd.GeoDataFrame:
     """
@@ -48,30 +38,17 @@ def clip_with_distance(gdf_to_clip : gpd.GeoDataFrame, clip_mask:gpd.GeoDataFram
         print("Auscour ascour clip_mask a plusieurs géométrie.........")
     return gdf_to_clip[gdf_to_clip.geometry.distance(clip_mask.geometry.iloc[0]) < 7000]
 
-def plot_geojson_from_lambert2(output_path:Path, chemin_a_plot: Path|None = None,gdf_ready: gpd.GeoDataFrame|None = None):
+def plot_geojson_from_lambert2(output_path:Path, gdf_ready: gpd.GeoDataFrame):
     """
-    Convertis le fichier pointé ou le dataframe fournis vers un fichier geojson dont les coordonnées sont au format EPSG:27572. (lambert2 étendu).
-
-    Si le gdf_découpé est vide, renvoie une erreur.
-    :param clip_mask: Le masque servant à délimiter
+    Enregistre le Dataframe sous forme de Geojson dans l'output_path.
+    Si le gdf_ready est vide, ne fais rien.
     :param output_path: Endroit où le fichier va être sauvegardé.
-    :param df_ready: Prend en paramètre un dataframe déjà lu, si il est fourni, alors le chemin à plot est ignoré.
-    :param chemin_a_plot: Le chemin vers le fichier csv à convertir en geojson.
+    :param gdf_ready: Le DataFrame à plot.
     :return: Rien
     """
-    print("Plotting geojson.")
-    if gdf_ready is not None:
-        res = gdf_ready
-    elif chemin_a_plot is not None:
-        if not chemin_a_plot.exists():
-            raise ValueError("Le chemin à plot n'existe pas.")
-        res = pd.read_csv(chemin_a_plot)
-    else:
-        raise ValueError("Pas de données fournie.")
-
     print("Saving...")
-    if not res.empty:
-        res.to_file(output_path, driver="GeoJSON", mode="w")
+    if not gdf_ready.empty:
+        gdf_ready.to_file(output_path, driver="GeoJSON", mode="w")
     else:
         print("gdf empty ! " + output_path)
 
@@ -166,7 +143,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
     is_bassin_clip_required = True
     match geographic_scale:
         case GeographicScaleClip.NATIONAL:
-            plot_geojson_from_lambert2(chemin_save_original, gdf_ready=gdf)
+            plot_geojson_from_lambert2(chemin_save_original, gdf)
             return
         case GeographicScaleClip.BASSIN:
             is_bassin_clip_required = False
@@ -195,8 +172,9 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
 
     chemin_zone_geographique = chemin_save_plot / geographic_scale
     print("Récupération Mask bassin versant")
-    # Récupération du bassin versant
-    gdf_bassin_mask = get_bassin_versant(BASSIN_VERSANT_DECOUPAGE)
+    # Récupération du bassin versant (on prend le premier bassin versant de la liste des bassin versant.
+    code_bassin_decoupe = download_meteoFrance.get_geographic_list(GeographicScaleClip.BASSIN)[0]
+    gdf_bassin_mask = get_bassin_versant(code_bassin_decoupe)
     for code in element_list:
         print(f"code : {code}")
         print("Récupération Mask")
@@ -224,7 +202,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
 
         # On plot le résultat
         print("Sauvegarde gdf")
-        plot_geojson_from_lambert2(chemin_save, gdf_ready=gdf_second_clip)
+        plot_geojson_from_lambert2(chemin_save, gdf_second_clip)
 
         # On crée les plots matplotlib associé à cette zone gégraphique.
         if not is_data_aggregated:
