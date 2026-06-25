@@ -20,14 +20,13 @@ def aggregate_range(data_freq:MeteoFranceDataType, df_to_aggregate:pd.DataFrame,
     """
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT:
-            # Colonne inconnue pour aggréger : ETP, HTEURNEIGEX, TINF_H, TSUP_H
+            # Colonne inconnue pour aggréger : HTEURNEIGEX, TINF_H, TSUP_H
             group_by_position_columns = ["LAMBX", "LAMBY"]
-            columns_to_sum = ["PRENEI","PRELIQ","DLI","SSI","EVAP", "PE", "DRAINC", "RUNC", "ECOULEMENT"]
+            columns_to_sum = ["PRENEI","PRELIQ","DLI","SSI","EVAP", "ETP", "PE", "DRAINC", "RUNC", "ECOULEMENT"]
             columns_to_mean = ["T","FF","Q","HU", "SWI", "SSWI_10J", "RESR_NEIGE", "RESR_NEIGE6", "HTEURNEIGE", "HTEURNEIGE6", "SNOW_FRAC", "WG_RACINE","WGI_RACINE"]
         case MeteoFranceDataType.SIM2_MENS:
-            # Colonne inconnue pour aggréger : ETP
             group_by_position_columns = ["LAMBX", "LAMBY"]
-            columns_to_sum = ["PRENEI", "PRELIQ", "PRETOTM", "EVAP", "PE", "DRAINC", "RUNC", "ECOULEMENT"]
+            columns_to_sum = ["PRENEI", "PRELIQ", "PRETOTM", "EVAP", "ETP", "PE", "DRAINC", "RUNC", "ECOULEMENT"]
             columns_to_mean = ["T", "SWI","SPI1", "SPI3", "SPI6", "SPI12", "SSWI1", "SSWI3", "SSWI6", "SSWI12"]
         case MeteoFranceDataType.QUOT:
             # Colonne inconnue pour aggréger : TN, TX,
@@ -50,7 +49,13 @@ def aggregate_range(data_freq:MeteoFranceDataType, df_to_aggregate:pd.DataFrame,
     match aggregation_method:
         case GroupByMethod.BY_POSITION:
             df_grouped_by = df_to_aggregate.groupby(by=group_by_position_columns)
-            dico_operation["DATE"] = ["min", "max"]
+            match data_freq:
+                case MeteoFranceDataType.SIM2_QUOT | MeteoFranceDataType.SIM2_MENS:
+                    dico_operation["DATE"] = ["min", "max"]
+                case MeteoFranceDataType.QUOT:
+                    dico_operation["AAAAMMJJ"] = ["min", "max"]
+                case MeteoFranceDataType.MENS:
+                    dico_operation["AAAAMM"] = ["min", "max"]
             dico_operation["DATE_DATETIME"] = ["min", "max"]
         case GroupByMethod.BY_DATE:
             df_grouped_by = df_to_aggregate.groupby(by=["DATE_DATETIME"])
@@ -69,7 +74,7 @@ def aggregate_range(data_freq:MeteoFranceDataType, df_to_aggregate:pd.DataFrame,
     match aggregation_method:
         case GroupByMethod.BY_POSITION:
             df_grouped_by_aggregated.columns = [
-                f"{col1}_{col2}" if "DATE" in col1 else col1
+                f"{col1}_{col2}" if "DATE" in col1 or "AAAAMM" in col1 else col1
                 for col1, col2 in df_grouped_by_aggregated.columns
             ]
         case GroupByMethod.BY_DATE:

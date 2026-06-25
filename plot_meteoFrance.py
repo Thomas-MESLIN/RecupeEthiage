@@ -184,8 +184,14 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
             is_bassin_clip_required = False
             element_list = DMeteo.region_list_metropole
 
-    start_date = gdf["DATE_DATETIME"].min()
-    end_date = gdf["DATE_DATETIME"].max()
+    if "DATE_DATETIME" in gdf.columns:
+        start_date = gdf["DATE_DATETIME"].min()
+        end_date = gdf["DATE_DATETIME"].max()
+    elif "DATE_DATETIME_min" in gdf.columns and "DATE_DATETIME_max":
+        start_date = gdf["DATE_DATETIME_min"].min()
+        end_date = gdf["DATE_DATETIME_max"].max()
+    else:
+        raise ValueError("Date de début et de fin non trouvée")
 
     chemin_zone_geographique = chemin_save_plot / geographic_scale
     print("Récupération Mask bassin versant")
@@ -197,11 +203,11 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
         gdf_geographie_mask = get_geographic_element(geographic_scale, code)
 
         # On procède au clipping du gdf d'origine.
-        print("Clipping gdf")
+        print("Clipping GeoDataFrame with geographic mask.")
         gdf_first_clip = clip_with_distance(gdf, gdf_geographie_mask)
 
         # Si on doit prendre l'échelle bassin, on découpe les données restantes avec le masque du bassin.
-        print("Clipping with Bassin")
+        print("Clipping GeoDataFrame with Bassin mask.")
         if is_bassin_clip_required:
             gdf_second_clip = clip_with_distance(gdf_first_clip, gdf_bassin_mask)
         else:
@@ -478,17 +484,6 @@ def plot_bar_dataframe(
 if __name__ == "__main__":
     print("Plotting !")
 
-    # gdf_region = get_all_region_geodf()
-    # print(gdf_region)
-    # region = get_region("93")
-    # print(region)
-    # gdf_departement = get_all_departement_geodf()
-    # print(gdf_departement)
-    # departement = get_departement("71")
-    # print(departement)
-    # SWI d'aujourd'hui
-    # export_geojson_day(datetime(2026,6,17))
-
     # Donnée MENS aggrégé de 2025 à 2026.
     # export_geojson_range(MeteoFranceDataType.SIM2_MENS, datetime(2025, 1, 1), datetime(2025, 12, 31), False)
     # Cumul depuis le dernier bulletin 10 juin et nombre de jour où la temptérature est au-dessus de la normale.
@@ -504,9 +499,8 @@ if __name__ == "__main__":
     # # Données non-aggrégé sur 1 mois.
     #export_geojson_month(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 5, 1))
     #export_geojson_day(MeteoFranceDataType.QUOT, datetime(2026, 6, 1))
-    export_geojson_month(MeteoFranceDataType.MENS, datetime(2026, 5, 1))
+    # export_geojson_month(MeteoFranceDataType.MENS, datetime(2026, 5, 1))
 
-#
     # # Données aggrégé de base sur 1 mois.
     # plot_month(MeteoFranceDataType.SIM2_MENS, datetime(2026,5,1))
     #
@@ -518,5 +512,15 @@ if __name__ == "__main__":
 
     # CUMUL des quantités d'eau depuis le début de l'année hydrologique.
     today = datetime.today()
-    export_all_format_geojson_range(MeteoFranceDataType.SIM2_MENS, datetime(2025, 9, 1), today, False)
-    export_all_format_geojson_range(MeteoFranceDataType.MENS, datetime(2025, 9, 1), today, False)
+    # export_all_format_geojson_range(MeteoFranceDataType.SIM2_MENS, datetime(2025, 9, 1), today, False)
+    # export_all_format_geojson_range(MeteoFranceDataType.MENS, datetime(2025, 9, 1), today, False)
+
+    # Evlution du 10 au 24 juin.
+    #export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 10), today, False)
+
+    # export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 10), today, True)
+
+    #export_all_format_geojson_range(MeteoFranceDataType.QUOT, datetime(2026, 6, 10), today, True)
+    #export_all_format_geojson_range(MeteoFranceDataType.QUOT, datetime(2026, 6, 10), today, False)
+    export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 10), today, True)
+    export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 10), today, False)
