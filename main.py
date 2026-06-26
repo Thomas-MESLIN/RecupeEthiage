@@ -16,7 +16,7 @@ def prompt_for_graphic() -> bool:
         logging.info("Les graphiques individuels ne seront pas générés.")
     return res_graphic
 
-def generer_hubeau_graph(res_prompt:str):
+def generer_hubeau_graph(res_generation_carte:str):
     # Selection de la date de la carte à générer.
     date_today = datetime.datetime.now()
     date_mois_precedent = date_today - timedelta(date_today.day)
@@ -100,6 +100,19 @@ def generer_meteo_carte(res_generation_carte:str):
     if choix_res == "2":
         is_sim2_generated = True
 
+    format_date = "AAAAMMJJ" if is_quot_generated else "AAAAMM"
+    formater_date = "%Y%m%d" if is_quot_generated else "%Y%m"
+
+    print(f"Quelles date de début souhaitez vous ? ({format_date})")
+    res_prompt = input(" -> ")
+    date_start = datetime.strptime(res_prompt, formater_date)
+    print(f"Date de départ : {date_start}")
+
+    print(f"Quelles date de fin souhaitez vous (inclus dans l'intervalle) ? ({format_date})")
+    res_prompt = input(" -> ")
+    date_end = datetime.strptime(res_prompt, formater_date)
+    print(f"Date de fin : {date_end}")
+
 
     print("Souhaitez vous aggréger les données dans cet intervalle ? O/n")
     print("Si vous n'aggrégez pas les données, des graphiques jour par jour seront générés en plus.")
@@ -109,36 +122,18 @@ def generer_meteo_carte(res_generation_carte:str):
         is_data_aggregated = False
 
     if is_quot_generated:
-        print("Quelles date de début souhaitez vous ? (AAAAMMJJ)")
-        res_prompt = input(" -> ")
-        date_start = datetime.strptime(res_prompt, "%Y%m%d")
-        print(f"Date de départ : {date_start}")
-
-        print("Quelles date de fin souhaitez vous (inclus dans l'intervalle) ? (AAAAMMJJ)")
-        res_prompt = input(" -> ")
-        date_end = datetime.strptime(res_prompt, "%Y%m%d")
-        print(f"Date de fin : {date_end}")
-
         if is_classic_generated:
-            print("Génération des données quotidiennes ")
+            print(f"Génération des données classiques quotidiennes de {date_start} à {date_end}")
             plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.QUOT, date_start, date_end, is_data_aggregated)
         if is_sim2_generated:
+            print(f"Génération des données SIM2 quotidiennes de {date_start} à {date_end}")
             plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, date_start, date_end, is_data_aggregated)
-
     if is_mens_generated:
-        print("Quelles date de début souhaitez vous ? (AAAAMM)")
-        res_prompt = input(" -> ")
-        date_start = datetime.strptime(res_prompt, "%Y%m")
-        print(f"Date de départ : {date_start}")
-
-        print("Quelles date de fin souhaitez vous (inclus dans l'intervalle) ? (AAAAMM)")
-        res_prompt = input(" -> ")
-        date_end = datetime.strptime(res_prompt, "%Y%m")
-        print(f"Date de fin : {date_end}")
-
         if is_classic_generated:
+            print(f"Génération des données classique mensuelles de {date_start} à {date_end}")
             plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.MENS, date_start, date_end, is_data_aggregated)
         if is_sim2_generated:
+            print(f"Génération des données SIM2 mensuelles de {date_start} à {date_end}")
             plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_MENS, date_start, date_end, is_data_aggregated)
 
 
