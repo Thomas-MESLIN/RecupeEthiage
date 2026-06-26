@@ -19,7 +19,7 @@ Dans le terminal (utilisez tab pour avoir de l'autocomplétion), rentrez :
 python3-64.exe -m venv venv
 
 # On installe les paquets nécessaire
-.\venv\Script\pip.exe install -r .\requirements.txt
+.\venv\Scripts\pip.exe install -r .\requirements.txt
 ```
 
 Vous avez besoin d'avoir accès à internet normal, le temps de télécharger les paquets.
@@ -29,7 +29,7 @@ Si vous êtes dans un réseau interne -> voir la section _Utiliser un proxy_.
 ## Lancer le programme
 ```bash
 # On lance le programme principal.
-.\venv\Script\python.exe main.py
+.\venv\Scripts\python.exe main.py
 ```
 
 ## main.py
@@ -100,9 +100,9 @@ Vous pouvez alors supprimer tout ce dossier, re-extraire au propre, re-installer
 En priant pour qu'il y ait une mise à jour qui règle le problème. 
 
 ## Utiliser un proxy
-Vous pouvez utiliser un proxy pour pouvoir télécharger vos données via le réseau interne.
+Vous pouvez utiliser un proxy pour pouvoir télécharger vos données via votre réseau interne.
 
-Le proxy peut être défini via le fichier `.env` en copiant `.env_example`.
+Le proxy peut être défini en copiant `.env_example` vers `.env` et en remplissant avec votre proxy.
 
 ## Documentation Source
 ### API Hub'eau

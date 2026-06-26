@@ -258,6 +258,24 @@ def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str
                            plot_title=f"Pluie Efficace : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
                            output_path=chemin_de_base / "PE.png")
 
+    if "PRELIQ" in dataframe_trie_par_date.columns:
+        plot_bar_dataframe(dataframe_trie_par_date["PRELIQ"],
+                           dataframe_date,
+                           plot_title=f"Cumul des précipitation liquide quotidiennes (mm) : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
+                           output_path=chemin_de_base / "PRELIQ.png")
+
+    if "EVAP" in dataframe_trie_par_date.columns:
+        plot_bar_dataframe(dataframe_trie_par_date["EVAP"],
+                           dataframe_date,
+                           plot_title=f"Cumul de l'évapotranspiration quotidienne (mm) : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
+                           output_path=chemin_de_base / "EVAP.png")
+
+    if "ETP" in dataframe_trie_par_date.columns:
+        plot_bar_dataframe(dataframe_trie_par_date["ETP"],
+                           dataframe_date,
+                           plot_title=f"Cumul de l'évapotranspiration potentielle quotidienne (mm) : {nom_echelle} {start_date:%Y%m%d} {end_date:%Y%m%d}",
+                           output_path=chemin_de_base / "ETP.png")
+
     if "RR" in dataframe_trie_par_date.columns:
         plot_bar_dataframe(dataframe_trie_par_date["RR"],
                            dataframe_date,

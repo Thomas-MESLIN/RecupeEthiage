@@ -144,17 +144,24 @@ def set_up_working_proxy():
     Le proxy sert à accéder à internet sur le réseau interne de la DREAL.
     Il est éxécuté une seule fois, même si plusieurs appels arrivent.
     """
+    print()
+    print("---------CONNEXION A INTERNET - TEST PROXY--------------")
     print("Configuration du proxy...\n")
 
-    print("Test sans proxy...")
-    if test_connection(TEST_URL):
-        print("Connexion directe OK")
-        return
-
-    print("Test avec proxy...")
+    print("Test avec les paramètres d'environnement...")
+    # Charge le fichier .env
     load_dotenv()
     if test_connection(TEST_URL):
-        print("Proxy OK")
+        print("Connexion proxy OK")
+        print("-------------CONNECTE--------------")
+        return
+
+    print("Test en supprimant HTTP_PROXY et HTTPS_PROXY")
+    os.unsetenv("HTTP_PROXY")
+    os.unsetenv("HTTPS_PROXY")
+    if test_connection(TEST_URL):
+        print("Connexion Direct OK")
+        print("-------------CONNECTE--------------")
         return
 
     print("Proxy KO")

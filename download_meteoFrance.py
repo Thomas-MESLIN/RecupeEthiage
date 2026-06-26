@@ -8,62 +8,9 @@ from functools import cache
 import utils
 import re
 import pandas as pd
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from enum import Enum, StrEnum
 import init_project
-
-region_list_metropole = [
-#    "11",
-#    "24",
-    "27",
-#    "28",
-#    "32",
-    "44",
-#    "52",
-#    "53",
-#    "75",
-    "76",
-    "84",
-    "93",
-]
-
-departement_list = [
-    "01",
-    "04",
-    "05",
-    "06",
-    "07",
-    "09",
-    "11",
-    "12",
-    "13",
-    "21",
-    "25",
-    "26",
-    "30",
-    "34",
-    "38",
-    "39",
-    "42",
-    "43",
-    "48",
-    "52",
-    "66",
-    "69",
-    "70",
-    "71",
-    "73",
-    "74",
-    "81",
-    "83",
-    "84",
-    "88",
-    "90",
-]
-
-code_bassin_versant_list = [
-    "06"
-]
 
 # Différentes sources de données.
 class MeteoFranceDataType(Enum):
@@ -130,6 +77,8 @@ def fetch_and_update_decennie_ressource_id(data_freq:MeteoFranceDataType):
     Tous les id des décénies de chaque ressources associé.
     :return: Rien.
     """
+    print("MISE A JOUR DE L'INDEX (date-debut,dete-fin -> id-datagouv)")
+    print("Cela peut prendre beaucoup de temps pour les données classique...")
     # On met en place les expression régulière pour reconnaitre uniquement les données du bon format.
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT:
@@ -140,16 +89,22 @@ def fetch_and_update_decennie_ressource_id(data_freq:MeteoFranceDataType):
             pattern = re.compile("MENS_SIM2_....-....")
         case MeteoFranceDataType.QUOT:
             id_dataset = "6569b51ae64326786e4e8e1a"
-            pattern = re.compile('|'.join(f"(QUOT_departement_{str_dep}_periode_....-...._.*)" for str_dep in departement_list))
+            pattern = re.compile('|'.join(f"(QUOT_departement_{str_dep}_periode_....-...._.*)" for str_dep in get_geographic_list(GeographicScaleClip.DEPARTEMENT_BASSIN)))
         case MeteoFranceDataType.MENS:
             id_dataset = "6569b3d7d193b4daf2b43edc"
-            pattern = re.compile('|'.join(f"(MENS_departement_{str_dep}_periode_....-....)" for str_dep in departement_list))
+            pattern = re.compile('|'.join(f"(MENS_departement_{str_dep}_periode_....-....)" for str_dep in get_geographic_list(GeographicScaleClip.DEPARTEMENT_BASSIN)))
         case _:
             raise NotImplementedError
     chemin_decennie_id = get_path_decennie_to_id_datagouv(data_freq)
     utils.set_up_working_proxy()
     # Dataset contenant toutes les données météoFrance correspondant sur data.gouv.fr
-    dataset_complet = Dataset(id_dataset)
+    success = False
+    while not success:
+        try:
+            dataset_complet = Dataset(id_dataset)
+            success = True
+        except:
+            pass
 
     tous_les_couples = []
     for res in dataset_complet.resources:
@@ -226,12 +181,14 @@ def delete_old_file(freq_data:MeteoFranceDataType, df_origine:pd.DataFrame, df_n
 
 @cache
 def is_user_want_update_index():
-    res = input("Souhaitez vous mettre à jour l'index des données ? N/y")
+    print("Souhaitez vous mettre à jour l'index des données ? N/y")
+    res = input(" -> ")
     return 'y' in res.lower()
 
 @cache
 def is_user_want_update_data():
-    res = input("Souhaitez vous mettre à jour les données ? N/y")
+    print("Souhaitez vous mettre à jour les données ? N/y")
+    res = input(" -> ")
     return 'y' in res.lower()
 
 @cache
@@ -244,8 +201,6 @@ def update_decennie_to_id_datagouv(freq_data:MeteoFranceDataType):
     :param freq_data: Le type de donnée qui est affecté.
     :return: Rien
     """
-    if not is_user_want_update_index():
-        return
     old_df_decennie_to_id_datagouv = get_df_decennie_to_id_datagouv(freq_data)
     # Télécharger le nouveau
     fetch_and_update_decennie_ressource_id(freq_data)
@@ -267,7 +222,10 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
         raise ValueError("La date de fin est plut tot que la date de début !")
 
     # On met à jour les correspondance decennie -> id_datagouv.
-    update_decennie_to_id_datagouv(data_freq)
+    if (not get_df_decennie_to_id_datagouv(data_freq).empty) and not is_user_want_update_index():
+        pass
+    else:
+        update_decennie_to_id_datagouv(data_freq)
 
     # On récupère les correspondance.
     df_decenie_to_id = get_df_decennie_to_id_datagouv(data_freq)
@@ -382,7 +340,14 @@ def download_and_extract(id_datagouv:str, chemin_archive:Path,chemin_final:Path)
     print(f"Downloading {chemin_final.name}...")
     utils.set_up_working_proxy()
     r = get_gouv_ressource(id_datagouv)
-    r.download(chemin_archive)
+    success = False
+    while not success:
+        try:
+            r.download(chemin_archive)
+            success = True
+        except:
+            pass
+
     try:
         with gzip.open(chemin_archive, "rb") as archive:
             with open(chemin_final, "wb") as final:
