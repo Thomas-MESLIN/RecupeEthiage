@@ -32,6 +32,12 @@ Si vous êtes dans un réseau interne -> voir la section _Utiliser un proxy_.
 .\venv\Scripts\python.exe main.py
 ```
 
+On peut aussi lancer la version complète en CLI (commande Line Interface). 
+```bash
+# On lance le programme principal en CLI
+.\venv\Scripts\python.exe main.py -h
+```
+
 ## main.py
 Le fichier main sert à lancer tout le reste des fichiers.
 

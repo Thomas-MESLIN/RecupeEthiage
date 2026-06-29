@@ -253,11 +253,13 @@ if __name__ == "__main__":
     # Si la date de début est vide, on remplace par le premier jour du mois précédent
     if start_date is None:
         start_date = (datetime.today().replace(day=1) - timedelta(days=1)).replace(day=1)
+        logging.info(f"Utilisation de la start_date par défaut : {start_date}")
 
     end_date = try_format_date(args.end_date,is_last_day=True)
     # Si la date de fin est vide, on remplace par le dernier jour du mois précédent
     if end_date is None:
         end_date = datetime.today().replace(day=1) - timedelta(days=1)
+        logging.info(f"Utilisation de la end_date par défaut : {end_date}")
 
     if args.type is None:
         logging.error("Le type de données souhaité n'est pas spécifié !")
