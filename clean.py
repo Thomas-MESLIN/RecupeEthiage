@@ -86,7 +86,7 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
     return df_code_sandre_with_data_no_duplicate
 
 # DONNEE MENSUEL
-def clean_single_month(annee_mois, code_sandre, grandeur:str):
+def clean_single_month(annee_mois:str, code_sandre:str, grandeur:str):
     """
     Clean a file containing a single month of data.
     Download it if the file does not exist.

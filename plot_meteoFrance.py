@@ -145,22 +145,12 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
         case GeographicScaleClip.NATIONAL:
             plot_geojson_from_lambert2(chemin_save_original, gdf)
             return
-        case GeographicScaleClip.BASSIN:
+        case GeographicScaleClip.BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF | GeographicScaleClip.REGION_ADMINISTRATIVE:
             is_bassin_clip_required = False
-            element_list = DMeteo.code_bassin_versant_list
-        case GeographicScaleClip.DEPARTEMENT_BASSIN:
+        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.REGION_BASSIN:
             is_bassin_clip_required = True
-            element_list = DMeteo.departement_list
-        case GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
-            is_bassin_clip_required = False
-            element_list = DMeteo.departement_list
-        case GeographicScaleClip.REGION_BASSIN:
-            is_bassin_clip_required = True
-            element_list = DMeteo.region_list_metropole
-        case GeographicScaleClip.REGION_ADMINISTRATIVE:
-            is_bassin_clip_required = False
-            element_list = DMeteo.region_list_metropole
 
+    element_list = DMeteo.get_geographic_list(geographic_scale)
     if "DATE_DATETIME" in gdf.columns:
         start_date = gdf["DATE_DATETIME"].min()
         end_date = gdf["DATE_DATETIME"].max()
@@ -299,7 +289,8 @@ def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str
                            }
                            )
 
-def export_all_format_geojson_range(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool):
+def export_all_format_geojson_range(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool,
+                                    has_index_update:bool=True, is_data_update_allowed:bool=True) -> None:
     """
     Enregistre des geojson contenant toutes les données entre start_date et end_date.
     Créer des découpages à l'échelle départementale, régionale et bassin.
@@ -309,9 +300,14 @@ def export_all_format_geojson_range(data_freq:MeteoFranceDataType, start_date:da
     :param data_freq: Type de donnée à récupérer
     :param start_date: Date de début (inclus dans l'intervalle)
     :param end_date: Date de fin (inclus dans l'intervalle)
+    :param has_index_update: Défini si l'index fichiers -> id_datagouv est mis à jour. Peut-être long pour les fichiers données non-analysé.
+    :param is_data_update_allowed: Si à faux, aucune mis à jour n'est fait, ni sur les fichiers à télécharger, ni sur les index.
     :return: Rien
     """
-    df_intervalle = DMeteo.get_data_in_range(data_freq, start_date, end_date)
+    if not is_data_update_allowed:
+        has_index_update = False
+
+    df_intervalle = DMeteo.get_data_in_range(data_freq, start_date, end_date, has_index_update, is_data_update_allowed)
     if df_intervalle.empty:
         print(f"L'intervalle de données ({start_date} - {end_date}) est vide. Abandon.")
         return

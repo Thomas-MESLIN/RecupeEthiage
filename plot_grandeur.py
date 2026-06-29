@@ -6,11 +6,10 @@ import utils
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
-import frequence_et_periode_de_retour as f_T
-import vcn3
+import calcul_frequence_periode_de_retour as f_T
 import station
 import download_Hubeau
-import hydraulicite
+import calcul_hydraulicite
 import logging
 
 
@@ -341,8 +340,14 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_re
     create_geojson_from_path(chemin_periode_de_retour, output_path, annee_mois, code_sandre)
 
 def create_geojson_from_hydraulicite(annee_mois:str, code_sandre:str):
+    """
+    Exporte un geojson de l'hydraulicite du mois AAAA-MM des stations correspondant au code_sandre.
+    :param annee_mois:
+    :param code_sandre:
+    :return:
+    """
     chemin_hydraulicite = utils.get_path_hydraulicite(code_sandre, annee_mois)
-    hydraulicite.calcul_hydraulicite_mensuel(annee_mois, code_sandre)
+    calcul_hydraulicite.calcul_hydraulicite_mensuel(annee_mois, code_sandre)
 
     output_path = Path(f"output/QGIS/hydraulicite/hydraulicite-{code_sandre}-{annee_mois}.geojson")
 

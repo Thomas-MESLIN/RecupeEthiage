@@ -99,6 +99,7 @@ def fetch_and_update_decennie_ressource_id(data_freq:MeteoFranceDataType):
     utils.set_up_working_proxy()
     # Dataset contenant toutes les données météoFrance correspondant sur data.gouv.fr
     success = False
+    utils.set_up_working_proxy()
     while not success:
         try:
             dataset_complet = Dataset(id_dataset)
@@ -180,18 +181,6 @@ def delete_old_file(freq_data:MeteoFranceDataType, df_origine:pd.DataFrame, df_n
         print("On été supprimé.")
 
 @cache
-def is_user_want_update_index():
-    print("Souhaitez vous mettre à jour l'index des données ? N/y")
-    res = input(" -> ")
-    return 'y' in res.lower()
-
-@cache
-def is_user_want_update_data():
-    print("Souhaitez vous mettre à jour les données ? N/y")
-    res = input(" -> ")
-    return 'y' in res.lower()
-
-@cache
 def update_decennie_to_id_datagouv(freq_data:MeteoFranceDataType):
     """
     Met a jour l'index décenie -> id datagouv.
@@ -209,22 +198,22 @@ def update_decennie_to_id_datagouv(freq_data:MeteoFranceDataType):
     if not old_df_decennie_to_id_datagouv.empty:
         delete_old_file(freq_data, old_df_decennie_to_id_datagouv, new_df_decennie_to_id_datagouv)
 
-def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date_end: datetime) -> pd.DataFrame:
+def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date_end: datetime, has_index_update:bool, is_data_update_allowed:bool) -> pd.DataFrame:
     """
     Renvoie toutes les données mensuelles de SIM2 entre la date de début et la date de fin.
 
     :param data_freq: Le type de données souhaitées !
     :param date_debut: La date de début de la fenêtre à récupérer
     :param date_end:  La date de fin de la fenêtre à récupérer
+    :param has_index_update: Si à True, l'index de correspondance est mis à jour.
+    :param is_data_update_allowed: Si à False, les mises à jour des fihciers existant ne sont pas téléchargés.
     :return: Un dataframe contenant toutes les données mensuelles de SIM2 entre date_debut et date_fin inclus.
     """
     if date_end < date_debut:
         raise ValueError("La date de fin est plut tot que la date de début !")
 
     # On met à jour les correspondance decennie -> id_datagouv.
-    if (not get_df_decennie_to_id_datagouv(data_freq).empty) and not is_user_want_update_index():
-        pass
-    else:
+    if has_index_update:
         update_decennie_to_id_datagouv(data_freq)
 
     # On récupère les correspondance.
@@ -249,7 +238,7 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
     print("Loading files...")
     all_df = []
     for date_debut_fichier, date_fin_fichier, id_datagouv in file_to_gather:
-        all_df.append(get_df_decennie(data_freq, date_debut_fichier, date_fin_fichier, id_datagouv))
+        all_df.append(get_df_decennie(data_freq, date_debut_fichier, date_fin_fichier, id_datagouv, is_data_update_allowed))
     df_complet = pd.concat(all_df, ignore_index=True)
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT | MeteoFranceDataType.SIM2_MENS:
@@ -296,6 +285,7 @@ def get_gouv_ressource(id_gouv_data:str) -> Resource:
     :param id_gouv_data: L'id à récupérer.
     :return: La ressource correspondante.
     """
+    utils.set_up_working_proxy()
     return Resource(id_gouv_data)
 
 def is_path_updated_with_datagouv(chemin_fichier:Path, id_gouv_data:str) -> bool:
@@ -313,9 +303,10 @@ def is_path_updated_with_datagouv(chemin_fichier:Path, id_gouv_data:str) -> bool
     return derniere_modification_gouv <= derniere_modification_fichier
 
 @cache
-def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date: datetime,id_gouv_data: str) -> pd.DataFrame:
+def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date: datetime,id_gouv_data: str, is_data_update_allowed:bool) -> pd.DataFrame:
     """
     Renvoie le dataframe contenant toutes les infosd du fichier de cette décénie.
+    :param is_data_update_allowed: Si à False, les données ne sont pas mise à jour.
     :param freq_data:
     :param start_date:
     :param end_date:
@@ -328,7 +319,7 @@ def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date
     print(f"Loading : {chemin}")
     if not chemin.exists():
         download_and_extract(id_gouv_data, chemin_archive, chemin)
-    elif not is_path_updated_with_datagouv(chemin, id_gouv_data) and is_user_want_update_data():
+    elif not is_path_updated_with_datagouv(chemin, id_gouv_data) and is_data_update_allowed:
         # On met a jour nos indices et on supprimes les fichiers qui n'existent plus.
         # On vérifie que le fichier est à jour par rapport au métadonnées du site.
         download_and_extract(id_gouv_data, chemin_archive, chemin)

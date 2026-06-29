@@ -9,7 +9,7 @@ def calcul_hydraulicite_mensuel(annee_mois: str, code_sandre: str):
     """
     Calcul l'hydraulicité à partir des données historiques et des données nettoyées
     Le sauvegarde ensuite dans un .csv dans le dossier hydraulicité.
-    :param annee_mois: Année et mois de l'hydraulicité souhaité
+    :param annee_mois: Année et mois de l'hydraulicité souhaité au format AAAA-MM
     :param code_sandre: Code Sandre de la liste à traiter
     """
     # On récupère les données nettoyés historique

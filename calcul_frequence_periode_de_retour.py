@@ -13,7 +13,7 @@ import scipy.stats as stats
 import plot_grandeur
 from tqdm import tqdm
 import utils
-import vcn3
+import calcul_vcn3
 import station
 from lmoments3 import distr as lm_distr
 
@@ -317,7 +317,7 @@ def get_result_station(code_station:str, mois:str, code_sandre:str, vcn3_observa
         'Periode_de_retour_interval_confiance_haut' : borne haute IC 95% sur T
     """
     mois_a_etudier = f"{mois:02}"
-    vcn3.ensure_calcul_vcn3_station(code_station, code_sandre)
+    calcul_vcn3.ensure_calcul_vcn3_station(code_station, code_sandre)
     df_all_vcn3 = pd.read_csv(utils.get_path_vcn3_station(code_station))
     df_mois_precis = df_all_vcn3[df_all_vcn3["annee_mois"].astype(str).str.contains(f"-{mois_a_etudier}")]
     # On enlève les cases vide...
@@ -376,8 +376,8 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     all_rows = []
     with tqdm(total=len(df_station)) as pbar:
         for station_code in df_station["code_station"]:
-            vcn3.ensure_calcul_vcn3_station(station_code, code_sandre)
-            valeur = vcn3.get_vcn3_station_mois(vcn3.get_df_moyenne_glissante(annee_mois, code_sandre),station_code, annee=annee, mois=mois)
+            calcul_vcn3.ensure_calcul_vcn3_station(station_code, code_sandre)
+            valeur = calcul_vcn3.get_vcn3_station_mois(calcul_vcn3.get_df_moyenne_glissante(annee_mois, code_sandre),station_code, annee=annee, mois=mois)
             if not pd.isna(valeur):
                 row = get_result_station(station_code, mois_str, code_sandre, valeur, plot_resultat=is_result_plotted)
                 row["code_station"] = station_code
