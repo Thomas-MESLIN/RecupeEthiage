@@ -28,13 +28,13 @@ Si vous êtes dans un réseau interne -> voir la section _Utiliser un proxy_.
 
 ## Lancer le programme
 ```bash
-# On lance le programme principal.
+# On lance le programme principal en version interactive.
 .\venv\Scripts\python.exe main.py
 ```
 
 On peut aussi lancer la version complète en CLI (commande Line Interface). 
 ```bash
-# On lance le programme principal en CLI
+# On lance le programme principal en CLI.
 .\venv\Scripts\python.exe main.py -h
 ```
 

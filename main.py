@@ -180,7 +180,7 @@ def main(
     has_vcn3_graphic: bool = False,
     has_meteo_aggregate: bool = False,
     has_meteo_index_update: bool = True,
-    has_meteo_update: bool = True,
+    is_data_update_allowed: bool = True,
 ):
     """
     Génère les geojson à partir des arguments d'entrée du CLI.
@@ -191,10 +191,10 @@ def main(
     :param has_vcn3_graphic:
     :param has_meteo_aggregate:
     :param has_meteo_index_update:
-    :param has_meteo_update: Autorise le script meteo à mettre ses données à jour.
+    :param is_data_update_allowed: Autorise le script meteo à mettre ses données à jour.
     :return:
     """
-    if not has_meteo_update:
+    if not is_data_update_allowed:
         has_meteo_index_update = False
 
     match type_carte:
@@ -203,13 +203,13 @@ def main(
         case "vcn3":
             plot_grandeur.create_geojson_from_periode_de_retour(start_date.strftime("%Y-%m"), reseau_sandre, has_vcn3_graphic)
         case "meteo_brut_MENS":
-            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.MENS, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, has_update=has_meteo_update)
+            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.MENS, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_sim2_MENS":
-            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_MENS, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, has_update=has_meteo_update)
+            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_MENS, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_brut_QUOT":
-            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.QUOT, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, has_update=has_meteo_update)
+            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.QUOT, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_sim2_QUOT":
-            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, has_update=has_meteo_update)
+            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case _:
             raise NotImplementedError
 

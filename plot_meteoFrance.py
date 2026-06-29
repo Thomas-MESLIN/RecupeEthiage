@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import download_meteoFrance
 from download_meteoFrance import MeteoFranceDataType, GeographicScaleClip
 import download_meteoFrance as DMeteo
@@ -165,7 +166,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
     # Récupération du bassin versant (on prend le premier bassin versant de la liste des bassin versant.
     code_bassin_decoupe = download_meteoFrance.get_geographic_list(GeographicScaleClip.BASSIN)[0]
     gdf_bassin_mask = get_bassin_versant(code_bassin_decoupe)
-    for code in element_list:
+    for code in tqdm(element_list):
         print(f"code : {code}")
         print("Récupération Mask")
         gdf_geographie_mask = get_geographic_element(geographic_scale, code)
@@ -348,51 +349,39 @@ def export_geojson_day(data_freq:MeteoFranceDataType, day_date:datetime):
     export_all_format_geojson_range(data_freq, start_date, end_date, False)
 
 @cache
-def get_all_region_geodf():
-    """
-    Renvoie le dataframe contenant toutes les régions, les télécharge si besoin.
-    :return: Un Dataframe contenant toute les régions de France dans la liste DMeteoFrance.region_list_metropole.
-    """
-    chemin_archive = Path("output/meteoFrance/downloaded_data/delimitation_qgis_archive/regions-100m.geojson.gz")
-    chemin = Path("output/meteoFrance/downloaded_data/delimitation_qgis/regions-100m.geojson")
-    id_data_gouv = "aa76860a-51af-4744-a593-4c19af2570b8"
-    if not chemin.exists():
-        DMeteo.download_and_extract(id_data_gouv, chemin_archive, chemin)
-    df_toute_region = gpd.read_file(chemin).to_crs(crs="EPSG:27572")
-    df_metropole = df_toute_region[df_toute_region["code"].isin(DMeteo.region_list_metropole)].copy()
-    return df_metropole
+def get_all_geographic_geodf(geographic_scale:GeographicScaleClip):
+    match geographic_scale:
+        case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
+            chemin_archive = Path(
+                "output/meteoFrance/downloaded_data/delimitation_qgis_archive/regions-100m.geojson.gz")
+            chemin = Path("output/meteoFrance/downloaded_data/delimitation_qgis/regions-100m.geojson")
+            id_data_gouv = "aa76860a-51af-4744-a593-4c19af2570b8"
+        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
+            chemin_archive = Path(
+                "output/meteoFrance/downloaded_data/delimitation_qgis_archive/departements-50m.geojson.gz")
+            chemin = Path("output/meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson")
+            id_data_gouv = "93a2ba8f-e30f-4916-a73b-0c4d87247ace"
+        case GeographicScaleClip.BASSIN:
+            chemin_archive = Path(
+                "output/meteoFrance/downloaded_data/delimitation_qgis_archive/bassin-hydrographique.geojson.zip")
+            chemin = Path("output/meteoFrance/downloaded_data/delimitation_qgis/BassinHydrographique_FXX.geojson")
+            id_data_gouv = "b0761a88-b59f-466f-a3cc-b97f237fd732"
+        case _:
+            raise NotImplementedError
 
-@cache
-def get_all_departement_geodf():
-    chemin_archive = Path("output/meteoFrance/downloaded_data/delimitation_qgis_archive/departements-50m.geojson.gz")
-    chemin = Path("output/meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson")
-    id_data_gouv = "93a2ba8f-e30f-4916-a73b-0c4d87247ace"
     if not chemin.exists():
         DMeteo.download_and_extract(id_data_gouv, chemin_archive, chemin)
     df_tout_departement = gpd.read_file(chemin).to_crs(crs="EPSG:27572")
-    df_departement_aura = df_tout_departement[df_tout_departement["code"].isin(DMeteo.departement_list)].copy()
-    return df_departement_aura
-
-@cache
-def get_all_bassin_versant():
-    chemin_archive = Path("output/meteoFrance/downloaded_data/delimitation_qgis_archive/bassin-hydrographique.geojson.zip")
-    chemin = Path("output/meteoFrance/downloaded_data/delimitation_qgis/BassinHydrographique_FXX.geojson")
-    id_data_gouv = "b0761a88-b59f-466f-a3cc-b97f237fd732"
-    if not chemin.exists():
-        DMeteo.download_and_extract(id_data_gouv, chemin_archive, chemin)
-    df_tout_bassin = gpd.read_file(chemin).to_crs(crs="EPSG:27572")
-    return df_tout_bassin
+    return df_tout_departement
 
 def get_geographic_element(geographic_scale:GeographicScaleClip, code:str):
+    df = get_all_geographic_geodf(geographic_scale)
     match geographic_scale:
         case GeographicScaleClip.BASSIN:
-            df = get_all_bassin_versant()
             nom_colonne = "CdBH"
         case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
-            df = get_all_departement_geodf()
             nom_colonne = "code"
         case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
-            df = get_all_region_geodf()
             nom_colonne = "code"
         case _:
             raise NotImplementedError
@@ -401,7 +390,7 @@ def get_geographic_element(geographic_scale:GeographicScaleClip, code:str):
     return df_departement
 
 def get_bassin_versant(code:str):
-    df = get_all_bassin_versant()
+    df = get_all_geographic_geodf(GeographicScaleClip.BASSIN)
     df_bassin = df[df["CdBH"] == code]
     return df_bassin
 
