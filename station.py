@@ -32,7 +32,7 @@ def get_stations(code_sandre:str|None = None, annee_mois_active:str|None=None) -
     if annee_mois_active is not None:
         # On filtre les stations qui sont ouverte à cette date là
         df_stations_sandre_ouverte = df_stations_sandre[
-            (annee_mois_active < df_stations_sandre["date_fermeture_station"].astype(str)) &
+            ((annee_mois_active < df_stations_sandre["date_fermeture_station"].astype(str)) | (df_stations_sandre["date_fermeture_station"].isna())) &
             (df_stations_sandre["date_ouverture_station"].astype(str) < annee_mois_active)
         ]
     else:

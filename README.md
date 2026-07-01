@@ -37,7 +37,18 @@ On peut aussi lancer la version complète en CLI (commande Line Interface).
 # On lance le programme principal en CLI.
 .\venv\Scripts\python.exe main.py -h
 ```
+Exemple d'utilisation : 
+```bash
+# Les type hydraulicité et VCN3 fonctionne au mois. Ainsi la end-date n'est pas pris en compte. (comportement à travailler)
+# On récupère l'hydraulicité du mois de Janvier 2026 sur les stations de la liste custom.
+python.exe .\main.py --type hydraulicite --start_date 2026-01 --reseau_sandre custom
 
+# On récupère le vcn3 du mois de Février 2024 sur les stations de le réseaux sandre BSH001.
+python.exe .\main.py --type hydraulicite --start_date 2024-02 --reseau_sandre BSH001
+
+# On récupère les données SIM2 de météoFrance pour le mois unique de juillet 2023
+python.exe .\main.py --type meteo_sim2_QUOT --start_date 2023-07-01 --end_date 2023-07-31
+```
 ## main.py
 Le fichier main sert à lancer tout le reste des fichiers.
 

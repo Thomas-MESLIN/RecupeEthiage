@@ -1,4 +1,5 @@
 import pandas as pd
+from datetime import datetime
 import clean
 import utils
 import logging
@@ -9,13 +10,36 @@ def calcul_hydraulicite_mensuel(annee_mois: str, code_sandre: str):
     """
     Calcul l'hydraulicité à partir des données historiques et des données nettoyées
     Le sauvegarde ensuite dans un .csv dans le dossier hydraulicité.
+
+    Si l'année et le mois correspondent au mois actuel, on utilise les données Journalière.
     :param annee_mois: Année et mois de l'hydraulicité souhaité au format AAAA-MM
     :param code_sandre: Code Sandre de la liste à traiter
     """
     # On récupère les données nettoyés historique
-    clean.ensure_single_month_cleaned(annee_mois, code_sandre, "QmM")
-    chemin_data_du_mois_clean = utils.get_path_clean_csv(code_sandre, annee_mois,"QmM")
+    grandeur = "QmM"
+    is_aggregated = False
+    today = datetime.today()
+    if today.year == int(annee_mois[0:4]) and today.month == int(annee_mois[5:7]):
+        grandeur = "QmnJ"
+        is_aggregated = True
+        print("LES DONNEES SOUHAITEZ PROVIENNENT DU MOIS ACTUEL, PASSAGE SUR LES SOURCES AU JOUR.")
+
+    clean.ensure_single_month_cleaned(annee_mois, code_sandre, grandeur)
+    chemin_data_du_mois_clean = utils.get_path_clean_csv(code_sandre, annee_mois,grandeur)
+
+    clean.ensure_single_month_cleaned(annee_mois, code_sandre, grandeur)
     df_mois = pd.DataFrame(pd.read_csv(chemin_data_du_mois_clean))
+
+    # Aggregation des données du mois via une moyenne.
+    if is_aggregated:
+        df_mois = df_mois.groupby(by=["code_site","code_station"]).agg(
+            {
+                "date_obs_elab":"max",
+                "resultat_obs_elab":"mean",
+                "date_prod":"max",
+            }
+        )
+        df_mois.reset_index(inplace=True)
 
     # Récupération du QmM moyen historique.
     ensure_QmM_moyen_historic_calculated(code_sandre)
@@ -154,5 +178,5 @@ if __name__ == "__main__":
     #calcul_hydraulicite_mensuel("2026-04","BSH001")
     #calcul_hydraulicite_mensuel("2026-05","BSH001")
     #calcul_hydraulicite_mensuel("2026-04","custom")
-    calcul_hydraulicite_mensuel("2026-05","custom")
+    calcul_hydraulicite_mensuel("2026-06","BSH101")
     # calcul_hydraulicite_mensuel("2025-11","custom")

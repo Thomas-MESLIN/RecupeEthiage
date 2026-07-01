@@ -220,19 +220,17 @@ def try_format_date(date_to_format:str,is_last_day:bool) -> datetime|None:
     :param is_last_day: Si à True, Renvoie le dernier jour du mois.
     :return: Une date formatté si l'opération a été réussi ou None si la date n'a pas été reconnue.
     """
-    try:
-        return datetime.strptime(date_to_format, "%Y-%m-%d")
-    except ValueError:
-        pass
-    try:
+    if len(date_to_format) == 7:
         res = datetime.strptime(date_to_format, "%Y-%m")
         res.replace(day=1)
         if is_last_day:
             res.replace(day=calendar.monthrange(res.year, res.month)[1])
-    except ValueError:
-        pass
+    elif len(date_to_format) == 10:
+        res = datetime.strptime(date_to_format, "%Y-%m-%d")
+    else:
+        return None
 
-    return None
+    return res
 
 
 if __name__ == "__main__":
@@ -249,22 +247,27 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    start_date = try_format_date(args.start_date,is_last_day=False)
-    # Si la date de début est vide, on remplace par le premier jour du mois précédent
-    if start_date is None:
-        start_date = (datetime.today().replace(day=1) - timedelta(days=1)).replace(day=1)
-        logging.info(f"Utilisation de la start_date par défaut : {start_date}")
-
-    end_date = try_format_date(args.end_date,is_last_day=True)
-    # Si la date de fin est vide, on remplace par le dernier jour du mois précédent
-    if end_date is None:
-        end_date = datetime.today().replace(day=1) - timedelta(days=1)
-        logging.info(f"Utilisation de la end_date par défaut : {end_date}")
-
     if args.type is None:
         logging.error("Le type de données souhaité n'est pas spécifié !")
         logging.info("Passage en mode interactif !")
+        interactif_start()
     else:
+        start_date = None
+        if args.start_date is not None:
+            start_date = try_format_date(args.start_date,is_last_day=False)
+        # Si la date de début est vide, on remplace par le premier jour du mois précédent
+        if start_date is None:
+            start_date = (datetime.today().replace(day=1) - timedelta(days=1)).replace(day=1)
+            logging.info(f"Utilisation de la start_date par défaut : {start_date}")
+
+        end_date = None
+        if args.end_date is not None:
+            end_date = try_format_date(args.end_date,is_last_day=True)
+        # Si la date de fin est vide, on remplace par le dernier jour du mois précédent
+        if end_date is None:
+            end_date = start_date.replace(day=calendar.monthrange(start_date.year,start_date.month)[1])
+            logging.info(f"Utilisation de la end_date par défaut : {end_date}")
+
         main(args.type,
              start_date,
              end_date,

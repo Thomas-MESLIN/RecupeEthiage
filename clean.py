@@ -65,6 +65,9 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
         logging.error("Path à nettoyer vide et grandeur inexistante.")
         raise NameError
 
+    if df_hubeau.empty:
+        logging.error("Le datafame lu est vide.")
+
     # Filtrage pour avoir uniquement les enregistrements aux bonnes dates tous le bon mois.
     df_hubeau_filtre_date = df_hubeau[df_hubeau[colonne_date_hubeau].astype(str).str.contains(date_a_filtrer)]
 

@@ -49,7 +49,8 @@ def plot_geojson_from_lambert2(output_path:Path, gdf_ready: gpd.GeoDataFrame):
     """
     print("Saving...")
     if not gdf_ready.empty:
-        gdf_ready.to_file(output_path, driver="GeoJSON", mode="w")
+        gdf_ready.to_file(output_path.with_suffix(".geojson"), driver="GeoJSON", mode="w")
+        gdf_ready.to_csv(output_path.with_suffix(".csv"), mode="w", index=False)
     else:
         print("gdf empty ! " + output_path)
 
@@ -290,13 +291,14 @@ def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str
                            }
                            )
 
-def export_all_format_geojson_range(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool,
+def export_all_format_geojson_range(geo_scale:GeographicScaleClip, data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool,
                                     has_index_update:bool=True, is_data_update_allowed:bool=True) -> None:
     """
     Enregistre des geojson contenant toutes les données entre start_date et end_date.
     Créer des découpages à l'échelle départementale, régionale et bassin.
 
     De plus, si les données ne sont pas aggrégé, produit des plots pour chaque métrique surveillé.
+    :param geo_scale: L'échelle à laquelle le geojson sera produit
     :param is_data_aggregated: Si a True, les données sont aggrégés, si a False, on retrouve les données individuelles.
     :param data_freq: Type de donnée à récupérer
     :param start_date: Date de début (inclus dans l'intervalle)
@@ -319,11 +321,7 @@ def export_all_format_geojson_range(data_freq:MeteoFranceDataType, start_date:da
     chemin_sauvegarde = get_chemin_sauvegarde(data_freq, start_date, end_date, is_data_aggregated)
     chemin_sauvegarde.parent.mkdir(exist_ok=True)
 
-    export_to_every_geographic_element(data_freq, GeographicScaleClip.DEPARTEMENT_BASSIN, df_intervalle, chemin_sauvegarde, is_data_aggregated)
-    export_to_every_geographic_element(data_freq, GeographicScaleClip.NATIONAL, df_intervalle, chemin_sauvegarde, is_data_aggregated)
-    export_to_every_geographic_element(data_freq, GeographicScaleClip.BASSIN, df_intervalle, chemin_sauvegarde, is_data_aggregated)
-    export_to_every_geographic_element(data_freq, GeographicScaleClip.REGION_BASSIN, df_intervalle, chemin_sauvegarde, is_data_aggregated)
-
+    export_to_every_geographic_element(data_freq, geo_scale, df_intervalle, chemin_sauvegarde, is_data_aggregated)
 
 def export_geojson_month(data_freq:MeteoFranceDataType, month_date:datetime):
     """
@@ -503,5 +501,5 @@ if __name__ == "__main__":
 
     #export_all_format_geojson_range(MeteoFranceDataType.QUOT, datetime(2026, 6, 10), today, True)
     #export_all_format_geojson_range(MeteoFranceDataType.QUOT, datetime(2026, 6, 10), today, False)
-    export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 10), today, True)
-    export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 6, 10), today, False)
+    for annee in range(1990,2021):
+        export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(annee, 6, 1), datetime(annee, 6, 30), True)
