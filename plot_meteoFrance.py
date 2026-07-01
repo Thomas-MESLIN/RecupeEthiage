@@ -291,6 +291,28 @@ def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str
                            }
                            )
 
+def df_range_processed(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool,
+                                    has_index_update:bool=True, is_data_update_allowed:bool=True) -> pd.DataFrame:
+    """
+    Renvoie un Dataframe avec toutes les données allant de start_date à end_date, en aggrégeant les données si demandé.
+    :param data_freq:Le type de données souhaité
+    :param start_date:La date de début des données
+    :param end_date:La date de fin des données
+    :param is_data_aggregated:Si a vrai, on aggrège les données sur la période.
+    :param has_index_update:On autorise l'index de correspondance données -> id_datagouv à se mettre à jour
+    :param is_data_update_allowed: On autorise les fichiers à se re-télécharger pour être à jour.
+    :return: Le Dataframe contenant toute les données de start_date à end_date.
+    """
+    df_intervalle = DMeteo.get_data_in_range(data_freq, start_date, end_date, has_index_update, is_data_update_allowed)
+    if df_intervalle.empty:
+        print(f"L'intervalle de données ({start_date} - {end_date}) est vide. Abandon.")
+        return df_intervalle
+
+    if is_data_aggregated:
+        df_intervalle = MeteoAgg.aggregate_range(data_freq, df_intervalle, GroupByMethod.BY_POSITION)
+
+    return df_intervalle
+
 def export_all_format_geojson_range(geo_scale:GeographicScaleClip, data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool,
                                     has_index_update:bool=True, is_data_update_allowed:bool=True) -> None:
     """
@@ -310,13 +332,7 @@ def export_all_format_geojson_range(geo_scale:GeographicScaleClip, data_freq:Met
     if not is_data_update_allowed:
         has_index_update = False
 
-    df_intervalle = DMeteo.get_data_in_range(data_freq, start_date, end_date, has_index_update, is_data_update_allowed)
-    if df_intervalle.empty:
-        print(f"L'intervalle de données ({start_date} - {end_date}) est vide. Abandon.")
-        return
-
-    if is_data_aggregated:
-        df_intervalle = MeteoAgg.aggregate_range(data_freq, df_intervalle, GroupByMethod.BY_POSITION)
+    df_intervalle = df_range_processed(data_freq, start_date, end_date, is_data_aggregated, has_index_update, is_data_update_allowed)
 
     chemin_sauvegarde = get_chemin_sauvegarde(data_freq, start_date, end_date, is_data_aggregated)
     chemin_sauvegarde.parent.mkdir(exist_ok=True)

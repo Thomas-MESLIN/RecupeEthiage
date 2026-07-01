@@ -198,6 +198,44 @@ def update_decennie_to_id_datagouv(freq_data:MeteoFranceDataType):
     if not old_df_decennie_to_id_datagouv.empty:
         delete_old_file(freq_data, old_df_decennie_to_id_datagouv, new_df_decennie_to_id_datagouv)
 
+def filter_range_in_df(df_to_filter:pd.DataFrame, data_freq: MeteoFranceDataType,
+                       date_debut: datetime, date_end: datetime) -> pd.DataFrame:
+    """
+    Filtre le DataFrame d'entrée pour ne récupérer que les données entre le date_debut et date_end.
+    :param df_to_filter: Le DataFrame a filter
+    :param data_freq: Le type de fréquence de donnée
+    :param date_debut: La date de début à filtrer
+    :param date_end: La date de fin à filtrer
+    :return: Le Dataframe filtré entre la date de début et la date de fin
+    """
+    match data_freq:
+        case MeteoFranceDataType.SIM2_QUOT:
+            format_to_catch = "%Y%m%d"
+            nom_colonne_date = "DATE"
+        case MeteoFranceDataType.SIM2_MENS:
+            format_to_catch = "%Y%m"
+            nom_colonne_date = "DATE"
+        case MeteoFranceDataType.QUOT:
+            format_to_catch = "%Y%m%d"
+            nom_colonne_date = "AAAAMMJJ"
+        case MeteoFranceDataType.MENS:
+            format_to_catch = "%Y%m"
+            nom_colonne_date = "AAAAMM"
+        case _:
+            raise NotImplementedError
+
+    int_date_debut = int(date_debut.strftime(format_to_catch))
+    int_date_end = int(date_end.strftime(format_to_catch))
+
+    # Filtre les df pour qu'ils soient entre la date début et la date fin.
+    df_reduit_bonne_date = df_to_filter[
+        (int_date_debut <= df_to_filter[nom_colonne_date]) & (df_to_filter[nom_colonne_date] <= int_date_end)].copy()
+
+    df_reduit_bonne_date["DATE_DATETIME"] = df_reduit_bonne_date[nom_colonne_date].apply(
+        lambda x: datetime.strptime(str(x), format_to_catch))
+
+    return df_reduit_bonne_date
+
 def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date_end: datetime, has_index_update:bool, is_data_update_allowed:bool) -> pd.DataFrame:
     """
     Renvoie toutes les données mensuelles de SIM2 entre la date de début et la date de fin.
@@ -240,43 +278,22 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
     for date_debut_fichier, date_fin_fichier, id_datagouv in file_to_gather:
         all_df.append(get_df_decennie(data_freq, date_debut_fichier, date_fin_fichier, id_datagouv, is_data_update_allowed))
     df_complet = pd.concat(all_df, ignore_index=True)
-    match data_freq:
-        case MeteoFranceDataType.SIM2_QUOT | MeteoFranceDataType.SIM2_MENS:
-            df_complet.drop_duplicates(subset=["LAMBX","LAMBY","DATE"],inplace=True)
-        case MeteoFranceDataType.QUOT:
-            df_complet.drop_duplicates(subset=["LAT","LON","AAAAMMJJ"],inplace=True)
-        case MeteoFranceDataType.MENS:
-            df_complet.drop_duplicates(subset=["LAT", "LON", "AAAAMM"], inplace=True)
-        case _:
-            raise NotImplementedError
+    if len(all_df) > 1:
+        match data_freq:
+            case MeteoFranceDataType.SIM2_QUOT | MeteoFranceDataType.SIM2_MENS:
+                df_complet.drop_duplicates(subset=["LAMBX","LAMBY","DATE"],inplace=True)
+            case MeteoFranceDataType.QUOT:
+                df_complet.drop_duplicates(subset=["LAT","LON","AAAAMMJJ"],inplace=True)
+            case MeteoFranceDataType.MENS:
+                df_complet.drop_duplicates(subset=["LAT", "LON", "AAAAMM"], inplace=True)
+            case _:
+                raise NotImplementedError
     print("Files loaded successfully...")
     print(df_complet)
 
-    match data_freq:
-        case MeteoFranceDataType.SIM2_QUOT:
-            format_to_catch = "%Y%m%d"
-            nom_colonne_date = "DATE"
-        case MeteoFranceDataType.SIM2_MENS:
-            format_to_catch = "%Y%m"
-            nom_colonne_date = "DATE"
-        case MeteoFranceDataType.QUOT:
-            format_to_catch = "%Y%m%d"
-            nom_colonne_date = "AAAAMMJJ"
-        case MeteoFranceDataType.MENS:
-            format_to_catch = "%Y%m"
-            nom_colonne_date = "AAAAMM"
-        case _:
-            raise NotImplementedError
+    df_date_filtre = filter_range_in_df(df_complet, data_freq, date_debut, date_end)
 
-    int_date_debut = int(date_debut.strftime(format_to_catch))
-    int_date_end = int(date_end.strftime(format_to_catch))
-
-    # Filtre les df pour qu'ils soient entre la date début et la date fin.
-    df_reduit_bonne_date =  df_complet[(int_date_debut <= df_complet[nom_colonne_date]) & (df_complet[nom_colonne_date] <= int_date_end)].copy()
-
-    df_reduit_bonne_date["DATE_DATETIME"] = df_reduit_bonne_date[nom_colonne_date].apply(lambda x: datetime.strptime(str(x), format_to_catch))
-
-    return df_reduit_bonne_date
+    return df_date_filtre
 
 @cache
 def get_gouv_ressource(id_gouv_data:str) -> Resource:
@@ -355,8 +372,8 @@ def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:date
     """
     Renvoie le chemin vers le fichier contenant les données téléchargé pour le type de données souhaitée..
     :param freq_data: Le type de donnée
-    :param debut_decenie: AAAA-MM-JJ
-    :param fin_decenie: AAAA-MM-JJ
+    :param debut_decenie: La datetime de début des données du fichier
+    :param fin_decenie: La datetime de fin des données du fichier
     :param id_gouv_data: L'identifiant unique par fichier indiquant le id datagouv.
     :param is_archive: Si True, renvoie un .csv.gz, si faut, renvoie un .csv
     :return: Chemin vers le fichier sim2
@@ -400,11 +417,3 @@ if __name__ == "__main__":
 
     liste = get_geographic_list(GeographicScaleClip.DEPARTEMENT_BASSIN)
     print(liste)
-
-    #date_freq = MeteoFranceDataType.MENS
-    #delete_old_file(date_freq, get_df_decennie_to_id_datagouv(date_freq), get_df_decennie_to_id_datagouv(date_freq))
-    # res_sim_quot_1 = get_data_in_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026, 5, 1), datetime(2026, 5, 30))
-    # res_sim_quot_1.to_csv(Path("output/test/res_quot_sim_1.csv"), index=False)
-    #
-    # res_sim_mens_1 = get_data_in_range(MeteoFranceDataType.SIM2_MENS, datetime(2026, 5, 1), datetime(2026, 5, 30))
-    # res_sim_mens_1.to_csv(Path("output/test/res_mens_sim_1.csv"), index=False)
