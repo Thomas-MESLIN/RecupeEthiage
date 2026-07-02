@@ -406,7 +406,8 @@ if __name__ == "__main__":
 
     for date in pd.date_range("2025-09-01", "2026-06-30", freq="MS"):
         annee_mois = date.strftime("%Y-%m")
-        ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, "custom", is_result_plotted=True)
+        print(annee_mois)
+        ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, "custom", is_result_plotted=False)
     # ensure_frequence_non_depassement_periode_retour_calcule("2026-06", "custom", is_result_plotted=False)
     # ensure_frequence_non_depassement_periode_retour_calcule("2026-04","custom", is_result_plotted=False)
     # ensure_frequence_non_depassement_periode_retour_calcule("2026-05","BSH001", is_result_plotted=False)

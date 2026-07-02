@@ -367,8 +367,8 @@ if __name__ == "__main__":
     #create_geojson_from_periode_de_retour("2026-04", "BSH001")
     #create_geojson_from_periode_de_retour("2026-04", "BSH001")
     #create_geojson_from_periode_de_retour("2026-05", "BSH001")
-    create_geojson_from_periode_de_retour("2026-06", "BSH101")
-    create_geojson_from_hydraulicite("2026-06", "BSH101")
+    # create_geojson_from_periode_de_retour("2026-06", "BSH101")
+    # create_geojson_from_hydraulicite("2026-06", "BSH101")
     # create_geojson_from_hydraulicite("2026-05", "custom")
     # create_geojson_from_periode_de_retour("2026-05", "BSH001")
     # create_geojson_from_periode_de_retour("2026-04", "BSH001")
@@ -376,3 +376,8 @@ if __name__ == "__main__":
     # create_geojson_from_periode_de_retour("2026-04", "custom")
     # create_geojson_from_stations(None, None)
     # create_geojson_from_sites(None)
+
+    create_geojson_from_periode_de_retour("2026-06", "custom")
+    # for date in pd.date_range("2025-09-01", "2026-06-30", freq="MS"):
+    #     annee_mois = date.strftime("%Y-%m")
+    #     create_geojson_from_periode_de_retour(annee_mois, "custom")

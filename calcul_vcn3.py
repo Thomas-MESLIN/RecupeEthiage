@@ -294,6 +294,8 @@ def find_vcn3_min(date_debut:datetime,date_fin:datetime, mois_souhaite:int, code
     annee_min = datetime(1900,1,1)
     for date_annee in pd.date_range(date_debut, date_fin, freq="YS"):
         date_anne_mois_correcte = date_annee.replace(month=mois_souhaite)
+        if date_anne_mois_correcte < date_debut or date_fin < date_anne_mois_correcte:
+            continue
         annee_mois = date_anne_mois_correcte.strftime("%Y-%m")
         valeur = get_vcn3_station_mois(get_df_moyenne_glissante(annee_mois, code_sandre),
                                        station_code, annee=date_anne_mois_correcte.year, mois=date_anne_mois_correcte.month)
