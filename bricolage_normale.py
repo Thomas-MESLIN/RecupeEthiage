@@ -46,4 +46,7 @@ df_actuel = df_donnee_actuelle.set_index(["LAMBX", "LAMBY"])
 df_actuel["PE_rapport_normale"] = (df_actuel["PE"]) / df_ref["PE"].abs().clip(lower=0.1)
 df_actuel.reset_index(inplace=True)
 df_lambert2 = plot_meteoFrance.to_lambert2_geodataframe(MeteoFranceDataType.SIM2_QUOT, df_actuel)
-plot_meteoFrance.plot_geojson_from_lambert2(Path(f"output/QGIS/meteoFrance/QUOT-SIM2-NORMALES-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}/bassin/QUOT-SIM2-NORMALES-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}.geojson"),df_lambert2)
+
+chemin_plot_normale = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-NORMALES-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}/bassin/QUOT-SIM2-NORMALES-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}.geojson")
+chemin_plot_normale.parent.mkdir(exist_ok=True, parents=True)
+plot_meteoFrance.plot_geojson_from_lambert2(chemin_plot_normale,df_lambert2)

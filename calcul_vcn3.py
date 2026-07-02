@@ -1,5 +1,4 @@
-import datetime
-from datetime import timedelta
+from datetime import timedelta, datetime
 import calendar
 import numpy as np
 import pandas as pd
@@ -23,8 +22,7 @@ def get_qmnj(code_sandre:str, date_mois:str) -> pd.DataFrame:
     """
     chemin_fichier = utils.get_path_clean_csv(code_sandre, date_mois, "QmnJ")
     if utils.is_date_historique(date_mois):
-        pass
-        # clean.ensure_historic_cleaned(code_sandre, "QmnJ")
+        clean.ensure_historic_cleaned(code_sandre, "QmnJ")
     else:
         clean.ensure_single_month_cleaned(date_mois, code_sandre, "QmnJ")
     df_hubeau = pd.DataFrame(pd.read_csv(chemin_fichier))
@@ -58,7 +56,7 @@ def get_df_moyenne_glissante(annee_mois:str, code_sandre:str):
     """
     annee = int(annee_mois[0:4])
     mois = int(annee_mois[5:7])
-    date_correspondante = datetime.date(year=annee, month=mois, day=1)
+    date_correspondante = datetime(annee, mois, 1)
     mois_precedent = date_correspondante - relativedelta(months=1)
     format_annee_mois_precedent = mois_precedent.strftime("%Y-%m")
 
@@ -85,11 +83,11 @@ def get_vcn3_station_mois(df:pd.DataFrame, station_code: str, annee:int, mois: i
     )
 
     # On ne garde que les données du mois actuel et des 3 jours avant et après.
-    datetime_first_day = datetime.date(year=annee, month=mois, day=1)
+    datetime_first_day = datetime(annee, mois, 1)
     _, n_day = calendar.monthrange(annee, mois)
 
-    datetime_first_day_minus_3 = pd.to_datetime(datetime_first_day - datetime.timedelta(days=3))
-    datetime_last_day = pd.to_datetime(datetime.date(year=annee, month=mois, day=n_day))
+    datetime_first_day_minus_3 = pd.to_datetime(datetime_first_day - timedelta(days=3))
+    datetime_last_day = pd.to_datetime(datetime(annee, mois, n_day))
 
     df_station_annee_mois = (df_station[(datetime_first_day_minus_3 < df_station["date_obs_elab"]) &
                                        (df_station["date_obs_elab"] <= datetime_last_day)].copy())
@@ -228,7 +226,7 @@ def test():
     res = get_vcn3_station_mois(df_qmnj_2025_08, "U401402001", 2025, 8)
     print(res)
 
-def calcul_vcn3_station(code_station:str, all_df:pd.DataFrame) -> pd.DataFrame:
+def calcul_vcn3_historique_station(code_station:str, all_df:pd.DataFrame) -> pd.DataFrame:
     """
     Calcul le VCN3 mensuel d'une station et le stocke de manière à pouvoir y accéder en fonction du nom de la station, puisque chaque calcul se déroule station par station.
     Il faut que le dataframe associé contienne les données de la station.
@@ -236,6 +234,7 @@ def calcul_vcn3_station(code_station:str, all_df:pd.DataFrame) -> pd.DataFrame:
     :param all_df: Le dataframe contenant au moins les données VCN3 de la station.
     :return: Un dataframe contenant les données de la station.
     """
+    print("Vérification des données historique...")
     df_station = all_df[all_df["code_station"] == code_station]
     all_rows = []
     for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
@@ -249,6 +248,7 @@ def calcul_vcn3_station(code_station:str, all_df:pd.DataFrame) -> pd.DataFrame:
         all_rows.append(row)
     df_vcn3_station = pd.DataFrame(data=all_rows)
     df_vcn3_station.to_csv(utils.get_path_vcn3_station(code_station), index=False)
+    print("Données historiques vérifiées !")
     return df_vcn3_station
 
 @cache
@@ -276,7 +276,35 @@ def ensure_calcul_vcn3_station(code_station:str, code_sandre:str):
     path_vcn3_station = utils.get_path_vcn3_station(code_station)
     if not utils.is_res_updated_with_source(utils.get_paths_source_historique("QmnJ"), path_vcn3_station):
         df_all_vcn3 = get_all_df_mensuel(code_sandre).copy()
-        calcul_vcn3_station(code_station, df_all_vcn3)
+        calcul_vcn3_historique_station(code_station, df_all_vcn3)
+
+
+def find_vcn3_min(date_debut:datetime,date_fin:datetime, mois_souhaite:int, code_sandre:str,station_code:str) -> tuple[float, datetime]:
+    """
+    Trouve le VCN3 minimum de la station appartenant au code sandre correspondant, sur la période date-début à date-fin
+    :param date_debut:
+    :param date_fin:
+    :param mois_souhaite:
+    :param code_sandre:
+    :param station_code:
+    :return:
+    """
+    print("Recherche du vcn3 le plus bas pour la station...")
+    val_min = 99999999999
+    annee_min = datetime(1900,1,1)
+    for date_annee in pd.date_range(date_debut, date_fin, freq="YS"):
+        date_anne_mois_correcte = date_annee.replace(month=mois_souhaite)
+        annee_mois = date_anne_mois_correcte.strftime("%Y-%m")
+        valeur = get_vcn3_station_mois(get_df_moyenne_glissante(annee_mois, code_sandre),
+                                       station_code, annee=date_anne_mois_correcte.year, mois=date_anne_mois_correcte.month)
+        if valeur < val_min:
+            annee_min = date_anne_mois_correcte
+            val_min = valeur
+    print("Recherche du vcn3 le plus bas pour la station terminé.")
+    if val_min == 99999999999:
+        val_min = pd.NA
+        annee_min = pd.NA
+    return val_min, annee_min
 
 if __name__ == "__main__":
     #calcule_minimum_glissant_moyen_1991_2020()

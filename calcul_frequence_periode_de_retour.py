@@ -16,6 +16,7 @@ import utils
 import calcul_vcn3
 import station
 from lmoments3 import distr as lm_distr
+from datetime import datetime
 
 # ---------------------------------------------------------------------------
 # 1. Estimateur des L-moments pour la loi Log-Normale
@@ -275,8 +276,8 @@ def get_period_from_flow(q_obs: float, res: dict) -> dict:
     ic_high = res["pcdf"]["IC_high"]
 
     if q_obs <= 0:
-        return {"q": q_obs, "p": res["p0"], "T": 1.0 / res["p0"] if res["p0"] > 0 else np.inf,
-                "IC_low": np.nan, "IC_high": np.nan}
+        return {"debit_obs": q_obs, "frequence_non_depassement": res["p0"], "Periode_de_retour": 1.0 / res["p0"] if res["p0"] > 0 else np.inf,
+              "Periode_de_retour_interval_confiance_bas": np.nan, "Periode_de_retour_interval_confiance_haut": np.nan}
 
     # Interpolation linéaire sur la grille x → cdf
     p_interp = np.interp(q_obs, x, cdf)
@@ -378,11 +379,14 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
         for station_code in df_station["code_station"]:
             calcul_vcn3.ensure_calcul_vcn3_station(station_code, code_sandre)
             valeur = calcul_vcn3.get_vcn3_station_mois(calcul_vcn3.get_df_moyenne_glissante(annee_mois, code_sandre),station_code, annee=annee, mois=mois)
+            res_min,date_min = calcul_vcn3.find_vcn3_min(datetime(1991,1,1), datetime.today(), mois, code_sandre, station_code)
             if not pd.isna(valeur):
                 row = get_result_station(station_code, mois_str, code_sandre, valeur, plot_resultat=is_result_plotted)
                 row["code_station"] = station_code
                 df_date_ouverture = df_station[df_station["code_station"] == station_code]["date_ouverture_station"]
                 row["date_ouverture_station"] = df_date_ouverture.iloc[0] if not df_date_ouverture.empty else pd.NA
+                row["vcn3_minimum_du_mois_connu"] = res_min
+                row["annee_occurence_vcn3_minimum_du_mois_connu"] = date_min
                 all_rows.append(row)
             else:
                 print(f"La station {station_code} n'a pas de donnée lors du mois {date.strftime('%B')}.")
@@ -396,7 +400,13 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     return df_all_analysis
 
 if __name__ == "__main__":
-    ensure_frequence_non_depassement_periode_retour_calcule("2026-06", "BSH101", is_result_plotted=False)
+    # Genère les fréquences de non dépassement et les période de retour sur l'année hydrologique
+    # Pour chaque mois.
+    ensure_frequence_non_depassement_periode_retour_calcule("2026-06", "custom", is_result_plotted=True)
+
+    for date in pd.date_range("2025-09-01", "2026-06-30", freq="MS"):
+        annee_mois = date.strftime("%Y-%m")
+        ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, "custom", is_result_plotted=True)
     # ensure_frequence_non_depassement_periode_retour_calcule("2026-06", "custom", is_result_plotted=False)
     # ensure_frequence_non_depassement_periode_retour_calcule("2026-04","custom", is_result_plotted=False)
     # ensure_frequence_non_depassement_periode_retour_calcule("2026-05","BSH001", is_result_plotted=False)

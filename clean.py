@@ -5,6 +5,7 @@ import utils
 import station
 from tqdm import tqdm
 import logging
+from functools import cache
 
 colonne_date_hubeau = "date_obs_elab"
 colonne_code_station_hubeau = "code_station"
@@ -58,7 +59,7 @@ def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=
     elif grandeur_a_filtrer in utils.GRANDEUR:
         if grandeur_a_filtrer == "QmnJ":
             download_Hubeau.ensure_grandeur_mensuel_downloaded(date_a_filtrer, grandeur_a_filtrer)
-            df_hubeau = pd.read_csv(utils.get_path_mensuel_raw_csv(date_a_filtrer, grandeur_a_filtrer))
+            df_hubeau = pd.read_csv(utils.get_path_mensuel_raw_csv(date_a_filtrer, grandeur_a_filtrer), low_memory=False)
         else:
             df_hubeau = get_grandeur_historique_df(grandeur_a_filtrer)
     else:
@@ -149,9 +150,10 @@ def ensure_single_month_cleaned(annee_mois:str, code_reseau_sandre:str, grandeur
     if not utils.is_res_updated_with_source(chemin_source, chemin_fichier_clean_mensuel):
         clean_single_month(annee_mois, code_reseau_sandre, grandeur)
 
+@cache
 def ensure_historic_cleaned(code_reseau_sandre:str, grandeur:str):
     """
-    S'assure que les données du mois sont à jour et qu'elles ont été calculés et synchronisées avec les données brutes.
+    S'assure que les données historiques sont à jour et qu'elles ont été calculés et synchronisés avec les données brutes.
     :param code_reseau_sandre: Code du réseau sandre qui est nettoyé.
     :param grandeur: La grandeur à nettoyer.
     :return: Rien

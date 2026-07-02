@@ -33,7 +33,6 @@ result_folder = [
     Path("QGIS"),
     Path("QGIS/stations"),
     Path("QGIS/sites"),
-    Path("QGIS/VCN3_periode_de_retour"),
     Path("QGIS/hydraulicite"),
     Path("QGIS/sites"),
     Path("QGIS/meteoFrance"),

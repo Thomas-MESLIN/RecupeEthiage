@@ -113,6 +113,12 @@ def create_geojson_from_stations(code_sandre:str|None=None, annee_mois:str|None=
         driver="GeoJSON"
     )
 
+    gdf_final.to_csv(
+        output_geojson.with_suffix(".csv"),
+        sep=';',
+        index=False,
+    )
+
     logging.info(f"GeoJSON créé : {output_geojson}")
 
 def create_geojson_from_sites(code_sandre:str|None=None):
