@@ -18,6 +18,7 @@ folder_to_create = [
     Path("downloaded_data/observations_elaboree"),
     Path("downloaded_data/sites"),
     Path("downloaded_data/stations"),
+    Path("downloaded_data/onde"),
     Path("QmM_moyen"),
 ]
 

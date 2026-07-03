@@ -4,6 +4,7 @@ import calendar
 import plot_grandeur
 import logging
 import plot_meteoFrance
+from download_meteoFrance import GeographicScaleClip
 from plot_meteoFrance import MeteoFranceDataType
 
 def prompt_for_graphic() -> bool:
@@ -203,13 +204,13 @@ def main(
         case "vcn3":
             plot_grandeur.create_geojson_from_periode_de_retour(start_date.strftime("%Y-%m"), reseau_sandre, has_vcn3_graphic)
         case "meteo_brut_MENS":
-            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.MENS, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
+            plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.REGION_ADMINISTRATIVE, MeteoFranceDataType.MENS, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_sim2_MENS":
-            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_MENS, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
+            plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.REGION_ADMINISTRATIVE, MeteoFranceDataType.SIM2_MENS, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_brut_QUOT":
-            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.QUOT, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
+            plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.REGION_ADMINISTRATIVE, MeteoFranceDataType.QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_sim2_QUOT":
-            plot_meteoFrance.export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, start_date, end_date, has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
+            plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.REGION_ADMINISTRATIVE, MeteoFranceDataType.SIM2_QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case _:
             raise NotImplementedError
 
@@ -236,7 +237,9 @@ def try_format_date(date_to_format:str,is_last_day:bool) -> datetime|None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exporter des données hydrologiques/météorologiques.",
                                      epilog="N'hésitez pas à rapporter des bugs ou des suggestions sur la page github : https://github.com/Thomas-MESLIN/RecupeEthiage")
-    parser.add_argument("--type", choices=["hydraulicite", "vcn3", "meteo_brut_MENS", "meteo_sim2_MENS", "meteo_brut_QUOT", "meteo_sim2_QUOT"])
+    parser.add_argument("--type", choices=["hydraulicite", "vcn3", "meteo_brut_MENS", "meteo_sim2_MENS", "meteo_brut_QUOT", "meteo_sim2_QUOT", "stations-sites"],
+                        help="hydraulicite : Calcul l'hydraucilité sur 1 mois désigné par start_date des stations "
+                             "")
     parser.add_argument("--start_date", help="Format: AAAA-MM-JJ|AAAA-MM (défaut le début du mois précédent)")
     parser.add_argument("--end_date", help="Format: AAAA-MM-JJ|AAAA-MM (borne incluse) (défaut - fin du mois précédent)")
     parser.add_argument("--reseau_sandre", help="Le réseau SANDRE que vous souhaitez utiliser (défaut BSH001), custom pour utiliser la liste de sites/stations custom")

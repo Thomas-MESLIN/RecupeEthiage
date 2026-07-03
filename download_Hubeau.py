@@ -1,13 +1,17 @@
 import pandas as pd
+import geopandas as gpd
 from cl_hubeau import hydrometry
 from pathlib import Path
 import os
 from datetime import datetime
+from cl_hubeau import watercourses_flow
 import calendar
 import logging
 
 import init_project
 import utils
+from utils import OndeGeographicZone
+
 
 # TELECHARGEMENT DONNEES MENSUELLES
 
@@ -133,6 +137,91 @@ def download_hubeau_1991_2020(grandeur_souhaite):
     else:
         ensure_grandeur_historique_downloaded("QmnJ")
 
+def download_hubeau_onde_campagnes() -> pd.DataFrame:
+    """
+    Télécharge les observations de 1991 à 2020 de la grandeur souhaite et de toute la france
+    :param grandeur_souhaite: La grandeur souhaité à télécharger parmis : HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ.
+    """
+    print(f"Téléchargement des données des campagnes ONDE")
+    utils.set_up_working_proxy()
+    gdf = watercourses_flow.get_all_campaigns()
+    chemin_campagne_onde = utils.get_path_campagne_onde()
+    gdf.to_csv(chemin_campagne_onde, index=False)
+    print(f"Données campagne ONDE téléchargés à : {chemin_campagne_onde}")
+    return gdf
+
+def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:OndeGeographicZone, code_zone:str):
+    """
+    Télécharge les observations de 1991 à 2020 de la grandeur souhaite et de toute la france
+    :param date_debut_obs: Les observations depuis ce jour-là inclus.
+    :param date_fin_obs: Les observations allant jusqu'à ce jour-là inclus.
+    :param zone_geographic: La zone géographic à extraire.
+    :param code_zone: Le code correspondant à la zone géographique (INSEE)
+    """
+    print(f"Téléchargement des données des observations ONDE")
+    utils.set_up_working_proxy()
+
+    kwargs = {
+        "date_observation_min": date_debut_obs.strftime("%Y-%m-%d"),
+        "date_observation_max": date_fin_obs.strftime("%Y-%m-%d"),
+    }
+
+    match zone_geographic:
+        case OndeGeographicZone.BASSIN:
+            kwargs["code_bassin"] = code_zone
+        case OndeGeographicZone.REGION:
+            kwargs["code_region"] = code_zone
+        case OndeGeographicZone.DEPARTEMENT:
+            kwargs["code_departement"] = code_zone
+
+    df = watercourses_flow.get_all_observations(**kwargs)
+    if df.empty:
+        print("DataFrame vide ! Pas de données sur cette période.")
+        return
+
+    chemin_observations_onde = utils.get_path_observation_onde(date_debut_obs, date_fin_obs, zone_geographic, code_zone)
+    df.to_csv(chemin_observations_onde, index=False)
+    print(f"Données observations ONDE téléchargés à : {chemin_observations_onde}")
+    return df
+
+def download_hubeau_onde_stations_geographic_zone(zone_geographic:OndeGeographicZone, code_zone:str):
+    print(f"Téléchargement des stations ONDE")
+    utils.set_up_working_proxy()
+
+    kwargs = {
+    }
+
+    match zone_geographic:
+        case OndeGeographicZone.BASSIN:
+            kwargs["code_bassin"] = code_zone
+        case OndeGeographicZone.REGION:
+            kwargs["code_region"] = code_zone
+        case OndeGeographicZone.DEPARTEMENT:
+            kwargs["code_departement"] = code_zone
+
+    df = watercourses_flow.get_all_stations(**kwargs)
+    if df.empty:
+        print("DataFrame vide ! Pas de données sur cette période.")
+        return
+
+    chemin_observations_onde = utils.get_path_stations_onde(zone_geographic, code_zone)
+    df.to_csv(chemin_observations_onde, index=False)
+    print(f"Données stations ONDE téléchargés à : {chemin_observations_onde}")
+    return df
+
+def get_df_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:OndeGeographicZone, code_zone:str) -> gpd.GeoDataFrame:
+    """
+    Renvoie un DataFrame allant de date_debut_obs à date_fin_obs, de la zone géographique souhaité et son code correspondant.
+    :param date_debut_obs: Date de début des observations souhaitées
+    :param date_fin_obs: Date de fin des observations souhaitées
+    :param zone_geographic: Zone géographique souhaitée
+    :param code_zone: Code de la zone géographique correspondant
+    :return: Renvoie un Dataframe correspondant aux observations faites sur cet intervalle.
+    """
+    df = download_hubeau_onde_observations_geographic_zone(date_debut_obs, date_fin_obs, zone_geographic, code_zone)
+    df["date_observation"] = pd.to_datetime(df["date_observation"])
+    return df
+
 # TELECHARGEMENT DONNEES STATIONS ET SITES
 
 def download_stations():
@@ -180,12 +269,25 @@ def ensure_sites_downloaded():
 # Code executé uniquement si on lance ce fichier individuellement, pas si on l'importe à l'aide d'un autre fichier.
 if __name__ == "__main__":
     # Données Mensuels
-    ensure_grandeur_mensuel_downloaded("2025-06","QmnJ")
-    ensure_grandeur_mensuel_downloaded("2025-07","QmnJ")
-    ensure_grandeur_mensuel_downloaded("2025-08","QmnJ")
-    # Données Historiques
-    ensure_grandeur_historique_downloaded("QmM")
-    ensure_grandeur_historique_downloaded("QmnJ")
-    # Stations et sites
-    ensure_station_downloaded()
-    ensure_sites_downloaded()
+    # ensure_grandeur_mensuel_downloaded("2025-06","QmnJ")
+    # ensure_grandeur_mensuel_downloaded("2025-07","QmnJ")
+    # ensure_grandeur_mensuel_downloaded("2025-08","QmnJ")
+    # # Données Historiques
+    # ensure_grandeur_historique_downloaded("QmM")
+    # ensure_grandeur_historique_downloaded("QmnJ")
+    # # Stations et sites
+    # ensure_station_downloaded()
+    # ensure_sites_downloaded()
+    pass
+    # download_hubeau_onde_campagnes()
+    # download_hubeau_onde_observations_geographic_zone(
+    #     datetime(2026,6,1),
+    #     datetime(2026,6,30),
+    #     OndeGeographicZone.REGION,
+    #     "84",
+    # )
+    download_hubeau_onde_stations_geographic_zone(OndeGeographicZone.REGION,"84")
+    # df_test = get_df_observations_geographic_zone(datetime(2025,5,1), datetime(2025,9,2),OndeGeographicZone.DEPARTEMENT,"33")
+    # df_test.to_csv(Path("output/test/testetst-onde.csv"),index=False)
+    # gdf_test = gpd.GeoDataFrame(data=df_test,geometry=df_test.geometry)
+    # gdf_test.to_file(Path("output/test/testetst-onde.geojson"),driver="GeoJSON")

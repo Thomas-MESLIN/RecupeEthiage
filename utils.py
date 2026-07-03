@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from functools import cache
 import logging
 from dotenv import load_dotenv
+from enum import StrEnum
 
 loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
 
@@ -17,6 +18,11 @@ GRANDEUR = {
     "QmM",
     "QmnJ",
 }
+
+class OndeGeographicZone(StrEnum):
+    BASSIN = "B",
+    REGION = "R",
+    DEPARTEMENT = "D",
 
 def get_path_historique_raw_csv(grandeur:str):
     return Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-{grandeur}-AURA-1991-2020.csv")
@@ -110,6 +116,39 @@ def get_path_sources(code_sandre: str, grandeur:str, annee_mois:str):
 
 def get_path_meteofrance_correspondance_departement_id_datagouv_mens_historique() -> Path:
     return Path("output/meteoFrance/departement_id_datagouv/MENS_departement_id_datagouv_historique.csv")
+
+def get_path_campagne_onde() -> Path:
+    """
+    :return: Le chemin où est stocké toutes les campagnes ONDE
+    """
+    return Path("output/hubeau/downloaded_data/onde/campagnes_onde.csv")
+
+
+def get_path_observation_onde(date_debut:datetime, date_fin:datetime, onde_zone:OndeGeographicZone, code_associe:str) -> Path:
+    """
+    Renvoie le chemin où est stocké la zone géographic des observations ONDE allant de date_debut jusqua date_fin.
+    :param date_debut: La date de début des observations
+    :param date_fin: La date de fin des observations
+    :param onde_zone: La zone géographique associées
+    :param code_associe: Le code associé à la zone géographique
+    :return: Un chemin vers le fichier correspondant.
+    """
+    lettre_zone = f"{onde_zone}{code_associe}"
+
+    return Path(f"output/hubeau/downloaded_data/onde/observation_onde_{lettre_zone}_{date_debut.strftime('%Y%m%d')}_{date_fin.strftime('%Y%m%d')}.csv")
+
+def get_path_stations_onde(onde_zone:OndeGeographicZone, code_associe:str) -> Path:
+    """
+    Renvoie le chemin où est stocké la zone géographic des observations ONDE allant de date_debut jusqua date_fin.
+    :param date_debut: La date de début des observations
+    :param date_fin: La date de fin des observations
+    :param onde_zone: La zone géographique associées
+    :param code_associe: Le code associé à la zone géographique
+    :return: Un chemin vers le fichier correspondant.
+    """
+    lettre_zone = f"{onde_zone}{code_associe}"
+
+    return Path(f"output/hubeau/downloaded_data/onde/stations_onde_{lettre_zone}.csv")
 
 def test_connection(
     url: str,

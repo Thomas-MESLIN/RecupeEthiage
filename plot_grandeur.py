@@ -246,26 +246,6 @@ def plot_results(res: dict, output_path: str|Path, title: str = "Analyse fréque
     ax2.legend(fontsize=9)
     ax2.grid(True, alpha=0.3)
 
-    # -------------------------------------------------------------------
-    # Graphique 3 : CDF — débit vs probabilité de non-dépassement
-    # -------------------------------------------------------------------
-    ax3 = axes[2]
-    ax3.set_xlim(y_min, y_max)
-    ax3.set_ylim(0, 1)
-
-    ax3.plot(pcdf["x"], pcdf["cdf"], color="firebrick", linewidth=1.5,
-             label="CDF Log-Normale (L-mom)")
-    ax3.scatter(emp["y_sorted"], emp["freq"], color="steelblue", s=20,
-                zorder=5, alpha=0.8, label="Fréquences empiriques (Hazen)")
-    if res["p0"] > 0:
-        ax3.axhline(res["p0"], color="gray", linestyle="--", linewidth=0.8,
-                    label=f"p0 = {res['p0']:.2f}")
-    ax3.set_xlabel("VCN3 (m³/s)", fontsize=11)
-    ax3.set_ylabel("Probabilité de non-dépassement", fontsize=11)
-    ax3.set_title("CDF empirique vs théorique")
-    ax3.legend(fontsize=9)
-    ax3.grid(True, alpha=0.3)
-
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close()
@@ -377,7 +357,7 @@ if __name__ == "__main__":
     # create_geojson_from_stations(None, None)
     # create_geojson_from_sites(None)
 
-    create_geojson_from_periode_de_retour("2026-06", "custom")
+    create_geojson_from_periode_de_retour("2026-05", "custom",is_result_plotted=True)
     # for date in pd.date_range("2025-09-01", "2026-06-30", freq="MS"):
-    #     annee_mois = date.strftime("%Y-%m")
-    #     create_geojson_from_periode_de_retour(annee_mois, "custom")
+    #      annee_mois = date.strftime("%Y-%m")
+    #      create_geojson_from_periode_de_retour(annee_mois, "custom")
