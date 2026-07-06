@@ -31,8 +31,8 @@ ANNEE_COULEURS : dict[int, str] = {
     2022: "#1b9e77",
     2023: "#d95f02",
     2024: "#7570b3",
-    2025: "#e7298a",
-    2026: "#66a61e",
+    2025: "#e3298a",
+    2026: "#ee0000",
 }
 
 def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datetime, annee_actuelle:int, output_path:Path=None):
