@@ -8,3 +8,4 @@ datagouv-client
 geopandas
 matplotlib
 python-dotenv
+numpy

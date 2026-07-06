@@ -11,6 +11,7 @@ import logging
 import init_project
 import utils
 from utils import OndeGeographicZone
+from functools import cache
 
 
 # TELECHARGEMENT DONNEES MENSUELLES
@@ -209,6 +210,17 @@ def download_hubeau_onde_stations_geographic_zone(zone_geographic:OndeGeographic
     print(f"Données stations ONDE téléchargés à : {chemin_observations_onde}")
     return df
 
+@cache
+def get_df_all_campagne() -> gpd.GeoDataFrame:
+    """
+    Renvoie un DataFrame contenant toutes les campagnes onde.
+    :return: Le DataFrame contenant toutes les campagnes Onde.
+    """
+    df = download_hubeau_onde_campagnes()
+    df["date_campagne"] = pd.to_datetime(df["date_campagne"])
+    return df
+
+@cache
 def get_df_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:OndeGeographicZone, code_zone:str) -> gpd.GeoDataFrame:
     """
     Renvoie un DataFrame allant de date_debut_obs à date_fin_obs, de la zone géographique souhaité et son code correspondant.
