@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from utils import OndeGeographicZone, OndeCampagneType
 import process_onde
+from styles import COULEUR_MOYENNE, ANNEE_COULEURS
 
 ## Traduction du numéro en nom de mois
 MOIS = {
@@ -18,26 +19,6 @@ MOIS = {
 
 ## Les mois souhaité.
 MOIS_CIBLE = [5, 6, 7, 8, 9]
-
-COULEUR_MOYENNE = "#000000"  # noir
-
-ANNEE_COULEURS : dict[int, str] = {
-    2012: "#1f77b4",
-    2013: "#ff7f0e",
-    2014: "#2ca02c",
-    2015: "#d62728",
-    2016: "#9467bd",
-    2017: "#8c564b",
-    2018: "#e377c2",
-    2019: "#7f7f7f",
-    2020: "#bcbd22",
-    2021: "#17becf",
-    2022: "#1b9e77",
-    2023: "#d95f02",
-    2024: "#7570b3",
-    2025: "#e3298a",
-    2026: "#ee0000",
-}
 
 def configure_matplotlib():
     plt.rcParams.update({
@@ -61,7 +42,7 @@ def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datet
     df = df[df["date_observation"].between(date_depart, date_fin)]
 
     # uniquement mai -> septembre
-    df = df[df["mois"].between(MOIS_CIBLE[0], MOIS_CIBLE[-1])]
+    df = df[df["mois"].isin(MOIS_CIBLE)]
 
     # Assec
     assecs = df[df["libelle_ecoulement"] == "Assec"]
@@ -98,7 +79,7 @@ def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datet
         if annee not in ANNEE_COULEURS:
             print()
             print(f"ERREUR, LA COULEUR DE L'ANNEE '{annee}' N'A PAS ETE REMPLIE.")
-            print("Veuillez l'ajouter à la variable 'ANNEE_COULEURS' dans le script plot_onde.py")
+            print("Veuillez l'ajouter à la variable 'ANNEE_COULEURS' dans le script styles.py")
             print()
             raise ValueError(f"Aucune couleur définie pour l'année {annee}")
 
