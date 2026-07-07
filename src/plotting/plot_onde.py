@@ -4,9 +4,9 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from utils import OndeGeographicZone, OndeCampagneType
-import process_onde
-from styles import COULEUR_MOYENNE, ANNEE_COULEURS
+from src.utils.utils import OndeGeographicZone, OndeCampagneType
+import src.processing.process_onde as process_onde
+from src.config.styles import COULEUR_MOYENNE, ANNEE_COULEURS
 
 ## Traduction du numéro en nom de mois
 MOIS = {

@@ -1,8 +1,8 @@
 import pandas as pd
-import download_Hubeau
+import src.io.download_Hubeau as download_Hubeau
 from pathlib import Path
-import utils
-import station
+import src.utils.utils as utils
+import src.processing.station as station
 from tqdm import tqdm
 import logging
 from functools import cache

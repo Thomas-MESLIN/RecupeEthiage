@@ -2,14 +2,14 @@
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
-import utils
+import src.utils.utils as utils
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
-import calcul_frequence_periode_de_retour as f_T
-import station
-import download_Hubeau
-import calcul_hydraulicite
+import src.processing.calcul_frequence_periode_de_retour as f_T
+import src.processing.station as station
+import src.io.download_Hubeau as download_Hubeau
+import src.processing.calcul_hydraulicite as calcul_hydraulicite
 import logging
 
 

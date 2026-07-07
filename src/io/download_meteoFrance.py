@@ -5,12 +5,13 @@ import gzip
 import shutil
 import calendar
 from functools import cache
-import utils
+import src.utils.utils as utils
 import re
 import pandas as pd
 from datetime import datetime, timezone
 from enum import Enum, StrEnum
-import init_project
+import src.config.init_project
+from src.config.paths import DATA_DIR
 
 # Différentes sources de données.
 class MeteoFranceDataType(Enum):
@@ -32,17 +33,20 @@ def get_geographic_list(geographic_scale: GeographicScaleClip):
         case GeographicScaleClip.NATIONAL:
             return []
         case GeographicScaleClip.BASSIN:
-            file_to_read = Path("liste_bassin.csv")
+            file_to_read = DATA_DIR / Path("liste_bassin.csv")
         case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
-            file_to_read = Path("liste_region.csv")
+            file_to_read = DATA_DIR / Path("liste_region.csv")
         case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
-            file_to_read = Path("liste_departement.csv")
+            file_to_read = DATA_DIR / Path("liste_departement.csv")
         case _:
             raise NotImplementedError
-    liste = []
+
     if file_to_read.exists():
         df_liste = pd.read_csv(file_to_read, dtype={"code":str})
         liste = df_liste[df_liste.columns[0]].to_list()
+    else:
+        raise FileNotFoundError(f"Le fichier {file_to_read} n'existe pas !")
+
     return liste
 
 def convert_chaine_to_date(chaine:str, is_start:bool) -> datetime:

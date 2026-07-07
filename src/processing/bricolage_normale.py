@@ -1,11 +1,8 @@
-import meteoFrance_aggregation_donnee
-from download_meteoFrance import MeteoFranceDataType, GeographicScaleClip
-from meteoFrance_aggregation_donnee import GroupByMethod
+from src.io.download_meteoFrance import MeteoFranceDataType, GeographicScaleClip
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
-import plot_meteoFrance
-import geopandas as gpd
+import src.plotting.plot_meteoFrance as plot_meteoFrance
 
 date_debut = datetime(2026, 6, 1)
 date_fin = datetime(2026, 6, 28)

@@ -1,11 +1,11 @@
 import argparse
 from datetime import timedelta, datetime
 import calendar
-import plot_grandeur
+import src.plotting.plot_grandeur as plot_grandeur
 import logging
-import plot_meteoFrance
-from download_meteoFrance import GeographicScaleClip
-from plot_meteoFrance import MeteoFranceDataType
+import src.plotting.plot_meteoFrance as plot_meteoFrance
+from src.io.download_meteoFrance import GeographicScaleClip
+from src.io.download_meteoFrance import MeteoFranceDataType
 
 def prompt_for_graphic() -> bool:
     print("Souhaitez vous générer les graphiques associées au stations individuel pour le calcul des périodes de retour ? (N/o)")
@@ -150,7 +150,7 @@ def generer_meteo_carte(res_generation_carte:str):
             print(f"Génération des données SIM2 mensuelles de {date_start} à {date_end}")
             data_freq = MeteoFranceDataType.SIM2_MENS
 
-    plot_meteoFrance.export_all_format_geojson_range(data_freq, date_start, date_end, is_data_aggregated, has_index_updated, has_data_updated)
+    plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.DEPARTEMENT_BASSIN, data_freq, date_start, date_end, is_data_aggregated, has_index_updated, has_data_updated)
 
 
 def interactif_start():

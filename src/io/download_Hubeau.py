@@ -7,11 +7,10 @@ from datetime import datetime
 from cl_hubeau import watercourses_flow
 import calendar
 import logging
-
-import init_project
-import utils
-from utils import OndeGeographicZone
+import src.utils.utils as utils
+from src.utils.utils import OndeGeographicZone
 from functools import cache
+import src.config.init_project
 
 
 # TELECHARGEMENT DONNEES MENSUELLES

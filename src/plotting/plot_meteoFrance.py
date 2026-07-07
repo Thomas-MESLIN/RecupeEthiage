@@ -1,14 +1,13 @@
 from tqdm import tqdm
-import download_meteoFrance
-from download_meteoFrance import MeteoFranceDataType, GeographicScaleClip
-import download_meteoFrance as DMeteo
+from src.io.download_meteoFrance import MeteoFranceDataType, GeographicScaleClip
+import src.io.download_meteoFrance as DMeteo
 from datetime import datetime
 from pathlib import Path
 import calendar
 import pandas as pd
 import geopandas as gpd
-import meteoFrance_aggregation_donnee as MeteoAgg
-from meteoFrance_aggregation_donnee import GroupByMethod
+import src.processing.meteoFrance_aggregation_donnee as MeteoAgg
+from src.processing.meteoFrance_aggregation_donnee import GroupByMethod
 from functools import cache
 import matplotlib.pyplot as plt
 
@@ -165,7 +164,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
     chemin_zone_geographique = chemin_save_plot / geographic_scale
     print("Récupération Mask bassin versant")
     # Récupération du bassin versant (on prend le premier bassin versant de la liste des bassin versant.
-    code_bassin_decoupe = download_meteoFrance.get_geographic_list(GeographicScaleClip.BASSIN)[0]
+    code_bassin_decoupe = DMeteo.get_geographic_list(GeographicScaleClip.BASSIN)[0]
     gdf_bassin_mask = get_bassin_versant(code_bassin_decoupe)
     for code in tqdm(element_list):
         print(f"code : {code}")

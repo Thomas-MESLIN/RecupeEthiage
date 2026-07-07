@@ -1,8 +1,9 @@
 from pathlib import Path
+from src.config.paths import OUTPUT_DIR
 # USAGE : The script sert à créer l'arborescence de dossier utilisé par les différents scritps
 print("Initialisation projet")
 
-output_folder = Path("output")
+output_folder = OUTPUT_DIR
 output_folder.mkdir(exist_ok=True)
 
 # Hubeau folder
@@ -64,6 +65,6 @@ result_folder = [
 ]
 
 for folder in result_folder:
-    ("output" / folder).mkdir(exist_ok=True)
+    (output_folder / folder).mkdir(exist_ok=True)
 
 print("Initialisation projet terminé !")

@@ -10,11 +10,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-import plot_grandeur
+import src.plotting.plot_grandeur as plot_grandeur
 from tqdm import tqdm
-import utils
-import calcul_vcn3
-import station
+import src.utils.utils as utils
+import src.processing.calcul_vcn3 as calcul_vcn3
+import src.processing.station as station
 from lmoments3 import distr as lm_distr
 from datetime import datetime
 

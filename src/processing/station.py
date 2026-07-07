@@ -1,7 +1,8 @@
-import utils
+import src.utils.utils as utils
 import pandas as pd
-import download_Hubeau
+import src.io.download_Hubeau as download_Hubeau
 from pathlib import Path
+from src.config.paths import DATA_DIR
 
 def get_stations(code_sandre:str|None = None, annee_mois_active:str|None=None) -> pd.DataFrame:
     """
@@ -49,10 +50,15 @@ def ensure_custom_list_up_to_date():
     chemin_liste_custom = utils.get_path_liste_site_station_custom()
     if (
         utils.is_file_need_download(chemin_liste_custom) or
-        not utils.is_res_updated_with_source([Path("liste_station_custom.csv"), Path("liste_site_custom.csv")] + [utils.get_path_stations()], chemin_liste_custom)
+        not utils.is_res_updated_with_source([get_path_liste_station_custom(), get_path_liste_site_custom()] + [utils.get_path_stations()], chemin_liste_custom)
     ):
         clean_custom_input_list()
 
+def get_path_liste_station_custom():
+    return DATA_DIR / "liste_station_custom.csv"
+
+def get_path_liste_site_custom():
+    return DATA_DIR / "liste_site_custom.csv"
 
 def clean_custom_input_list():
     """
@@ -65,8 +71,8 @@ def clean_custom_input_list():
     """
     print("MISE A JOUR DE LA LISTE DE STATION ET SITES CUSTOM.")
     print("=" * 50)
-    df_station = pd.read_csv("liste_station_custom.csv")
-    df_site = pd.read_csv("liste_site_custom.csv")
+    df_station = pd.read_csv(get_path_liste_station_custom())
+    df_site = pd.read_csv(get_path_liste_site_custom())
     df_station_no_duplicate = df_station.drop_duplicates()
     df_site_no_duplicate = df_site.drop_duplicates()
 

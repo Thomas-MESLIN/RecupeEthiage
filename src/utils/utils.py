@@ -8,6 +8,7 @@ from functools import cache
 import logging
 from dotenv import load_dotenv
 from enum import StrEnum
+from src.config.paths import OUTPUT_DIR
 
 loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
 
@@ -30,42 +31,42 @@ class OndeCampagneType(StrEnum):
     ALL_CAMPAGNE = "A",
 
 def get_path_historique_raw_csv(grandeur:str):
-    return Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-{grandeur}-AURA-1991-2020.csv")
+    return OUTPUT_DIR / Path(f"hubeau/downloaded_data/observations_elaboree/observations-{grandeur}-AURA-1991-2020.csv")
 
 def get_path_mensuel_raw_csv(annee_mois:str, grandeur:str):
-    return Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-{grandeur}-AURA-{annee_mois}.csv")
+    return OUTPUT_DIR / Path(f"hubeau/downloaded_data/observations_elaboree/observations-{grandeur}-AURA-{annee_mois}.csv")
 
 def get_path_clean_csv(code_sandre:str,annee_mois:str, grandeur:str):
     if code_sandre == "":
-        return Path(f"output/hubeau/cleaned_data/clean-{grandeur}-{annee_mois}.csv")
-    return Path(f"output/hubeau/cleaned_data/clean-{grandeur}-{code_sandre}-{annee_mois}.csv")
+        return OUTPUT_DIR / Path(f"hubeau/cleaned_data/clean-{grandeur}-{annee_mois}.csv")
+    return OUTPUT_DIR / Path(f"hubeau/cleaned_data/clean-{grandeur}-{code_sandre}-{annee_mois}.csv")
 
 def get_path_qmm_moyen_historique(code_sandre:str):
-    return Path(f"output/hubeau/QmM_moyen/QmM_moyennes_{code_sandre}_1991_2020.csv")
+    return OUTPUT_DIR / Path(f"hubeau/QmM_moyen/QmM_moyennes_{code_sandre}_1991_2020.csv")
 
 def get_path_hydraulicite(code_sandre:str, annee_mois:str):
-    return Path(f"output/hydraulicite/hydraulicite-{code_sandre}-{annee_mois}.csv")
+    return OUTPUT_DIR / Path(f"hydraulicite/hydraulicite-{code_sandre}-{annee_mois}.csv")
 
 def get_path_vcn3_moyenne_historique(code_sandre:str):
-    return Path(f"output/VCN3/moyenne_historique/VCN3-moyenne-{code_sandre}-1991-2020.csv")
+    return OUTPUT_DIR / Path(f"VCN3/moyenne_historique/VCN3-moyenne-{code_sandre}-1991-2020.csv")
 
 def get_path_vcn3_mensuel(code_sandre:str, annee_mois:str):
-    return Path(f"output/VCN3/mensuel/VCN3-{code_sandre}-{annee_mois}.csv")
+    return OUTPUT_DIR / Path(f"VCN3/mensuel/VCN3-{code_sandre}-{annee_mois}.csv")
 
 def get_path_vcn3_station(code_station:str):
-    return Path(f"output/VCN3/stations/VCN3-station-{code_station}.csv")
+    return OUTPUT_DIR / Path(f"VCN3/stations/VCN3-station-{code_station}.csv")
 
 def get_path_periode_de_retour(code_sandre:str, annee_mois:str):
-    return Path(f"output/VCN3/analyse_frequence_periode/periode-de-retour-{code_sandre}-{annee_mois}.csv")
+    return OUTPUT_DIR / Path(f"VCN3/analyse_frequence_periode/periode-de-retour-{code_sandre}-{annee_mois}.csv")
 
 def is_date_historique(annee_mois:str):
     return "1990-12" <= annee_mois <= "2020-12"
 
 def get_path_stations():
-    return Path("output/hubeau/downloaded_data/stations/stations.csv")
+    return OUTPUT_DIR / Path("hubeau/downloaded_data/stations/stations.csv")
 
 def get_path_sites():
-    return Path("output/hubeau/downloaded_data/sites/sites.csv")
+    return OUTPUT_DIR / Path("hubeau/downloaded_data/sites/sites.csv")
 
 @cache
 def get_paths_source_historique(grandeur:str) -> list[Path]:
@@ -103,7 +104,7 @@ def get_paths_source_mensuel(grandeur:str, annee_mois:str) -> list[Path]:
     return list_chemin.copy()
 
 def get_path_liste_site_station_custom():
-    return Path("output/site_station_custom/liste_site_et_station_custom.csv")
+    return OUTPUT_DIR / Path("site_station_custom/liste_site_et_station_custom.csv")
 
 @cache
 def get_path_sources(code_sandre: str, grandeur:str, annee_mois:str):
@@ -120,13 +121,13 @@ def get_path_sources(code_sandre: str, grandeur:str, annee_mois:str):
     return [chemin_liste_station] + get_paths_source_historique(grandeur) + get_paths_source_mensuel(grandeur, annee_mois)
 
 def get_path_meteofrance_correspondance_departement_id_datagouv_mens_historique() -> Path:
-    return Path("output/meteoFrance/departement_id_datagouv/MENS_departement_id_datagouv_historique.csv")
+    return OUTPUT_DIR / Path("meteoFrance/departement_id_datagouv/MENS_departement_id_datagouv_historique.csv")
 
 def get_path_campagne_onde() -> Path:
     """
     :return: Le chemin où est stocké toutes les campagnes ONDE
     """
-    return Path("output/hubeau/downloaded_data/onde/campagnes_onde.csv")
+    return OUTPUT_DIR / Path("hubeau/downloaded_data/onde/campagnes_onde.csv")
 
 
 def get_path_observation_onde(date_debut:datetime, date_fin:datetime, onde_zone:OndeGeographicZone, code_associe:str) -> Path:
@@ -140,7 +141,7 @@ def get_path_observation_onde(date_debut:datetime, date_fin:datetime, onde_zone:
     """
     lettre_zone = f"{onde_zone}{code_associe}"
 
-    return Path(f"output/hubeau/downloaded_data/onde/observation_onde_{lettre_zone}_{date_debut.strftime('%Y%m%d')}_{date_fin.strftime('%Y%m%d')}.csv")
+    return OUTPUT_DIR / Path(f"hubeau/downloaded_data/onde/observation_onde_{lettre_zone}_{date_debut.strftime('%Y%m%d')}_{date_fin.strftime('%Y%m%d')}.csv")
 
 def get_path_stations_onde(onde_zone:OndeGeographicZone, code_associe:str) -> Path:
     """
@@ -153,7 +154,7 @@ def get_path_stations_onde(onde_zone:OndeGeographicZone, code_associe:str) -> Pa
     """
     lettre_zone = f"{onde_zone}{code_associe}"
 
-    return Path(f"output/hubeau/downloaded_data/onde/stations_onde_{lettre_zone}.csv")
+    return OUTPUT_DIR / Path(f"hubeau/downloaded_data/onde/stations_onde_{lettre_zone}.csv")
 
 def test_connection(
     url: str,

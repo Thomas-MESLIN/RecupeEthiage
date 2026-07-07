@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
-import clean
-import utils
+import src.processing.clean as clean
+import src.utils.utils as utils
 import logging
 # Ce script sert à récupérer les données nettoyée et les exploiter pour calculer l'hydraulicité.
 # On a besoin pour cela de l'hydraulicité historique.

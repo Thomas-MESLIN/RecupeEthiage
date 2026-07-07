@@ -1,5 +1,5 @@
-import download_meteoFrance as dm
-from download_meteoFrance import MeteoFranceDataType
+import src.io.download_meteoFrance as dm
+from src.io.download_meteoFrance import MeteoFranceDataType
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
