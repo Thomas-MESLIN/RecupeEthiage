@@ -249,14 +249,22 @@ def plot_evolution_ecoulements(df:pd.DataFrame, campagne_type:OndeCampagneType, 
 
     plt.close()
 
-def save_df_onde(df_to_save:pd.DataFrame, csv_path:Path,geojson_path:Path):
+def save_df_onde(df_to_save:pd.DataFrame, csv_path:Path, geojson_path:Path, annee_mois_to_save:datetime|None):
     """
     Sauvegarde le dataframe sous forme de GeoJSON et de csv dans les chemins indiqués
     :param df_to_save: Le DataFrame à sauvegarder
     :param csv_path: Le chemin pour le csv
     :param geojson_path: Le chemin pour le geojson
+    :param annee_mois_to_save: L'année et le mois à extraire du DataFrame à sauvegarder. Si à None, sauvegarde le DataFrame dans son entièreté.
     :return: Rien
     """
+    if annee_mois_to_save is not None:
+        df_to_save = df_to_save[df_to_save["date_observation"].between(
+            annee_mois_to_save.replace(day=1),
+            annee_mois_to_save.replace(day=calendar.monthrange(annee_mois_to_save.year,
+                                                               annee_mois_to_save.month)[1])
+        )]
+
     df_to_save.to_csv(csv_path, index=False)
     gpd.GeoDataFrame(df_to_save, geometry=df_to_save["geometry"]).to_file(geojson_path, driver="GeoJSON", index=False)
 
@@ -265,8 +273,9 @@ def get_df_complet_campagne_usuelle(onde_campagne_type:OndeCampagneType, annee_m
     Récupère les données des campagnes et des observations depuis 2012 jusqu'à today()
     :return:
     """
-    dossier_csv = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}/csv")
+    dossier_csv = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}/{geographic_scale}{zone_code}/csv")
     dossier_csv.mkdir(parents=True, exist_ok=True)
+    output_path_campagne_all_historic_csv: Path = Path(f"output/onde/HISTORIC_DATA/observations_et_campagnes_all_historic.csv")
     output_path_campagne_all_csv: Path = dossier_csv / Path(f"observations_et_campagnes_all_{annee_mois.strftime('%Y-%m')}.csv")
     output_path_campagne_usuelles_csv: Path = dossier_csv / Path(f"observations_et_campagnes_usuelles_{annee_mois.strftime('%Y-%m')}.csv")
     output_path_campagne_complementaire_csv: Path = dossier_csv / Path(f"observations_et_campagnes_complementaires_{annee_mois.strftime('%Y-%m')}.csv")
@@ -274,8 +283,9 @@ def get_df_complet_campagne_usuelle(onde_campagne_type:OndeCampagneType, annee_m
     output_path_campagne_no_duplicated_csv: Path = dossier_csv / Path(
         f"observations_et_campagnes_latest_{geographic_scale}{zone_code}_{onde_campagne_type}_{annee_mois.strftime('%Y-%m')}.csv")
 
-    dossier_geojson = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}/geojson")
+    dossier_geojson = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}/{geographic_scale}{zone_code}/geojson")
     dossier_geojson.mkdir(parents=True, exist_ok=True)
+    output_path_campagne_all_historic_geojson: Path = Path(f"output/onde/HISTORIC_DATA/observations_et_campagnes_all_historic.geojson")
     output_path_campagne_all_geojson: Path = dossier_geojson / Path(f"observations_et_campagnes_all_{annee_mois.strftime('%Y-%m')}.geojson")
     output_path_campagne_usuelles_geojson: Path = dossier_geojson / Path(f"observations_et_campagnes_usuelles_{annee_mois.strftime('%Y-%m')}.geojson")
     output_path_campagne_complementaire_geojson: Path = dossier_geojson / Path(f"observations_et_campagnes_complementaires_{annee_mois.strftime('%Y-%m')}.geojson")
@@ -297,15 +307,18 @@ def get_df_complet_campagne_usuelle(onde_campagne_type:OndeCampagneType, annee_m
                                        "code_type_campagne", "libelle_type_campagne", "code_reseau",
                                        "libelle_reseau", "uri_reseau"]].drop_duplicates(subset="code_campagne", ignore_index=True)
     df_join_campagne = df_observations.merge(df_campagne_reduit, on="code_campagne", how="left")
-    save_df_onde(df_join_campagne, output_path_campagne_all_csv, output_path_campagne_all_geojson)
+    save_df_onde(df_join_campagne, output_path_campagne_all_csv, output_path_campagne_all_geojson, annee_mois)
+
+    # Sauvegarde des données historiques
+    save_df_onde(df_join_campagne, output_path_campagne_all_historic_csv, output_path_campagne_all_historic_geojson, None)
 
     # On filtre avec que les campagnes usuelles
     df_join_campagne_usuelle = df_join_campagne[df_join_campagne["code_type_campagne"] == 1]
-    save_df_onde(df_join_campagne_usuelle, output_path_campagne_usuelles_csv, output_path_campagne_usuelles_geojson)
+    save_df_onde(df_join_campagne_usuelle, output_path_campagne_usuelles_csv, output_path_campagne_usuelles_geojson, annee_mois)
 
     # On sauvegarde aussi les campagnes complémentaires
     df_join_campagne_complementaire = df_join_campagne[df_join_campagne["code_type_campagne"] == 2]
-    save_df_onde(df_join_campagne_complementaire, output_path_campagne_complementaire_csv, output_path_campagne_complementaire_geojson)
+    save_df_onde(df_join_campagne_complementaire, output_path_campagne_complementaire_csv, output_path_campagne_complementaire_geojson, annee_mois)
 
     match onde_campagne_type:
         case OndeCampagneType.COMPLEMENTAIRE:
@@ -325,7 +338,7 @@ def get_df_complet_campagne_usuelle(onde_campagne_type:OndeCampagneType, annee_m
     # On supprime les duplicatas et on garde le plus récent :
     df_campagne_trie = df_campagne.sort_values(by="date_observation", ascending=False)
     df_campagne_derniere_donne_chaque_station = df_campagne_trie.drop_duplicates(subset=["geometry","annee","mois"], keep="first")
-    save_df_onde(df_campagne_derniere_donne_chaque_station, output_path_campagne_no_duplicated_csv, output_path_campagne_no_duplicated_geojson)
+    save_df_onde(df_campagne_derniere_donne_chaque_station, output_path_campagne_no_duplicated_csv, output_path_campagne_no_duplicated_geojson, annee_mois)
 
     return df_campagne_derniere_donne_chaque_station
 
@@ -340,7 +353,7 @@ def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geograp
     :param zone_code: Le code associé à cette zone géographique
     :return: Rien.
     """
-    dossier_chemin = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}")
+    dossier_chemin = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}/{geographic_scale}{zone_code}")
     dossier_chemin.mkdir(parents=True, exist_ok=True)
     df_complet = get_df_complet_campagne_usuelle(campagne_type, annee_mois, geographic_scale, zone_code)
     # On prend l'extrait depuis 4 ans.

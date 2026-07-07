@@ -45,6 +45,7 @@ result_folder = [
     Path("VCN3/moyenne_historique"),
     Path("site_station_custom"),
     Path("onde"),
+    Path("onde/HISTORIC_DATA"),
     Path("meteoFrance"),
     Path("meteoFrance/departement_id_datagouv"),
     Path("meteoFrance/downloaded_data"),
