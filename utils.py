@@ -24,6 +24,11 @@ class OndeGeographicZone(StrEnum):
     REGION = "R",
     DEPARTEMENT = "D",
 
+class OndeCampagneType(StrEnum):
+    USUELLE = "U",
+    COMPLEMENTAIRE = "C",
+    ALL_CAMPAGNE = "A",
+
 def get_path_historique_raw_csv(grandeur:str):
     return Path(f"output/hubeau/downloaded_data/observations_elaboree/observations-{grandeur}-AURA-1991-2020.csv")
 
@@ -205,9 +210,9 @@ def set_up_working_proxy():
 
     print("Proxy KO")
 
-    raise RuntimeError(
-        "Aucune connexion réseau disponible"
-    )
+    # raise RuntimeError(
+    #     "Aucune connexion réseau disponible"
+    # )
 
 
 # Vérification de l'ancienneté des données.
