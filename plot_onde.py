@@ -1,13 +1,11 @@
 import calendar
 from datetime import datetime
-import download_Hubeau
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import geopandas as gpd
 from utils import OndeGeographicZone, OndeCampagneType
-from functools import cache
+import process_onde
 
 ## Traduction du numéro en nom de mois
 MOIS = {
@@ -50,6 +48,11 @@ def configure_matplotlib():
         "grid.alpha": 0.25,
         "grid.linestyle": "--",
     })
+
+def save_and_close_plot(output_path:Path|None):
+    if output_path:
+        plt.savefig(output_path)
+    plt.close()
 
 def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datetime, annee_actuelle:int, campagne_type:OndeCampagneType, output_path:Path=None):
     df = df.copy()
@@ -116,8 +119,6 @@ def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datet
     ax.set_xlabel("Mois")
     ax.set_ylabel("Nombre d'assecs")
 
-    ax.grid(alpha=0.3)
-
     ax.legend(
         ncol=1,
         frameon=False,
@@ -128,9 +129,7 @@ def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datet
     plt.tight_layout()
     # plt.show()
 
-    if output_path is not None:
-        plt.savefig(output_path)
-    plt.close()
+    save_and_close_plot(output_path)
 
 ORDRE = [
     "Pas de données",
@@ -245,169 +244,7 @@ def plot_evolution_ecoulements(df:pd.DataFrame, campagne_type:OndeCampagneType, 
     plt.tight_layout()
     # plt.show()
 
-    if output_path is not None:
-        plt.savefig(output_path)
-
-    plt.close()
-
-def save_df_onde(df_to_save:pd.DataFrame, csv_path:Path, geojson_path:Path, filter_annee_mois:datetime|None):
-    """
-    Sauvegarde le dataframe sous forme de GeoJSON et de csv dans les chemins indiqués
-    :param df_to_save: Le DataFrame à sauvegarder
-    :param csv_path: Le chemin pour le csv
-    :param geojson_path: Le chemin pour le geojson
-    :param filter_annee_mois: L'année et le mois à extraire du DataFrame à sauvegarder. Si à None, sauvegarde le DataFrame dans son entièreté.
-    :return: Rien
-    """
-    if filter_annee_mois is not None:
-        df_to_save = df_to_save[df_to_save["date_observation"].between(
-            filter_annee_mois.replace(day=1),
-            filter_annee_mois.replace(day=calendar.monthrange(filter_annee_mois.year,
-                                                               filter_annee_mois.month)[1])
-        )]
-
-    df_to_save.to_csv(csv_path, index=False)
-    gpd.GeoDataFrame(df_to_save, geometry=df_to_save["geometry"]).to_file(geojson_path, driver="GeoJSON", index=False)
-
-@cache
-def get_df_observations_data(geographic_scale:OndeGeographicZone, zone_code:str) -> pd.DataFrame:
-    """
-    Récupère toutes les données d'observations de 2012 à aujourd'hui.
-    :param geographic_scale: la zone géographique à récupérer
-    :param zone_code: Le code de la zone géographique à récupérer
-    :return: Un DataFrame contenant toutes les données d'observations de 2012 à aujourd'hui.
-    """
-    df_observations = download_Hubeau.get_df_observations_geographic_zone(
-        datetime(2012, 1, 1),
-        datetime.today(),
-        geographic_scale,
-        zone_code,
-    )
-    df_observations["code_campagne"] = df_observations["code_campagne"].astype("int64")
-    return df_observations
-
-@cache
-def get_df_campagnes_data() -> pd.DataFrame:
-    """
-    Récupère les modalité des campagnes de toute la France depuis 2012 jusqu'à aujourd'hui.
-    :return: Un DataFrame contenant toutes les campagnes Onde.
-    """
-    df_campagnes = download_Hubeau.get_df_all_campagne()
-    # On ne garde quie les colonnes utiles et on enlève les doublons. Les campgnes osnt enregistré pour chaque départements.
-    # On a besoin uniquement des modalités, donc on ne garde qu'un seul code.
-    df_campagne_reduit = df_campagnes[["code_campagne", "date_campagne", "nombre_modalite_ecoulement",
-                                       "code_type_campagne", "libelle_type_campagne", "code_reseau",
-                                       "libelle_reseau", "uri_reseau"]].drop_duplicates(subset="code_campagne",
-                                                                                        ignore_index=True)
-    return df_campagne_reduit
-
-def save_observations_campagnes_export(df_to_save:pd.DataFrame, df_campagne_derniere_donnee_chaque_station:pd.DataFrame, onde_campagne_type:OndeCampagneType, annee_mois:datetime, geographic_scale:OndeGeographicZone, zone_code:str) -> None:
-    """
-    Sauvegarde les données d'observations dans les formats csv et GeoJSON
-    :param df_to_save: Le DataFrame a sauvegarder contenant toutes les données de toutes les campagnes
-    :param df_campagne_derniere_donnee_chaque_station: Le DataFrame complètement nettoyé, contenant les dernières données mensuelles pour chaque stations
-    :param onde_campagne_type: Le type de campagne Onde
-    :param annee_mois: L'année et le mois ciblé
-    :param geographic_scale: L'échelle géographique souhaité
-    :param zone_code: Le code de la zone géographique
-    :return: Rien.
-    """
-    annee_mois_str = annee_mois.strftime('%Y-%m')
-    dossier_csv = Path(f"output/onde/BSH_{annee_mois_str}/{geographic_scale}{zone_code}/csv")
-    dossier_csv.mkdir(parents=True, exist_ok=True)
-    output_path_campagne_all_historic_csv: Path = Path(
-        f"output/onde/HISTORIC_DATA/observations_et_campagnes_all_historic.csv")
-    output_path_campagne_all_csv: Path = dossier_csv / Path(
-        f"observations_et_campagnes_all_{annee_mois_str}.csv")
-    output_path_campagne_usuelles_csv: Path = dossier_csv / Path(
-        f"observations_et_campagnes_usuelles_{annee_mois_str}.csv")
-    output_path_campagne_complementaire_csv: Path = dossier_csv / Path(
-        f"observations_et_campagnes_complementaires_{annee_mois_str}.csv")
-
-    output_path_campagne_no_duplicated_csv: Path = dossier_csv / Path(
-        f"observations_et_campagnes_latest_{geographic_scale}{zone_code}_{onde_campagne_type}_{annee_mois_str}.csv")
-
-    dossier_geojson = Path(f"output/onde/BSH_{annee_mois_str}/{geographic_scale}{zone_code}/geojson")
-    dossier_geojson.mkdir(parents=True, exist_ok=True)
-    output_path_campagne_all_historic_geojson: Path = Path(
-        f"output/onde/HISTORIC_DATA/observations_et_campagnes_all_historic.geojson")
-    output_path_campagne_all_geojson: Path = dossier_geojson / Path(
-        f"observations_et_campagnes_all_{annee_mois_str}.geojson")
-    output_path_campagne_usuelles_geojson: Path = dossier_geojson / Path(
-        f"observations_et_campagnes_usuelles_{annee_mois_str}.geojson")
-    output_path_campagne_complementaire_geojson: Path = dossier_geojson / Path(
-        f"observations_et_campagnes_complementaires_{annee_mois_str}.geojson")
-
-    output_path_campagne_no_duplicated_geojson: Path = dossier_geojson / Path(
-        f"observations_et_campagnes_latest_{annee_mois_str}_{onde_campagne_type}_{geographic_scale}{zone_code}.geojson")
-
-
-    save_df_onde(df_to_save, output_path_campagne_all_csv, output_path_campagne_all_geojson, annee_mois)
-
-    # Sauvegarde des données historiques
-    save_df_onde(df_to_save, output_path_campagne_all_historic_csv, output_path_campagne_all_historic_geojson,
-                 None)
-
-    # On filtre avec que les campagnes usuelles
-    df_to_save_campagne_usuelle = df_to_save[df_to_save["code_type_campagne"] == 1]
-    save_df_onde(df_to_save_campagne_usuelle, output_path_campagne_usuelles_csv, output_path_campagne_usuelles_geojson,
-                 annee_mois)
-
-    # On sauvegarde aussi les campagnes complémentaires
-    df_to_save_campagne_complementaire = df_to_save[df_to_save["code_type_campagne"] == 2]
-    save_df_onde(df_to_save_campagne_complementaire, output_path_campagne_complementaire_csv,
-                 output_path_campagne_complementaire_geojson, annee_mois)
-
-    # On sauvegarde les données les plus récentes pour chaque coordonnée.
-    save_df_onde(df_campagne_derniere_donnee_chaque_station, output_path_campagne_no_duplicated_csv, output_path_campagne_no_duplicated_geojson, annee_mois)
-
-def filter_campagne_type(df_to_filter:pd.DataFrame, campagne_type:OndeCampagneType):
-    """
-    Filtre le dataframe pour avoir les données correspondant au type de campagne souhaité.
-    :param df_to_filter: Le DataFrame a filtrer, doit posséder la colonne 'code_type_campagne'
-    :param campagne_type: Le type de campagne souhaité
-    :return: Le dataframe filtré.
-    """
-    match campagne_type:
-        case OndeCampagneType.COMPLEMENTAIRE:
-            return df_to_filter[df_to_filter["code_type_campagne"] == 2]
-        case OndeCampagneType.USUELLE:
-            return df_to_filter[df_to_filter["code_type_campagne"] == 1]
-        case OndeCampagneType.ALL_CAMPAGNE:
-            return df_to_filter
-        case _:
-            raise NotImplementedError(f"Type de Campagne non implémenté : {campagne_type}")
-
-def get_df_complet_campagne_usuelle(onde_campagne_type:OndeCampagneType, annee_mois:datetime, geographic_scale:OndeGeographicZone, zone_code:str) -> pd.DataFrame:
-    """
-    Récupère les données des campagnes et des observations depuis 2012 jusqu'à today()
-    :return: Un DataFrame contenant toutes les données de 2012 à today(), qui pour chaque station n'a gardé que les données les plus récente du mois.
-    """
-    # Récupérations des observations
-    df_observations = get_df_observations_data(geographic_scale, zone_code).copy()
-
-    df_campagnes = get_df_campagnes_data().copy()
-
-    # Les observations jointes aux campagnes.
-    df_observation_join_campagne = df_observations.merge(df_campagnes, on="code_campagne", how="left")
-
-    # On filtre les données pour ne retenir que les types de campagnes souhaité.
-    df_campagne = filter_campagne_type(df_observation_join_campagne, onde_campagne_type)
-
-    # Mise en formes des dates.
-    df_campagne["date_observation"] = pd.to_datetime(df_campagne["date_observation"])
-    df_campagne["annee"] = df_campagne["date_observation"].dt.year
-    df_campagne["mois"] = df_campagne["date_observation"].dt.month
-
-    # On supprime les duplicatas et on garde le plus récent :
-    df_campagne_trie = df_campagne.sort_values(by="date_observation", ascending=False)
-    df_campagne_derniere_donne_chaque_station = df_campagne_trie.drop_duplicates(subset=["geometry","annee","mois"], keep="first")
-
-    # On sauvegarde toute les données.
-    save_observations_campagnes_export(df_observation_join_campagne, df_campagne_derniere_donne_chaque_station,
-                                       onde_campagne_type, annee_mois, geographic_scale, zone_code)
-
-    return df_campagne_derniere_donne_chaque_station
+    save_and_close_plot(output_path)
 
 def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geographic_scale:OndeGeographicZone, zone_code:str):
     """
@@ -422,7 +259,7 @@ def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geograp
     """
     dossier_chemin = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}/{geographic_scale}{zone_code}")
     dossier_chemin.mkdir(parents=True, exist_ok=True)
-    df_complet = get_df_complet_campagne_usuelle(campagne_type, annee_mois, geographic_scale, zone_code)
+    df_complet = process_onde.load_and_prepare_onde_data(campagne_type, annee_mois, geographic_scale, zone_code)
     # On prend l'extrait depuis 4 ans.
     plot_evolution_assecs(df_complet,
                           annee_mois.replace(year=annee_mois.year-4, month=MOIS_CIBLE[0], day=1), # On prend le premier jour du mois de mai il y a 4 ans
