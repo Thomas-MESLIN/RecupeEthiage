@@ -182,6 +182,7 @@ def main(
     has_meteo_aggregate: bool = False,
     has_meteo_index_update: bool = True,
     is_data_update_allowed: bool = True,
+    geographic_scale:GeographicScaleClip = GeographicScaleClip.BASSIN,
 ):
     """
     Génère les geojson à partir des arguments d'entrée du CLI.
@@ -193,6 +194,7 @@ def main(
     :param has_meteo_aggregate:
     :param has_meteo_index_update:
     :param is_data_update_allowed: Autorise le script meteo à mettre ses données à jour.
+    :param geographic_scale:
     :return:
     """
     if not is_data_update_allowed:
@@ -204,13 +206,13 @@ def main(
         case "vcn3":
             plot_grandeur.create_geojson_from_periode_de_retour(start_date.strftime("%Y-%m"), reseau_sandre, has_vcn3_graphic)
         case "meteo_brut_MENS":
-            plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.REGION_ADMINISTRATIVE, MeteoFranceDataType.MENS, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
+            plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.MENS, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_sim2_MENS":
-            plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.REGION_ADMINISTRATIVE, MeteoFranceDataType.SIM2_MENS, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
+            plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.SIM2_MENS, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_brut_QUOT":
-            plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.REGION_ADMINISTRATIVE, MeteoFranceDataType.QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
+            plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_sim2_QUOT":
-            plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.REGION_ADMINISTRATIVE, MeteoFranceDataType.SIM2_QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
+            plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.SIM2_QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case _:
             raise NotImplementedError
 
@@ -244,6 +246,7 @@ if __name__ == "__main__":
     parser.add_argument("--end_date", help="Format: AAAA-MM-JJ|AAAA-MM (borne incluse) (défaut - fin du mois précédent)")
     parser.add_argument("--reseau_sandre", help="Le réseau SANDRE que vous souhaitez utiliser (défaut BSH001), custom pour utiliser la liste de sites/stations custom")
     parser.add_argument("--vcn3_graphic", action='store_true', help="[VCN3] Si présent, des graphiques individuels seront générés pour chaque stations")
+    parser.add_argument("--meteo_geographic_scale", choices=[GeographicScaleClip.BASSIN, GeographicScaleClip.REGION_ADMINISTRATIVE, GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF, GeographicScaleClip.REGION_BASSIN, GeographicScaleClip.DEPARTEMENT_BASSIN], help="[météo] L'échelle géographique à laquelle on veut exporter les données, par défaut, BASSIN", default=GeographicScaleClip.BASSIN)
     parser.add_argument("--meteo_aggregate", action='store_true', help="[météo] Si présent, les données seront aggrégés sur la période sélectionnée")
     parser.add_argument("--meteo_no_index_update", action='store_false', help="[météo] Si présent, l'index de correspondance entre les fichiers enregistré des dataset et leur id_datagouv ne sera pas mis à jour.")
     parser.add_argument("--meteo_no_update", action='store_false',help="[météo] Si présent, aucune données ne sera mis à jour. Peut servir pour les données quotidiennes brut où il peut y avoir beaucoup de mis à jour.")
@@ -279,6 +282,7 @@ if __name__ == "__main__":
              args.meteo_aggregate,
              args.meteo_no_index_update,
              args.meteo_no_update,
+             args.meteo_geographic_scale,
         )
 
     logging.info("\nGénération terminée.")
