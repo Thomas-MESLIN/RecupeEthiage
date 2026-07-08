@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from src.io.download_meteoFrance import MeteoFranceDataType, GeographicScaleClip
+from src.model.enums import GeographicScaleClip,MeteoFranceDataType
 import src.io.download_meteoFrance as DMeteo
 from datetime import datetime
 from pathlib import Path

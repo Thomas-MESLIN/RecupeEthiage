@@ -1,8 +1,8 @@
 import src.utils.utils as utils
 import pandas as pd
 import src.io.download_Hubeau as download_Hubeau
-from pathlib import Path
 from src.config.paths import DATA_DIR
+import src.utils.utils_file as utils_file
 
 def get_stations(code_sandre:str|None = None, annee_mois_active:str|None=None) -> pd.DataFrame:
     """
@@ -49,8 +49,8 @@ def ensure_custom_list_up_to_date():
     """
     chemin_liste_custom = utils.get_path_liste_site_station_custom()
     if (
-        utils.is_file_need_download(chemin_liste_custom) or
-        not utils.is_res_updated_with_source([get_path_liste_station_custom(), get_path_liste_site_custom()] + [utils.get_path_stations()], chemin_liste_custom)
+        utils_file.is_file_need_download(chemin_liste_custom) or
+        not utils_file.is_res_updated_with_source([get_path_liste_station_custom(), get_path_liste_site_custom()] + [utils.get_path_stations()], chemin_liste_custom)
     ):
         clean_custom_input_list()
 

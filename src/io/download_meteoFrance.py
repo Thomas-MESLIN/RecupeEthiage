@@ -5,28 +5,15 @@ import gzip
 import shutil
 import calendar
 from functools import cache
-import src.utils.utils as utils
 import re
 import pandas as pd
 from datetime import datetime, timezone
 from enum import Enum, StrEnum
-import src.config.init_project
+import src.utils.utils_proxy as utils_proxy
+import src.utils.utils_file as utils_file
 from src.config.paths import DATA_DIR
-
-# Différentes sources de données.
-class MeteoFranceDataType(Enum):
-    SIM2_QUOT = 1
-    SIM2_MENS = 2
-    QUOT = 3
-    MENS = 4
-
-class GeographicScaleClip(StrEnum):
-    NATIONAL = "NATIONAL"
-    BASSIN = "BASSIN"
-    REGION_ADMINISTRATIVE = "REGION_ADMINISTRATIVE"
-    DEPARTEMENT_ADMINISTRATIF = "DEPARTEMENT_ADMINISTRATIF"
-    REGION_BASSIN = "REGION_BASSIN"
-    DEPARTEMENT_BASSIN = "DEPARTEMENT_BASSIN"
+import src.config.init_project
+from src.model.enums import GeographicScaleClip,MeteoFranceDataType
 
 def get_geographic_list(geographic_scale: GeographicScaleClip):
     match geographic_scale:
@@ -100,10 +87,10 @@ def fetch_and_update_decennie_ressource_id(data_freq:MeteoFranceDataType):
         case _:
             raise NotImplementedError
     chemin_decennie_id = get_path_decennie_to_id_datagouv(data_freq)
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
     # Dataset contenant toutes les données météoFrance correspondant sur data.gouv.fr
     success = False
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
     while not success:
         try:
             dataset_complet = Dataset(id_dataset)
@@ -306,7 +293,7 @@ def get_gouv_ressource(id_gouv_data:str) -> Resource:
     :param id_gouv_data: L'id à récupérer.
     :return: La ressource correspondante.
     """
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
     return Resource(id_gouv_data)
 
 def is_path_updated_with_datagouv(chemin_fichier:Path, id_gouv_data:str) -> bool:
@@ -350,7 +337,7 @@ def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date
 
 def download_and_extract(id_datagouv:str, chemin_archive:Path,chemin_final:Path):
     print(f"Downloading {chemin_final.name}...")
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
     r = get_gouv_ressource(id_datagouv)
     success = False
     while not success:

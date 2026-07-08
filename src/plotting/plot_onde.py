@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from src.utils.utils import OndeGeographicZone, OndeCampagneType
+from src.model.enums import OndeGeographicZone, OndeCampagneType
 import src.processing.process_onde as process_onde
 from src.config.styles import COULEUR_MOYENNE, ANNEE_COULEURS
 

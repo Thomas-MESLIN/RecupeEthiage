@@ -1,5 +1,5 @@
 import src.io.download_meteoFrance as dm
-from src.io.download_meteoFrance import MeteoFranceDataType
+from src.model.enums import MeteoFranceDataType
 import pandas as pd
 from datetime import datetime
 from pathlib import Path

@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 from tqdm import tqdm
 from functools import cache
 import logging
+import src.utils.utils_file as utils_file
 # Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
 
 
@@ -257,7 +258,7 @@ def get_all_df_mensuel(code_sandre:str):
     for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
         annee_mois = date.strftime("%Y-%m")
         path_mensuel = utils.get_path_vcn3_mensuel(code_sandre, annee_mois)
-        if not utils.is_res_updated_with_source(utils.get_paths_source_historique("QmnJ"), path_mensuel):
+        if not utils_file.is_res_updated_with_source(utils.get_paths_source_historique("QmnJ"), path_mensuel):
             calcule_minimum_glissant_moyen_1991_2020(code_sandre)
         df_mois = pd.read_csv(path_mensuel)
         df_mois["annee_mois"] = annee_mois
@@ -274,7 +275,7 @@ def ensure_calcul_vcn3_station(code_station:str, code_sandre:str):
     :return: Rien
     """
     path_vcn3_station = utils.get_path_vcn3_station(code_station)
-    if not utils.is_res_updated_with_source(utils.get_paths_source_historique("QmnJ"), path_vcn3_station):
+    if not utils_file.is_res_updated_with_source(utils.get_paths_source_historique("QmnJ"), path_vcn3_station):
         df_all_vcn3 = get_all_df_mensuel(code_sandre).copy()
         calcul_vcn3_historique_station(code_station, df_all_vcn3)
 

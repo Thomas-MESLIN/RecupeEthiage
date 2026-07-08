@@ -3,6 +3,7 @@ from datetime import datetime
 import src.processing.clean as clean
 import src.utils.utils as utils
 import logging
+import src.utils.utils_file as utils_file
 # Ce script sert à récupérer les données nettoyée et les exploiter pour calculer l'hydraulicité.
 # On a besoin pour cela de l'hydraulicité historique.
 
@@ -171,7 +172,7 @@ def ensure_QmM_moyen_historic_calculated(code_sandre):
     """
     chemin_qmm_moyen_historic = utils.get_path_qmm_moyen_historique(code_sandre)
     chemin_source_qmm_moyen = utils.get_paths_source_historique("QmM")
-    if not utils.is_res_updated_with_source(chemin_source_qmm_moyen, chemin_qmm_moyen_historic):
+    if not utils_file.is_res_updated_with_source(chemin_source_qmm_moyen, chemin_qmm_moyen_historic):
         calcule_QmM_moyen_historic(code_sandre)
 
 if __name__ == "__main__":

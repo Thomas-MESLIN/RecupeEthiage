@@ -6,6 +6,7 @@ import src.processing.station as station
 from tqdm import tqdm
 import logging
 from functools import cache
+import src.utils.utils_file as utils_file
 
 colonne_date_hubeau = "date_obs_elab"
 colonne_code_station_hubeau = "code_station"
@@ -147,7 +148,7 @@ def ensure_single_month_cleaned(annee_mois:str, code_reseau_sandre:str, grandeur
     """
     chemin_fichier_clean_mensuel = utils.get_path_clean_csv(code_reseau_sandre, annee_mois, grandeur)
     chemin_source = utils.get_path_sources(code_reseau_sandre, grandeur, annee_mois)
-    if not utils.is_res_updated_with_source(chemin_source, chemin_fichier_clean_mensuel):
+    if not utils_file.is_res_updated_with_source(chemin_source, chemin_fichier_clean_mensuel):
         clean_single_month(annee_mois, code_reseau_sandre, grandeur)
 
 @cache
@@ -165,7 +166,7 @@ def ensure_historic_cleaned(code_reseau_sandre:str, grandeur:str):
     for date in pd.date_range(start_date, "2020-12-01", freq="MS"):
         annee_mois = date.strftime("%Y-%m")
         chemin_fichier_clean_mensuel = utils.get_path_clean_csv(code_reseau_sandre, annee_mois, grandeur)
-        if not utils.is_res_updated_with_source(chemin_source, chemin_fichier_clean_mensuel):
+        if not utils_file.is_res_updated_with_source(chemin_source, chemin_fichier_clean_mensuel):
             clean_historic_data(code_reseau_sandre, grandeur)
 
 

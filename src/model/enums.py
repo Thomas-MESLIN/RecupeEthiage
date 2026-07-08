@@ -1,0 +1,27 @@
+from enum import StrEnum, Enum
+
+# Enums Onde
+class OndeGeographicZone(StrEnum):
+    BASSIN = "B",
+    REGION = "R",
+    DEPARTEMENT = "D",
+
+class OndeCampagneType(StrEnum):
+    USUELLE = "U",
+    COMPLEMENTAIRE = "C",
+    ALL_CAMPAGNE = "A",
+
+# Enums MeteoFrance
+class MeteoFranceDataType(Enum):
+    SIM2_QUOT = 1
+    SIM2_MENS = 2
+    QUOT = 3
+    MENS = 4
+
+class GeographicScaleClip(StrEnum):
+    NATIONAL = "NATIONAL"
+    BASSIN = "BASSIN"
+    REGION_ADMINISTRATIVE = "REGION_ADMINISTRATIVE"
+    DEPARTEMENT_ADMINISTRATIF = "DEPARTEMENT_ADMINISTRATIF"
+    REGION_BASSIN = "REGION_BASSIN"
+    DEPARTEMENT_BASSIN = "DEPARTEMENT_BASSIN"

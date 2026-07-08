@@ -1,4 +1,4 @@
-from src.io.download_meteoFrance import MeteoFranceDataType, GeographicScaleClip
+from src.model.enums import GeographicScaleClip,MeteoFranceDataType
 from pathlib import Path
 from datetime import datetime
 import pandas as pd

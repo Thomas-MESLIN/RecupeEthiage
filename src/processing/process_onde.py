@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 import calendar
 from functools import cache
-from src.utils.utils import OndeGeographicZone, OndeCampagneType
+from src.model.enums import OndeGeographicZone, OndeCampagneType
 import src.io.download_Hubeau as download_Hubeau
 
 def save_df_onde(df_to_save:pd.DataFrame, csv_path:Path, geojson_path:Path, filter_annee_mois:datetime|None):

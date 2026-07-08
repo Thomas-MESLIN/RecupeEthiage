@@ -1,17 +1,16 @@
 import pandas as pd
 import geopandas as gpd
 from cl_hubeau import hydrometry
-from pathlib import Path
-import os
 from datetime import datetime
 from cl_hubeau import watercourses_flow
 import calendar
 import logging
 import src.utils.utils as utils
-from src.utils.utils import OndeGeographicZone
+import src.utils.utils_proxy as utils_proxy
+from src.model.enums import OndeGeographicZone
 from functools import cache
 import src.config.init_project
-
+import src.utils.utils_file as utils_file
 
 # TELECHARGEMENT DONNEES MENSUELLES
 
@@ -23,7 +22,7 @@ def ensure_grandeur_mensuel_downloaded(annee_mois:str, grandeur:str):
     :return: Rien
     """
     complete_path = utils.get_path_mensuel_raw_csv(annee_mois,grandeur)
-    if utils.is_file_need_download(complete_path):
+    if utils_file.is_file_need_download(complete_path):
         logging.info(f"Téléchargement du fichier en cours : {complete_path}")
         download_hubeau_AURA_mois(annee_mois,grandeur)
         logging.info(f"Téléchargement du fichier terminé : {complete_path}")
@@ -36,7 +35,7 @@ def download_hubeau_AURA_mois(annee_mois : str, grandeur : str):
     :param grandeur: La grandeur à télécharger parmis -> HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ
     """
     # initialisation du proxy
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
 
     # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
     bounding_box_grossiere = [1.142578, 42.039587, 8.481445, 49.612271]
@@ -84,7 +83,7 @@ def ensure_grandeur_historique_downloaded(grandeur:str):
     :return: Rien
     """
     path_grandeur = utils.get_path_historique_raw_csv(grandeur)
-    if grandeur != "QmnJ" and utils.is_file_need_download(path_grandeur):
+    if grandeur != "QmnJ" and utils_file.is_file_need_download(path_grandeur):
         download_hubeau_1991_2020(grandeur)
     if grandeur == "QmnJ":
         for date in pd.date_range("1990-12-01", "2020-12-01", freq="MS"):
@@ -102,7 +101,7 @@ def download_hubeau_1991_2020(grandeur_souhaite):
     print(f"Téléchargement des données historiques : 1991 à 2020 de la grandeur {grandeur_souhaite}")
     # Permet d'accéder à internet via le réseau interne de la DREAL
     # initialisation du proxy
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
 
     # Bounding box grossière du bassin versant Auvergne-Rhône-Alpes
     bounding_box_grossiere = [1.142578, 42.039587, 8.481445, 49.612271]
@@ -143,7 +142,7 @@ def download_hubeau_onde_campagnes() -> pd.DataFrame:
     :param grandeur_souhaite: La grandeur souhaité à télécharger parmis : HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ.
     """
     print(f"Téléchargement des données des campagnes ONDE")
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
     gdf = watercourses_flow.get_all_campaigns()
     chemin_campagne_onde = utils.get_path_campagne_onde()
     gdf.to_csv(chemin_campagne_onde, index=False)
@@ -159,7 +158,7 @@ def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, d
     :param code_zone: Le code correspondant à la zone géographique (INSEE)
     """
     print(f"Téléchargement des données des observations ONDE")
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
 
     kwargs = {
         "date_observation_min": date_debut_obs.strftime("%Y-%m-%d"),
@@ -186,7 +185,7 @@ def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, d
 
 def download_hubeau_onde_stations_geographic_zone(zone_geographic:OndeGeographicZone, code_zone:str):
     print(f"Téléchargement des stations ONDE")
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
 
     kwargs = {
     }
@@ -241,7 +240,7 @@ def download_stations():
     :return: Rien
     """
     print("Téléchargement des stations.")
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
 
     df_all_stations = hydrometry.get_all_stations()
     df_all_stations.to_csv(utils.get_path_stations())
@@ -253,7 +252,7 @@ def download_sites():
     :return: Rien
     """
     print("Téléchargement des sites.")
-    utils.set_up_working_proxy()
+    utils_proxy.set_up_working_proxy()
 
     df_all_sites = hydrometry.get_all_sites()
     df_all_sites.to_csv(utils.get_path_sites())
@@ -265,7 +264,7 @@ def ensure_station_downloaded():
     :return: Rien
     """
     chemin = utils.get_path_stations()
-    if utils.is_file_need_download(chemin):
+    if utils_file.is_file_need_download(chemin):
         download_stations()
 
 def ensure_sites_downloaded():
@@ -274,7 +273,7 @@ def ensure_sites_downloaded():
     :return: Rien
     """
     chemin = utils.get_path_sites()
-    if utils.is_file_need_download(chemin):
+    if utils_file.is_file_need_download(chemin):
         download_sites()
 
 # Code executé uniquement si on lance ce fichier individuellement, pas si on l'importe à l'aide d'un autre fichier.

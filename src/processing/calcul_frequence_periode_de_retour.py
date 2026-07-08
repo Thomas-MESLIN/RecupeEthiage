@@ -17,6 +17,7 @@ import src.processing.calcul_vcn3 as calcul_vcn3
 import src.processing.station as station
 from lmoments3 import distr as lm_distr
 from datetime import datetime
+import src.utils.utils_file as utils_file
 
 # ---------------------------------------------------------------------------
 # 1. Estimateur des L-moments pour la loi Log-Normale
@@ -362,7 +363,7 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     :return: Un Dataframe contenant les périodes de retour
     """
     path_periode_de_retour = utils.get_path_periode_de_retour(code_sandre, annee_mois)
-    if utils.is_res_updated_with_source(utils.get_path_sources(code_sandre, "QmnJ", annee_mois), path_periode_de_retour):
+    if utils_file.is_res_updated_with_source(utils.get_path_sources(code_sandre, "QmnJ", annee_mois), path_periode_de_retour):
         return pd.DataFrame(pd.read_csv(utils.get_path_periode_de_retour(code_sandre, annee_mois)))
 
     print("Calcul des fréquences de non dépassement et des périodes de retour.")
