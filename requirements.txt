@@ -9,3 +9,5 @@ geopandas
 matplotlib
 python-dotenv
 numpy
+scipy
+rasterio
