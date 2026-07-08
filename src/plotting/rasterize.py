@@ -186,70 +186,73 @@ def rasterize_geojson(series_to_rasterize:gpd.GeoDataFrame, value_column_name:st
     print(f"PNG généré : {output_path}")
 
 
-POINTS_FILE = OUTPUT_DIR / "QGIS/meteoFrance/MENS-SIM2-202606/bassin/MENS-SIM2-202606-B06.geojson"
+def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str], list[float]]|None:
+    """
+    Récupère les paramètre pour cette unité souhaité
+    :param unit_to_get_graphic: L'unité dont il faut récupérer les paramètre.
+    :return: Renvoie un triplet (palette_de_couleur, is_palette_inverse labels_colorBar, TickColorBar)
+    """
+    if "SSWI" in unit_to_get_graphic:
+        return (
+            "turbo",
+            True,
+            [
+                "-1.25 - Extrêmement Sec",
+                "-0.75",
+                "-0.25",
+                "0.25",
+                "0.75",
+                "1.25 - Extrêmement Humide",
+                "Très Sec",
+                "Modérément Sec",
+                "Autour de la Normale",
+                "Modérément Humide",
+                "Très Humide",
+            ],
+            [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25]
+        )
+    else:
+        return None
 
-VALUE_FIELD = "SSWI1"
+if __name__ == "__main__":
+    POINTS_FILE = OUTPUT_DIR / "QGIS/meteoFrance/MENS-SIM2-202606/bassin/MENS-SIM2-202606-B06.geojson"
 
-OUTPUT_PNG = OUTPUT_DIR / "test/output_rasterise_test.png"
+    VALUE_FIELD = "SSWI1"
 
-MASK_FILE = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/BassinHydrographique_FXX.geojson"
+    OUTPUT_PNG = OUTPUT_DIR / "test/output_rasterise_test.png"
 
-point_dataframe = gpd.read_file(POINTS_FILE).to_crs(2154)
-geo_mask = gpd.read_file(MASK_FILE).to_crs(2154)
-geo_mask = geo_mask[geo_mask["CdBH"] == "06"]
+    MASK_FILE = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/BassinHydrographique_FXX.geojson"
 
-rasterize_geojson(point_dataframe, "SSWI1", geo_mask, "SSWI1 du mois de Juin 2026", "turbo", True,
-                  [
-                      "-1.25 - Extrêmement Sec",
-                      "-0.75",
-                      "-0.25",
-                      "0.25",
-                      "0.75",
-                      "1.25 - Extrêmement Humide",
-                      "Très Sec",
-                      "Modérément Sec",
-                      "Autour de la Normale",
-                      "Modérément Humide",
-                      "Très Humide",
-                  ],
-                  [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25],
-                  output_path=OUTPUT_PNG)
+    point_dataframe = gpd.read_file(POINTS_FILE).to_crs(2154)
+    geo_mask = gpd.read_file(MASK_FILE).to_crs(2154)
+    geo_mask = geo_mask[geo_mask["CdBH"] == "06"]
 
+    palette, is_palette_inverse, intervalle_name, tick_pos = get_graphic_parameter("SSWI1")
 
-# AUTRE ECHELLE
+    rasterize_geojson(point_dataframe, "SSWI1", geo_mask, "SSWI1 du mois de Juin 2026",
+                      palette, is_palette_inverse, intervalle_name, tick_pos, OUTPUT_PNG)
 
-POINTS_FILE = OUTPUT_DIR / "QGIS/meteoFrance/MENS-SIM2-202606/region_administrative/MENS-SIM2-202606-R84.geojson"
+    # AUTRE ECHELLE
 
-VALUE_FIELD = "SSWI1"
+    POINTS_FILE = OUTPUT_DIR / "QGIS/meteoFrance/MENS-SIM2-202606/region_administrative/MENS-SIM2-202606-R84.geojson"
 
-OUTPUT_PNG = OUTPUT_DIR / "test/output_rasterise_test_REGION.png"
+    VALUE_FIELD = "SSWI1"
 
-MASK_FILE = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/regions-100m.geojson"
+    OUTPUT_PNG = OUTPUT_DIR / "test/output_rasterise_test_REGION.png"
 
-point_dataframe = gpd.read_file(POINTS_FILE).to_crs(2154)
-geo_mask = gpd.read_file(MASK_FILE).to_crs(2154)
-geo_mask = geo_mask[geo_mask["code"] == "84"]
+    MASK_FILE = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/regions-100m.geojson"
 
+    point_dataframe = gpd.read_file(POINTS_FILE).to_crs(2154)
+    geo_mask = gpd.read_file(MASK_FILE).to_crs(2154)
+    geo_mask = geo_mask[geo_mask["code"] == "84"]
 
-DEPARTEMENT = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
-geo_departement_mask = gpd.read_file(DEPARTEMENT).to_crs(2154)
-geo_departement_mask = geo_departement_mask[geo_departement_mask["code"].isin(["03","01","74","63","42","69","73","38","26","07","43","15"])]
+    DEPARTEMENT = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
+    geo_departement_mask = gpd.read_file(DEPARTEMENT).to_crs(2154)
+    geo_departement_mask = geo_departement_mask[
+        geo_departement_mask["code"].isin(["03", "01", "74", "63", "42", "69", "73", "38", "26", "07", "43", "15"])]
 
-rasterize_geojson(point_dataframe, "SSWI1", geo_mask, "SSWI1 du mois de Juin 2026 en Auvergne-Rhône-Alpes", "turbo", True,
-                  [
-                      "-1.25 - Extrêmement Sec",
-                      "-0.75",
-                      "-0.25",
-                      "0.25",
-                      "0.75",
-                      "1.25 - Extrêmement Humide",
-                      "Très Sec",
-                      "Modérément Sec",
-                      "Autour de la Normale",
-                      "Modérément Humide",
-                      "Très Humide",
-                  ],
-                  [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25],
-                  OUTPUT_PNG,
-                  geo_departement_mask)
+    palette, is_palette_inverse,  intervalle_name, tick_pos = get_graphic_parameter("SSWI1")
+
+    rasterize_geojson(point_dataframe, "SSWI1", geo_mask, "SSWI1 du mois de Juin 2026 en Auvergne-Rhône-Alpes",
+                      palette, is_palette_inverse, intervalle_name, tick_pos, OUTPUT_PNG, geo_departement_mask)
 
