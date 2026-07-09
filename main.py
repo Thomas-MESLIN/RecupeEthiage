@@ -4,8 +4,10 @@ import calendar
 import src.plotting.plot_grandeur as plot_grandeur
 import logging
 import src.plotting.plot_meteoFrance as plot_meteoFrance
+from src.model.enums import OndeCampagneType
 from src.io.download_meteoFrance import GeographicScaleClip
 from src.io.download_meteoFrance import MeteoFranceDataType
+import src.plotting.plot_onde as plot_onde
 
 def prompt_for_graphic() -> bool:
     print("Souhaitez vous générer les graphiques associées au stations individuel pour le calcul des périodes de retour ? (N/o)")
@@ -183,6 +185,7 @@ def main(
     has_meteo_index_update: bool = True,
     is_data_update_allowed: bool = True,
     geographic_scale:GeographicScaleClip = GeographicScaleClip.BASSIN,
+    code_zone:str = "01",
 ):
     """
     Génère les geojson à partir des arguments d'entrée du CLI.
@@ -194,7 +197,8 @@ def main(
     :param has_meteo_aggregate:
     :param has_meteo_index_update:
     :param is_data_update_allowed: Autorise le script meteo à mettre ses données à jour.
-    :param geographic_scale:
+    :param geographic_scale: L'échelle géographique souhaitée.
+    :param code_zone: Le code associé à la zone géogrpahique Onde à afficher
     :return:
     """
     if not is_data_update_allowed:
@@ -213,6 +217,10 @@ def main(
             plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
         case "meteo_sim2_QUOT":
             plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.SIM2_QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
+        case "onde_USUELLE":
+            plot_onde.plot_everything(OndeCampagneType.USUELLE, start_date, geographic_scale, code_zone)
+        case "onde_ALL":
+            plot_onde.plot_everything(OndeCampagneType.ALL_CAMPAGNE, start_date, geographic_scale, code_zone)
         case _:
             raise NotImplementedError
 
@@ -239,14 +247,20 @@ def try_format_date(date_to_format:str,is_last_day:bool) -> datetime|None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exporter des données hydrologiques/météorologiques.",
                                      epilog="N'hésitez pas à rapporter des bugs ou des suggestions sur la page github : https://github.com/Thomas-MESLIN/RecupeEthiage")
-    parser.add_argument("--type", choices=["hydraulicite", "vcn3", "meteo_brut_MENS", "meteo_sim2_MENS", "meteo_brut_QUOT", "meteo_sim2_QUOT", "stations-sites"],
-                        help="hydraulicite : Calcul l'hydraucilité sur 1 mois désigné par start_date des stations "
-                             "")
+    parser.add_argument("--type", choices=["hydraulicite", "vcn3", "meteo_brut_MENS", "meteo_sim2_MENS", "meteo_brut_QUOT", "meteo_sim2_QUOT", "stations-sites", "onde_USUELLE", "onde_ALL"],
+                        help="hydraulicite : Calcul l'hydraucilité sur 1 mois désigné par start_date des stations, | "
+                             "vcn3 : Calcul du VCN3 et des périodes de retour et des fréquences de on-dépassements sur 1 mois. | "
+                             "meteo_brut_... : Récupères les données Météo brute station par stations. | "
+                             "meteo_sim2_... : Récupères les données Météo SIM2 via des carré de 8x8km. | "
+                             "stations_sites : Sauvegarde les stations et les sites de n'importe quelle liste SANDRE souhaités ou de la liste custom. | "
+                             "onde_USUELLE : Récupères les données Onde sur les campagnes USUELLES UNIQUEMENT d'écoulements des cours d'eaux | "    
+                             "onde_ALL : Récupères les données Onde sur les campagnes USUELLES ET COMPLEMENTAIRES d'écoulements des cours d'eaux, ne garde que les données les plus récente pour chaque coordonnées | ")
     parser.add_argument("--start_date", help="Format: AAAA-MM-JJ|AAAA-MM (défaut le début du mois précédent)")
     parser.add_argument("--end_date", help="Format: AAAA-MM-JJ|AAAA-MM (borne incluse) (défaut - fin du mois précédent)")
     parser.add_argument("--reseau_sandre", help="Le réseau SANDRE que vous souhaitez utiliser (défaut BSH001), custom pour utiliser la liste de sites/stations custom")
     parser.add_argument("--vcn3_graphic", action='store_true', help="[VCN3] Si présent, des graphiques individuels seront générés pour chaque stations")
-    parser.add_argument("--meteo_geographic_scale", choices=[GeographicScaleClip.BASSIN, GeographicScaleClip.REGION_ADMINISTRATIVE, GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF, GeographicScaleClip.REGION_BASSIN, GeographicScaleClip.DEPARTEMENT_BASSIN], help="[météo] L'échelle géographique à laquelle on veut exporter les données, par défaut, BASSIN", default=GeographicScaleClip.BASSIN)
+    parser.add_argument("--geographic_scale", choices=[GeographicScaleClip.BASSIN, GeographicScaleClip.REGION_ADMINISTRATIVE, GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF, GeographicScaleClip.REGION_BASSIN, GeographicScaleClip.DEPARTEMENT_BASSIN], help="[météo|onde] L'échelle géographique à laquelle on veut exporter les données, par défaut, BASSIN", default=GeographicScaleClip.BASSIN)
+    parser.add_argument("--onde_zone_code",  help="[onde] Le code de la zone géographique souhaité. (CC) ex : '06' pour le bassin Rhone-Méditerranéen")
     parser.add_argument("--meteo_aggregate", action='store_true', help="[météo] Si présent, les données seront aggrégés sur la période sélectionnée")
     parser.add_argument("--meteo_no_index_update", action='store_false', help="[météo] Si présent, l'index de correspondance entre les fichiers enregistré des dataset et leur id_datagouv ne sera pas mis à jour.")
     parser.add_argument("--meteo_no_update", action='store_false',help="[météo] Si présent, aucune données ne sera mis à jour. Peut servir pour les données quotidiennes brut où il peut y avoir beaucoup de mis à jour.")
@@ -282,7 +296,8 @@ if __name__ == "__main__":
              args.meteo_aggregate,
              args.meteo_no_index_update,
              args.meteo_no_update,
-             args.meteo_geographic_scale,
+             args.geographic_scale,
+             args.onde_zone_code,
         )
 
     logging.info("\nGénération terminée.")

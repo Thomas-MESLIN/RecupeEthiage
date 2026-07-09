@@ -4,7 +4,8 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from src.model.enums import OndeGeographicZone, OndeCampagneType
+from src.model.enums import GeographicScaleClip
+from src.model.enums import OndeCampagneType
 import src.processing.process_onde as process_onde
 from src.config.styles import COULEUR_MOYENNE, ANNEE_COULEURS
 
@@ -227,7 +228,7 @@ def plot_evolution_ecoulements(df:pd.DataFrame, campagne_type:OndeCampagneType, 
 
     save_and_close_plot(output_path)
 
-def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geographic_scale:OndeGeographicZone, zone_code:str):
+def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geographic_scale:GeographicScaleClip, zone_code:str):
     """
     Créer les plot ONDE à partir de l'année et du mois souhaité
     Va créer des plots sur l'évolutions des écoulements et l'évolutions des assecs.
@@ -238,7 +239,9 @@ def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geograp
     :param zone_code: Le code associé à cette zone géographique
     :return: Rien.
     """
-    dossier_chemin = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}/{geographic_scale}{zone_code}")
+    if zone_code is None:
+        raise ValueError("Le code pour la zone géographique n'est pas précisé.")
+    dossier_chemin = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}/{geographic_scale[0]}{zone_code}")
     dossier_chemin.mkdir(parents=True, exist_ok=True)
     df_complet = process_onde.load_and_prepare_onde_data(campagne_type, annee_mois, geographic_scale, zone_code)
     # On prend l'extrait depuis 4 ans.
@@ -247,15 +250,15 @@ def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geograp
                           annee_mois.replace(day=calendar.monthrange(annee_mois.year, annee_mois.month)[1]), # On prend le dernier jour du mois
                           annee_mois.year,
                           campagne_type,
-                          output_path=dossier_chemin / f"onde_evolution-assec_{annee_mois.strftime('%Y')}_{campagne_type}_{geographic_scale}{zone_code}.png")
+                          output_path=dossier_chemin / f"onde_evolution-assec_{annee_mois.strftime('%Y')}_{campagne_type}_{geographic_scale[0]}{zone_code}.png")
 
     plot_evolution_ecoulements(df_complet,
                                campagne_type,
                                6,nb_mesures=385,
-                               output_path=dossier_chemin / f"onde_evolution-ecoulement_{annee_mois.strftime('%Y-%m')}_{campagne_type}_{geographic_scale}{zone_code}.png")
+                               output_path=dossier_chemin / f"onde_evolution-ecoulement_{annee_mois.strftime('%Y-%m')}_{campagne_type}_{geographic_scale[0]}{zone_code}.png")
 
 
 if __name__ == "__main__":
-    plot_everything(OndeCampagneType.USUELLE, datetime(2026,6,1), OndeGeographicZone.REGION, "84")
-    plot_everything(OndeCampagneType.COMPLEMENTAIRE, datetime(2026,6,1), OndeGeographicZone.REGION, "84")
-    plot_everything(OndeCampagneType.ALL_CAMPAGNE, datetime(2026,6,1), OndeGeographicZone.REGION, "84")
+    plot_everything(OndeCampagneType.USUELLE, datetime(2026,6,1), GeographicScaleClip.REGION_ADMINISTRATIVE, "84")
+    plot_everything(OndeCampagneType.COMPLEMENTAIRE, datetime(2026,6,1), GeographicScaleClip.REGION_ADMINISTRATIVE, "84")
+    plot_everything(OndeCampagneType.ALL_CAMPAGNE, datetime(2026,6,1), GeographicScaleClip.REGION_ADMINISTRATIVE, "84")

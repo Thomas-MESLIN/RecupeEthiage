@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from functools import cache
 import logging
 from src.config.paths import OUTPUT_DIR
-from src.model.enums import OndeGeographicZone
+from src.model.enums import GeographicScaleClip
 
 loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
 
@@ -117,7 +117,7 @@ def get_path_campagne_onde() -> Path:
     return OUTPUT_DIR / Path("hubeau/downloaded_data/onde/campagnes_onde.csv")
 
 
-def get_path_observation_onde(date_debut:datetime, date_fin:datetime, onde_zone:OndeGeographicZone, code_associe:str) -> Path:
+def get_path_observation_onde(date_debut:datetime, date_fin:datetime, onde_zone:GeographicScaleClip, code_associe:str) -> Path:
     """
     Renvoie le chemin où est stocké la zone géographic des observations ONDE allant de date_debut jusqua date_fin.
     :param date_debut: La date de début des observations
@@ -126,11 +126,11 @@ def get_path_observation_onde(date_debut:datetime, date_fin:datetime, onde_zone:
     :param code_associe: Le code associé à la zone géographique
     :return: Un chemin vers le fichier correspondant.
     """
-    lettre_zone = f"{onde_zone}{code_associe}"
+    lettre_zone = f"{onde_zone[0]}{code_associe}"
 
     return OUTPUT_DIR / Path(f"hubeau/downloaded_data/onde/observation_onde_{lettre_zone}_{date_debut.strftime('%Y%m%d')}_{date_fin.strftime('%Y%m%d')}.csv")
 
-def get_path_stations_onde(onde_zone:OndeGeographicZone, code_associe:str) -> Path:
+def get_path_stations_onde(onde_zone:GeographicScaleClip, code_associe:str) -> Path:
     """
     Renvoie le chemin où est stocké la zone géographic des observations ONDE allant de date_debut jusqua date_fin.
     :param date_debut: La date de début des observations
@@ -139,6 +139,6 @@ def get_path_stations_onde(onde_zone:OndeGeographicZone, code_associe:str) -> Pa
     :param code_associe: Le code associé à la zone géographique
     :return: Un chemin vers le fichier correspondant.
     """
-    lettre_zone = f"{onde_zone}{code_associe}"
+    lettre_zone = f"{onde_zone[0]}{code_associe}"
 
     return OUTPUT_DIR / Path(f"hubeau/downloaded_data/onde/stations_onde_{lettre_zone}.csv")

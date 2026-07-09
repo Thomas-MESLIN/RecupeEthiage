@@ -7,7 +7,7 @@ import calendar
 import logging
 import src.utils.utils as utils
 import src.utils.utils_proxy as utils_proxy
-from src.model.enums import OndeGeographicZone
+from src.model.enums import GeographicScaleClip
 from functools import cache
 import src.config.init_project
 import src.utils.utils_file as utils_file
@@ -149,7 +149,7 @@ def download_hubeau_onde_campagnes() -> pd.DataFrame:
     print(f"Données campagne ONDE téléchargés à : {chemin_campagne_onde}")
     return gdf
 
-def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:OndeGeographicZone, code_zone:str):
+def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:GeographicScaleClip, code_zone:str):
     """
     Télécharge les observations de 1991 à 2020 de la grandeur souhaite et de toute la france
     :param date_debut_obs: Les observations depuis ce jour-là inclus.
@@ -166,11 +166,11 @@ def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, d
     }
 
     match zone_geographic:
-        case OndeGeographicZone.BASSIN:
+        case GeographicScaleClip.BASSIN:
             kwargs["code_bassin"] = code_zone
-        case OndeGeographicZone.REGION:
+        case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
             kwargs["code_region"] = code_zone
-        case OndeGeographicZone.DEPARTEMENT:
+        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
             kwargs["code_departement"] = code_zone
 
     df = watercourses_flow.get_all_observations(**kwargs)
@@ -183,7 +183,7 @@ def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, d
     print(f"Données observations ONDE téléchargés à : {chemin_observations_onde}")
     return df
 
-def download_hubeau_onde_stations_geographic_zone(zone_geographic:OndeGeographicZone, code_zone:str):
+def download_hubeau_onde_stations_geographic_zone(zone_geographic:GeographicScaleClip, code_zone:str):
     print(f"Téléchargement des stations ONDE")
     utils_proxy.set_up_working_proxy()
 
@@ -191,11 +191,11 @@ def download_hubeau_onde_stations_geographic_zone(zone_geographic:OndeGeographic
     }
 
     match zone_geographic:
-        case OndeGeographicZone.BASSIN:
+        case GeographicScaleClip.BASSIN:
             kwargs["code_bassin"] = code_zone
-        case OndeGeographicZone.REGION:
+        case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
             kwargs["code_region"] = code_zone
-        case OndeGeographicZone.DEPARTEMENT:
+        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
             kwargs["code_departement"] = code_zone
 
     df = watercourses_flow.get_all_stations(**kwargs)
@@ -219,7 +219,7 @@ def get_df_all_campagne() -> gpd.GeoDataFrame:
     return df
 
 @cache
-def get_df_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:OndeGeographicZone, code_zone:str) -> gpd.GeoDataFrame:
+def get_df_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:GeographicScaleClip, code_zone:str) -> gpd.GeoDataFrame:
     """
     Renvoie un DataFrame allant de date_debut_obs à date_fin_obs, de la zone géographique souhaité et son code correspondant.
     :param date_debut_obs: Date de début des observations souhaitées
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     #     OndeGeographicZone.REGION,
     #     "84",
     # )
-    download_hubeau_onde_stations_geographic_zone(OndeGeographicZone.REGION,"84")
+    download_hubeau_onde_stations_geographic_zone(GeographicScaleClip.REGION_ADMINISTRATIVE,"84")
     # df_test = get_df_observations_geographic_zone(datetime(2025,5,1), datetime(2025,9,2),OndeGeographicZone.DEPARTEMENT,"33")
     # df_test.to_csv(Path("output/test/testetst-onde.csv"),index=False)
     # gdf_test = gpd.GeoDataFrame(data=df_test,geometry=df_test.geometry)

@@ -1,11 +1,6 @@
 from enum import StrEnum, Enum
 
 # Enums Onde
-class OndeGeographicZone(StrEnum):
-    BASSIN = "B",
-    REGION = "R",
-    DEPARTEMENT = "D",
-
 class OndeCampagneType(StrEnum):
     USUELLE = "U",
     COMPLEMENTAIRE = "C",

@@ -4,7 +4,9 @@ from pathlib import Path
 from datetime import datetime
 import calendar
 from functools import cache
-from src.model.enums import OndeGeographicZone, OndeCampagneType
+
+from src.model.enums import GeographicScaleClip
+from src.model.enums import OndeCampagneType
 import src.io.download_Hubeau as download_Hubeau
 
 def save_df_onde(df_to_save:pd.DataFrame, csv_path:Path, geojson_path:Path, filter_annee_mois:datetime|None):
@@ -27,7 +29,7 @@ def save_df_onde(df_to_save:pd.DataFrame, csv_path:Path, geojson_path:Path, filt
     gpd.GeoDataFrame(df_to_save, geometry=df_to_save["geometry"]).to_file(geojson_path, driver="GeoJSON", index=False)
 
 @cache
-def get_df_observations_data(geographic_scale:OndeGeographicZone, zone_code:str) -> pd.DataFrame:
+def get_df_observations_data(geographic_scale:GeographicScaleClip, zone_code:str) -> pd.DataFrame:
     """
     Récupère toutes les données d'observations de 2012 à aujourd'hui.
     :param geographic_scale: la zone géographique à récupérer
@@ -146,7 +148,7 @@ def keep_last_station_data(df:pd.DataFrame) -> pd.DataFrame:
                                                                                  keep="first")
     return df_derniere_donne_chaque_station
 
-def load_and_prepare_onde_data(onde_campagne_type:OndeCampagneType, annee_mois:datetime, geographic_scale:OndeGeographicZone, zone_code:str) -> pd.DataFrame:
+def load_and_prepare_onde_data(onde_campagne_type:OndeCampagneType, annee_mois:datetime, geographic_scale:GeographicScaleClip, zone_code:str) -> pd.DataFrame:
     """
     Récupère les données des campagnes et des observations depuis 2012 jusqu'à today(), nettoie et sauvegardes ces données
     :return: Un DataFrame contenant toutes les données de 2012 à today(), qui pour chaque station n'a gardé que les données les plus récente du mois.

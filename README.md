@@ -1,6 +1,7 @@
 # Automatisation Récupération données hydrologiques
 Ces scripts Python ont pour vocations de : 
 - Récupérer les données hydrologiques via l'API de Hub'eau en passant par le client Python cl_hubeau.
+- Récupérer les données Onde les plus récentes sur un mois via Hub'eau.
 - Récupérer les données météorologiques via DataGouv par le client Python datagouv-client.
 - Procéder au calcul de l'hydraulicité et du VCN3 (période de retour et fréquence de non-dépassement) d'un mois particulier.
 - Extraire n'importe quel intervalle de temps, à n'importe quelle granularité temporelle (mensuelle,quotienne,SIM2,...) et sur n'importe quel territoire.
@@ -18,15 +19,19 @@ Dans le terminal (utilisez tab pour avoir de l'autocomplétion), rentrez :
 # On créer l'environnement virtuel pour Python. (l'endroit où il stocke ses paquets)
 python3-64.exe -m venv venv
 
-# On installe les paquets nécessaire
+# On installe les paquets nécessaire, attention, vous ne pouvez pas installer les paquets en étant sur le réseau interne.
 .\venv\Scripts\pip.exe install -r .\requirements.txt
+
+# On vérifie que le programme s'est correctement installé.
+.\venv\Scripts\python.exe main.py -h
 ```
 
 Vous avez besoin d'avoir accès à internet normal, le temps de télécharger les paquets.
 
+## Lancer le programme
+
 Si vous êtes dans un réseau interne -> voir la section _Utiliser un proxy_.
 
-## Lancer le programme
 ```bash
 # On lance le programme principal en version interactive.
 .\venv\Scripts\python.exe main.py
@@ -37,7 +42,9 @@ On peut aussi lancer la version complète en CLI (commande Line Interface).
 # On lance le programme principal en CLI.
 .\venv\Scripts\python.exe main.py -h
 ```
-Exemple d'utilisation : 
+
+### Exemple d'utilisation : 
+TODO, ajouter image pour chaque sortie. + ajouter commande Onde
 ```bash
 # Les type hydraulicité et VCN3 fonctionne au mois. Ainsi la end-date n'est pas pris en compte. (comportement à travailler)
 # On récupère l'hydraulicité du mois de Janvier 2026 sur les stations de la liste custom.
@@ -108,7 +115,15 @@ plot_res_validation_clean.py
 
 ### Sortie des scripts
 
-Tous les fichiers générés vont dans le dossier `output`. 
+Tous les fichiers générés et téléchargés par tous les scripts vont dans le dossier `output`. 
+
+## Hub'Eau
+Hub'Eau prend soin de collecter des données depuis plusieurs API : 
+
+### Onde (API Ecoulement des cours d'eau)
+Les données ondes peuvent être récupéré au mois via 
+
+
 Les geojson vont dans le dossier `output/QGIS`.
 
 
@@ -117,10 +132,14 @@ Les dernières données seront re-téléchargé automatiquement lorsqu'elles ne 
 
 ## En cas de panne
 Si on est face à une superbe panne, qu'il y a une erreur obscure ou autre, 
-la meilleure solution est de tout remettre à 0.
+la solution la plus simple est de tout remettre à 0.
 
 Vous pouvez alors supprimer tout ce dossier, re-extraire au propre, re-installer un venv et re-lancer votre requête. 
 En priant pour qu'il y ait une mise à jour qui règle le problème. 
+
+### Si un paquet bug et ne veut pas fonctionner
+1. On désinstalle le paquet : `.\venv\Scripts\pip.exe uninstall [nom_du_paquet] -y`
+2. On réinstalle tout : `.\venv\Scripts\pip.exe install -r .\requirements.txt`
 
 ## Utiliser un proxy
 Vous pouvez utiliser un proxy pour pouvoir télécharger vos données via votre réseau interne.
