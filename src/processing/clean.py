@@ -7,6 +7,7 @@ from tqdm import tqdm
 import logging
 from functools import cache
 import src.utils.utils_file as utils_file
+from src.config.paths import OUTPUT_DIR
 
 colonne_date_hubeau = "date_obs_elab"
 colonne_code_station_hubeau = "code_station"
@@ -41,7 +42,7 @@ def get_grandeur_historique_df(grandeur:str):
         logging.info("Files Reading Complete")
     return _cache[grandeur]
 
-def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=Path(""), grandeur_a_filtrer="", fichier_station_hubeau="output/hubeau/downloaded_data/stations/stations.csv") -> pd.DataFrame:
+def clean_hubeau_data(date_a_filtrer: str, code_sandre: str, path_file_to_clean=Path(""), grandeur_a_filtrer="", fichier_station_hubeau=str(OUTPUT_DIR / "hubeau" / "downloaded_data" / "stations" / "stations.csv")) -> pd.DataFrame:
     """
     Va chercher le fichier des observations qmm dans les fichiers téléchargé.
     Charge les données et prendre uniquement les données correspondantes à la date en paramètre.

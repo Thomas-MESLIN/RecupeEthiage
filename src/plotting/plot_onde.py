@@ -9,6 +9,7 @@ from src.model.enums import OndeCampagneType
 import src.processing.process_onde as process_onde
 from src.config.styles import COULEUR_MOYENNE, ANNEE_COULEURS
 from src.config.logging_config import setup_logger
+from src.config.paths import OUTPUT_DIR
 
 # Initialiser le logger
 logger = setup_logger(name="plot_onde")
@@ -245,7 +246,7 @@ def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geograp
     """
     if zone_code is None:
         raise ValueError("Le code pour la zone géographique n'est pas précisé.")
-    dossier_chemin = Path(f"output/onde/BSH_{annee_mois.strftime('%Y-%m')}/{geographic_scale[0]}{zone_code}")
+    dossier_chemin = OUTPUT_DIR / "onde" / f"BSH_{annee_mois.strftime('%Y-%m')}" / f"{geographic_scale[0]}{zone_code}"
     dossier_chemin.mkdir(parents=True, exist_ok=True)
     df_complet = process_onde.load_and_prepare_onde_data(campagne_type, annee_mois, geographic_scale, zone_code)
     # On prend l'extrait depuis 4 ans.

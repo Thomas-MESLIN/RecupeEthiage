@@ -12,6 +12,7 @@ import src.io.download_Hubeau as download_Hubeau
 import src.processing.calcul_hydraulicite as calcul_hydraulicite
 import logging
 from src.config.logging_config import setup_logger
+from src.config.paths import OUTPUT_DIR
 
 # Initialiser le logger
 logger = setup_logger(name="plot_grandeur")
@@ -103,14 +104,14 @@ def create_geojson_from_stations(code_sandre:str|None=None, annee_mois:str|None=
 
     if annee_mois is not None:
         if code_sandre is not None:
-            output_geojson = Path(f"output/QGIS/stations/stations-ouverte-{code_sandre}-{annee_mois}.geojson")
+            output_geojson = OUTPUT_DIR / "QGIS" / "stations" / f"stations-ouverte-{code_sandre}-{annee_mois}.geojson"
         else:
-            output_geojson = Path(f"output/QGIS/stations/stations-ouverte-{annee_mois}.geojson")
+            output_geojson = OUTPUT_DIR / "QGIS" / "stations" / f"stations-ouverte-{annee_mois}.geojson"
     else:
         if code_sandre is not None:
-            output_geojson = Path(f"output/QGIS/stations/stations-{code_sandre}.geojson")
+            output_geojson = OUTPUT_DIR / "QGIS" / "stations" / f"stations-{code_sandre}.geojson"
         else:
-            output_geojson = Path(f"output/QGIS/stations/stations.geojson")
+            output_geojson = OUTPUT_DIR / "QGIS" / "stations" / "stations.geojson"
 
     gdf_final.to_file(
         output_geojson,
@@ -162,9 +163,9 @@ def create_geojson_from_sites(code_sandre:str|None=None):
             gdf_complet_sites_code_sandre = gdf_complet_sites_code_sandre.drop(columns=col)
 
     if code_sandre is not None:
-        output_geojson = Path(f"output/QGIS/sites/sites-{code_sandre}.geojson")
+        output_geojson = OUTPUT_DIR / "QGIS" / "sites" / f"sites-{code_sandre}.geojson"
     else:
-        output_geojson = Path(f"output/QGIS/sites/sites.geojson")
+        output_geojson = OUTPUT_DIR / "QGIS" / "sites" / "sites.geojson"
 
     gdf_final.to_file(
         output_geojson,
@@ -314,18 +315,18 @@ def plot_period_from_flow(q_obs: float, res_station:dict, res_estimation: dict, 
 def plot_result_station(code_station: str, mois:str, result_station:dict, resultats_frequence_periode_retour:dict):
     resultats = resultats_frequence_periode_retour
     plot_results(resultats,
-                 Path(f"output/VCN3/plot_stations/analyse-frequentielle-{code_station}-{mois:02}.png"),
+                 OUTPUT_DIR / "VCN3" / "plot_stations" / f"analyse-frequentielle-{code_station}-{mois:02}.png",
                  title=f"VCN3 — Analyse fréquentielle - Station : {code_station}")
     vcn3_observation = result_station["debit_obs"]
     plot_period_from_flow(q_obs=vcn3_observation, res_station=result_station, res_estimation=resultats, code_station=code_station,
-                          output_path=Path(f"output/VCN3/plot_stations/periode-de-retour-{code_station}-{mois:02}.png"))
+                          output_path=OUTPUT_DIR / "VCN3" / "plot_stations" / f"periode-de-retour-{code_station}-{mois:02}.png")
 
 
 def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_result_plotted:bool=False):
     chemin_periode_de_retour = utils.get_path_periode_de_retour(code_sandre, annee_mois)
     f_T.ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, code_sandre, is_result_plotted)
 
-    output_path = Path(f"output/QGIS/frequence_periode_de_retour/periode-de-retour-{code_sandre}-{annee_mois}.geojson")
+    output_path = OUTPUT_DIR / "QGIS" / "frequence_periode_de_retour" / f"periode-de-retour-{code_sandre}-{annee_mois}.geojson"
 
     create_geojson_from_path(chemin_periode_de_retour, output_path, annee_mois, code_sandre)
 
@@ -339,7 +340,7 @@ def create_geojson_from_hydraulicite(annee_mois:str, code_sandre:str):
     chemin_hydraulicite = utils.get_path_hydraulicite(code_sandre, annee_mois)
     calcul_hydraulicite.calcul_hydraulicite_mensuel(annee_mois, code_sandre)
 
-    output_path = Path(f"output/QGIS/hydraulicite/hydraulicite-{code_sandre}-{annee_mois}.geojson")
+    output_path = OUTPUT_DIR / "QGIS" / "hydraulicite" / f"hydraulicite-{code_sandre}-{annee_mois}.geojson"
 
     create_geojson_from_path(chemin_hydraulicite, output_path, annee_mois, code_sandre)
 

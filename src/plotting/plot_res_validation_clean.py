@@ -1,9 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
+from src.config.paths import OUTPUT_DIR
 
 # Exemple : chargement du CSV
-df = pd.read_csv(Path("output/res-validation/diff_hydro_hubeau_clean.csv"))
+df = pd.read_csv(OUTPUT_DIR / "res-validation" / "diff_hydro_hubeau_clean.csv")
 
 # Conversion de la colonne date
 df["annee_mois"] = pd.to_datetime(df["annee_mois"], format="%Y-%m")

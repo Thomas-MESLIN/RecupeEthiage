@@ -4,6 +4,7 @@ import requests
 import pandas as pd
 from pathlib import Path
 from src.config.logging_config import setup_logger
+from src.config.paths import OUTPUT_DIR
 
 # Initialiser le logger
 logger = setup_logger(name="test_gather_auto_hydroportail")
@@ -20,7 +21,7 @@ def download_hydro(sandre_code:str,start_date:str):
     """
     rdds = sandre_code
     start_at = start_date
-    output_folder = Path("output/exports_hydroportail")
+    output_folder = OUTPUT_DIR / "exports_hydroportail"
     if rdds != "":
         output_file = output_folder / f"{start_at[:7]}-{rdds}-only-validated-qmm.csv"
     else:

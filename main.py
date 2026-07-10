@@ -156,7 +156,7 @@ def generer_carte_hubeau(type_carte: str):
     Args:
         type_carte: "hydraulicite", "vcn3", ou "les_deux"
     """
-    logger.info("\n" + "="*60)
+    logger.info("="*60)
     logger.info("GENERATION DE CARTE HUBEAU")
     logger.info("="*60)
     
@@ -193,7 +193,7 @@ def generer_carte_hubeau(type_carte: str):
             "(pour le calcul des périodes de retour)?"
         )
     
-    logger.info("\nGénération en cours...")
+    logger.info("Génération en cours...")
     
     # Générer les fichiers GeoJSON de base (communs à toutes les cartes)
     logger.info("  - Génération des stations ouvertes pour le mois sélectionné...")
@@ -231,7 +231,7 @@ def generer_carte_meteo():
     """
     Génère une carte à partir des données Météo France.
     """
-    logger.info("\n" + "="*60)
+    logger.info("="*60)
     logger.info("GENERATION DE CARTE METEO FRANCE")
     logger.info("="*60)
     
@@ -291,7 +291,7 @@ def generer_carte_meteo():
     # 5. Mise à jour des données
     mettre_a_jour_donnees = demander_ou_non(
         "Souhaitez-vous mettre à jour les données téléchargées ?",
-        valeur_par_defaut=False
+        valeur_par_defaut=True
     )
     
     mettre_a_jour_index = False
@@ -343,12 +343,12 @@ def mode_interactif():
     Lance le script en mode interactif.
     Guide l'utilisateur pas à pas pour générer les cartes souhaitées.
     """
-    logger.info("\n" + "="*60)
+    logger.info("="*60)
     logger.info("BIENVENUE DANS L'OUTIL DE GENERATION DE CARTES")
     logger.info("="*60)
-    logger.info("\nCe script permet de générer différentes cartes à partir de données")
+    logger.info("Ce script permet de générer différentes cartes à partir de données")
     logger.info("hydrologiques (Hubeau) et météorologiques (Météo France).")
-    logger.info("\nVous pouvez aussi utiliser le mode CLI avec des arguments.")
+    logger.info("Vous pouvez aussi utiliser le mode CLI avec des arguments.")
     logger.info("Voir --help pour plus d'informations.\n")
     
     # Sélection du type de carte à générer
@@ -655,6 +655,6 @@ if __name__ == "__main__":
         # Mode CLI
         mode_cli(args)
     
-    logger.info("\n" + "="*60)
+    logger.info("="*60)
     logger.info("GENERATION TERMINEE AVEC SUCCES !")
     logger.info("="*60)

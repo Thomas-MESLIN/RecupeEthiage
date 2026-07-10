@@ -34,7 +34,7 @@ def ensure_grandeur_mensuel_downloaded(annee_mois:str, grandeur:str):
 
 def download_hubeau_AURA_mois(annee_mois : str, grandeur : str):
     """
-    Télécharge les observations élaboré via l'api Hubeau dans le dossier output/hubeau/downloaded_data/observations_elaboree.
+    Télécharge les observations élaboré via l'api Hubeau dans le dossier OUTPUT_DIR/hubeau/downloaded_data/observations_elaboree.
     :param annee_mois: L'année et le mois à télécharger au format AAAA-MM
     :param grandeur: La grandeur à télécharger parmis -> HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ
     """

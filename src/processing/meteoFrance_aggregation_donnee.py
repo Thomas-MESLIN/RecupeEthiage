@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime
 from pathlib import Path
 from enum import Enum
+from src.config.paths import OUTPUT_DIR
 
 
 class GroupByMethod(Enum):
@@ -88,5 +89,5 @@ def aggregate_range(data_freq:MeteoFranceDataType, df_to_aggregate:pd.DataFrame,
 if __name__ == "__main__":
     df_to_aggregate = dm.get_data_in_range(MeteoFranceDataType.SIM2_QUOT, datetime(2026,5,1),datetime(2026,5,7))
     df_aggregated = aggregate_range(MeteoFranceDataType.SIM2_QUOT, df_to_aggregate)
-    df_to_aggregate.to_csv(Path("output/test/df_a_aggreger.csv"), index=False)
-    df_aggregated.to_csv(Path("output/test/df_aggrege.csv"), index=False)
+    df_to_aggregate.to_csv(OUTPUT_DIR / "test" / "df_a_aggreger.csv", index=False)
+    df_aggregated.to_csv(OUTPUT_DIR / "test" / "df_aggrege.csv", index=False)

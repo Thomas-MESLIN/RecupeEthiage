@@ -4,6 +4,7 @@ from pathlib import Path
 from tqdm import tqdm
 import utils
 from src.config.logging_config import setup_logger
+from src.config.paths import OUTPUT_DIR
 
 # Initialiser le logger
 logger = setup_logger(name="validate_clean_data")
@@ -248,7 +249,7 @@ dataframe_dico = pd.DataFrame(
     index=pd.array(list_total_station_unique)
 )
 
-chemin_resultat_difference = "output/res-validation/res_station_unique_hubeau_hydroportail_BSH001_BSH101.csv"
+chemin_resultat_difference = OUTPUT_DIR / "res-validation" / "res_station_unique_hubeau_hydroportail_BSH001_BSH101.csv"
 dataframe_dico.to_csv(Path(chemin_resultat_difference), index_label="code_station", sep=';')
 logger.info(f"\n\nRésultat enregistré dans {chemin_resultat_difference}")
 

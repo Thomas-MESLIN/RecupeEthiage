@@ -3,6 +3,7 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 import src.plotting.plot_meteoFrance as plot_meteoFrance
+from src.config.paths import OUTPUT_DIR
 
 date_debut = datetime(2026, 6, 1)
 date_fin = datetime(2026, 6, 28)
@@ -30,7 +31,7 @@ df_aggregated = df_groupped_by.agg({
 df_aggregated.reset_index(inplace=True)
 # df_aggregated = meteoFrance_aggregation_donnee.aggregate_range(MeteoFranceDataType.SIM2_QUOT,df_concatenated,GroupByMethod.BY_POSITION)
 
-chemin_mois_actuel = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-aggregated-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}/bassin/QUOT-SIM2-aggregated-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}-B06.csv")
+chemin_mois_actuel = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"QUOT-SIM2-aggregated-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}" / "bassin" / f"QUOT-SIM2-aggregated-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}-B06.csv"
 if not chemin_mois_actuel.exists():
     plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.BASSIN, MeteoFranceDataType.SIM2_QUOT, date_debut, date_fin, True)
 df_donnee_actuelle = plot_meteoFrance.df_range_processed(MeteoFranceDataType.SIM2_QUOT, date_debut, date_fin, True)
@@ -44,6 +45,6 @@ df_actuel["PE_rapport_normale"] = (df_actuel["PE"]) / df_ref["PE"].abs().clip(lo
 df_actuel.reset_index(inplace=True)
 df_lambert2 = plot_meteoFrance.to_lambert2_geodataframe(MeteoFranceDataType.SIM2_QUOT, df_actuel)
 
-chemin_plot_normale = Path(f"output/QGIS/meteoFrance/QUOT-SIM2-NORMALES-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}/bassin/QUOT-SIM2-NORMALES-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}.geojson")
+chemin_plot_normale = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"QUOT-SIM2-NORMALES-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}" / "bassin" / f"QUOT-SIM2-NORMALES-{date_debut.strftime('%Y%m%d')}-{date_fin.strftime('%Y%m%d')}.geojson"
 chemin_plot_normale.parent.mkdir(exist_ok=True, parents=True)
 plot_meteoFrance.plot_geojson_from_lambert2(chemin_plot_normale,df_lambert2)

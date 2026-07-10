@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from enum import Enum, StrEnum
 import src.utils.utils_proxy as utils_proxy
 import src.utils.utils_file as utils_file
-from src.config.paths import DATA_DIR
+from src.config.paths import DATA_DIR, OUTPUT_DIR
 import src.config.init_project
 from src.model.enums import GeographicScaleClip,MeteoFranceDataType
 from src.config.logging_config import setup_logger
@@ -125,13 +125,13 @@ def fetch_and_update_decennie_ressource_id(data_freq:MeteoFranceDataType):
 def get_path_decennie_to_id_datagouv(data_freq:MeteoFranceDataType):
     match data_freq:
         case MeteoFranceDataType.SIM2_MENS:
-            return Path("output/meteoFrance/MENS_SIM2_decennie_to_id_datagouv.csv")
+            return OUTPUT_DIR / "meteoFrance" / "MENS_SIM2_decennie_to_id_datagouv.csv"
         case MeteoFranceDataType.SIM2_QUOT:
-            return Path("output/meteoFrance/QUOT_SIM2_decennie_to_id_datagouv.csv")
+            return OUTPUT_DIR / "meteoFrance" / "QUOT_SIM2_decennie_to_id_datagouv.csv"
         case MeteoFranceDataType.QUOT:
-            return Path("output/meteoFrance/QUOT_decennie_to_id_datagouv.csv")
+            return OUTPUT_DIR / "meteoFrance" / "QUOT_decennie_to_id_datagouv.csv"
         case MeteoFranceDataType.MENS:
-            return Path("output/meteoFrance/MENS_decennie_to_id_datagouv.csv")
+            return OUTPUT_DIR / "meteoFrance" / "MENS_decennie_to_id_datagouv.csv"
         case _:
             raise NotImplementedError
 
@@ -247,6 +247,7 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
 
     # On met à jour les correspondance decennie -> id_datagouv.
     if has_index_update:
+        logger.info("Mise à jour de l'index.")
         update_decennie_to_id_datagouv(data_freq)
 
     # On récupère les correspondance.
@@ -376,39 +377,35 @@ def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:date
     match freq_data:
         case MeteoFranceDataType.SIM2_QUOT:
             if is_archive:
-                return Path(f"output/meteoFrance/downloaded_data/quot_sim2_archive/QUOT_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz")
+                return OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "quot_sim2_archive" / f"QUOT_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz"
             else:
-                return Path(f"output/meteoFrance/downloaded_data/quot_sim2/QUOT_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
+                return OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "quot_sim2" / f"QUOT_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv"
         case MeteoFranceDataType.SIM2_MENS:
             if is_archive:
-                return Path(
-                    f"output/meteoFrance/downloaded_data/mens_sim2_archive/MENS_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz")
+                return OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "mens_sim2_archive" / f"MENS_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz"
             else:
-                return Path(
-                    f"output/meteoFrance/downloaded_data/mens_sim2/MENS_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
+                return OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "mens_sim2" / f"MENS_SIM2_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv"
         case MeteoFranceDataType.QUOT:
             if is_archive:
-                return Path(
-                    f"output/meteoFrance/downloaded_data/quot_archive/QUOT_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz")
+                return OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "quot_archive" / f"QUOT_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz"
             else:
-                return Path(
-                    f"output/meteoFrance/downloaded_data/quot/QUOT_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
+                return OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "quot" / f"QUOT_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv"
         case MeteoFranceDataType.MENS:
             if is_archive:
-                return Path(
-                    f"output/meteoFrance/downloaded_data/mens_archive/MENS_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz")
+                return OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "mens_archive" / f"MENS_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv.gz"
             else:
-                return Path(
-                    f"output/meteoFrance/downloaded_data/mens/MENS_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv")
+                return OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "mens" / f"MENS_{id_gouv_data}_{debut_decenie.strftime('%Y%m%d')}-{fin_decenie.strftime('%Y%m%d')}.csv"
         case _:
             raise NotImplementedError
 
 if __name__ == "__main__":
-    liste = get_geographic_list(GeographicScaleClip.BASSIN)
-    logger.debug(liste)
+    #liste = get_geographic_list(GeographicScaleClip.BASSIN)
+    #logger.debug(liste)
 
-    liste = get_geographic_list(GeographicScaleClip.REGION_BASSIN)
-    logger.debug(liste)
+    #liste = get_geographic_list(GeographicScaleClip.REGION_BASSIN)
+    #logger.debug(liste)
 
-    liste = get_geographic_list(GeographicScaleClip.DEPARTEMENT_BASSIN)
-    logger.debug(liste)
+    #liste = get_geographic_list(GeographicScaleClip.DEPARTEMENT_BASSIN)
+    #logger.debug(liste)
+
+    df = get_data_in_range(MeteoFranceDataType.SIM2_QUOT,datetime(2026,6,1),datetime(2026,6,30),True,True)
