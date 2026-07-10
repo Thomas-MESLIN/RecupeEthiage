@@ -8,6 +8,7 @@ from src.model.enums import OndeCampagneType
 from src.io.download_meteoFrance import GeographicScaleClip
 from src.io.download_meteoFrance import MeteoFranceDataType
 import src.plotting.plot_onde as plot_onde
+from pynsee.utils import clear_all_cache
 
 def prompt_for_graphic() -> bool:
     print("Souhaitez vous générer les graphiques associées au stations individuel pour le calcul des périodes de retour ? (N/o)")
@@ -245,6 +246,9 @@ def try_format_date(date_to_format:str,is_last_day:bool) -> datetime|None:
 
 
 if __name__ == "__main__":
+    # On clear le cache de Pynsee
+    clear_all_cache()
+
     parser = argparse.ArgumentParser(description="Exporter des données hydrologiques/météorologiques.",
                                      epilog="N'hésitez pas à rapporter des bugs ou des suggestions sur la page github : https://github.com/Thomas-MESLIN/RecupeEthiage")
     parser.add_argument("--type", choices=["hydraulicite", "vcn3", "meteo_brut_MENS", "meteo_sim2_MENS", "meteo_brut_QUOT", "meteo_sim2_QUOT", "stations-sites", "onde_USUELLE", "onde_ALL"],

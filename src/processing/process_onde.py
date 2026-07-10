@@ -72,7 +72,7 @@ def save_observations_campagnes_export(df_to_save:pd.DataFrame, df_campagne_dern
     :return: Rien.
     """
     annee_mois_str = annee_mois.strftime('%Y-%m')
-    dossier_csv = Path(f"output/onde/BSH_{annee_mois_str}/{geographic_scale}{zone_code}/csv")
+    dossier_csv = Path(f"output/onde/BSH_{annee_mois_str}/{geographic_scale[0]}{zone_code}/csv")
     dossier_csv.mkdir(parents=True, exist_ok=True)
     output_path_campagne_all_historic_csv: Path = Path(
         f"output/onde/HISTORIC_DATA/observations_et_campagnes_all_historic.csv")
@@ -84,9 +84,9 @@ def save_observations_campagnes_export(df_to_save:pd.DataFrame, df_campagne_dern
         f"observations_et_campagnes_complementaires_{annee_mois_str}.csv")
 
     output_path_campagne_no_duplicated_csv: Path = dossier_csv / Path(
-        f"observations_et_campagnes_latest_{geographic_scale}{zone_code}_{onde_campagne_type}_{annee_mois_str}.csv")
+        f"observations_et_campagnes_latest_{geographic_scale[0]}{zone_code}_{onde_campagne_type}_{annee_mois_str}.csv")
 
-    dossier_geojson = Path(f"output/onde/BSH_{annee_mois_str}/{geographic_scale}{zone_code}/geojson")
+    dossier_geojson = Path(f"output/onde/BSH_{annee_mois_str}/{geographic_scale[0]}{zone_code}/geojson")
     dossier_geojson.mkdir(parents=True, exist_ok=True)
     output_path_campagne_all_historic_geojson: Path = Path(
         f"output/onde/HISTORIC_DATA/observations_et_campagnes_all_historic.geojson")
@@ -98,7 +98,7 @@ def save_observations_campagnes_export(df_to_save:pd.DataFrame, df_campagne_dern
         f"observations_et_campagnes_complementaires_{annee_mois_str}.geojson")
 
     output_path_campagne_no_duplicated_geojson: Path = dossier_geojson / Path(
-        f"observations_et_campagnes_latest_{annee_mois_str}_{onde_campagne_type}_{geographic_scale}{zone_code}.geojson")
+        f"observations_et_campagnes_latest_{annee_mois_str}_{onde_campagne_type}_{geographic_scale[0]}{zone_code}.geojson")
 
 
     save_df_onde(df_to_save, output_path_campagne_all_csv, output_path_campagne_all_geojson, annee_mois)
