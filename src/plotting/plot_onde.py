@@ -8,6 +8,11 @@ from src.model.enums import GeographicScaleClip
 from src.model.enums import OndeCampagneType
 import src.processing.process_onde as process_onde
 from src.config.styles import COULEUR_MOYENNE, ANNEE_COULEURS
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="plot_onde")
+
 
 ## Traduction du numéro en nom de mois
 MOIS = {
@@ -35,6 +40,7 @@ def save_and_close_plot(output_path:Path|None):
     if output_path:
         plt.savefig(output_path)
     plt.close()
+    logger.info("Plot Sauvegardé à " + str(output_path))
 
 def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datetime, annee_actuelle:int, campagne_type:OndeCampagneType, output_path:Path=None):
     df = df.copy()
@@ -78,10 +84,8 @@ def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datet
             )
 
         if annee not in ANNEE_COULEURS:
-            print()
-            print(f"ERREUR, LA COULEUR DE L'ANNEE '{annee}' N'A PAS ETE REMPLIE.")
-            print("Veuillez l'ajouter à la variable 'ANNEE_COULEURS' dans le script styles.py")
-            print()
+            logger.error(f"ERREUR, LA COULEUR DE L'ANNEE '{annee}' N'A PAS ETE REMPLIE.")
+            logger.error("Veuillez l'ajouter à la variable 'ANNEE_COULEURS' dans le script styles.py")
             raise ValueError(f"Aucune couleur définie pour l'année {annee}")
 
         ax.plot(
@@ -256,6 +260,7 @@ def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geograp
                                campagne_type,
                                6,nb_mesures=385,
                                output_path=dossier_chemin / f"onde_evolution-ecoulement_{annee_mois.strftime('%Y-%m')}_{campagne_type}_{geographic_scale[0]}{zone_code}.png")
+    logger.info("Données générées avec succès dans : " + str(dossier_chemin))
 
 
 if __name__ == "__main__":

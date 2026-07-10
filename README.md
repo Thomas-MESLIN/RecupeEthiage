@@ -60,7 +60,10 @@ TODO, ajouter image pour chaque sortie. + ajouter commande Onde
 .\venv\Scripts\python.exe .\main.py --type meteo_sim2_QUOT --start_date 2026-06-15 --end_date 2026-06-25
 
 # On récupère les données SIM2 de météoFrance qu'on aggrège pour avoir idée de la pluie cumulée depuis le début de l'année hydrologique
-.\venv\Scripts\python.exe .\main.py --type meteo_sim2_MENS --start_date 2025-09-01 --end_date 2026-07-01 --meteo_aggregate
+    .\venv\Scripts\python.exe .\main.py --type meteo_sim2_MENS --start_date 2025-09-01 --end_date 2026-07-01 --meteo_aggregate
+
+# On récupère les données des campagnes Ondes USUELLES et COMPLÉMENTAIRE du bassin versant du mois de juin !
+python.exe .\main.py --type onde_ALL --start_date 2026-06-01 --geographic_scale BASSIN --onde_zone_code 06
 ```
 ## main.py
 Le fichier main sert à lancer tout le reste des fichiers.

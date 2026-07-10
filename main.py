@@ -2,22 +2,25 @@ import argparse
 from datetime import timedelta, datetime
 import calendar
 import src.plotting.plot_grandeur as plot_grandeur
-import logging
 import src.plotting.plot_meteoFrance as plot_meteoFrance
 from src.model.enums import OndeCampagneType
 from src.io.download_meteoFrance import GeographicScaleClip
 from src.io.download_meteoFrance import MeteoFranceDataType
 import src.plotting.plot_onde as plot_onde
 from pynsee.utils import clear_all_cache
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="main")
 
 def prompt_for_graphic() -> bool:
     print("Souhaitez vous générer les graphiques associées au stations individuel pour le calcul des périodes de retour ? (N/o)")
     input_graphic = input(" -> ")
     res_graphic = input_graphic.lower() in ["o","oui","y","yes"]
     if res_graphic:
-        logging.info("Les graphiques individuels seront générés.")
+        logger.info("Les graphiques individuels seront générés.")
     else:
-        logging.info("Les graphiques individuels ne seront pas générés.")
+        logger.info("Les graphiques individuels ne seront pas générés.")
     return res_graphic
 
 def generer_hubeau_graph(res_generation_carte:str):
@@ -35,7 +38,7 @@ def generer_hubeau_graph(res_generation_carte:str):
             date_annee_mois = input_user_mois
             date_res = parsed_date
         except ValueError:
-            logging.exception(f"Format de date rentrée invalide, date par défaut sélectionnée. -> {date_annee_mois}")
+            logger.exception(f"Format de date rentrée invalide, date par défaut sélectionnée. -> {date_annee_mois}")
 
     print(f"Mois sélectionné : {date_res}")
 
@@ -52,7 +55,7 @@ def generer_hubeau_graph(res_generation_carte:str):
     if res_generation_carte in ["2", "3"]:
         is_graphic_genere = prompt_for_graphic()
 
-    logging.info("Génération en cours...")
+    logger.info("Génération en cours...")
     # On génère les stations ouverte lors de date_annee_mois
     plot_grandeur.create_geojson_from_stations(reseaux_sandre, date_annee_mois)
     # On génère les sites correspondant au réseaux_sandre
@@ -272,8 +275,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.type is None:
-        logging.error("Le type de données souhaité n'est pas spécifié !")
-        logging.info("Passage en mode interactif !")
+        logger.error("Le type de données souhaité n'est pas spécifié !")
+        logger.info("Passage en mode interactif !")
         interactif_start()
     else:
         start_date = None
@@ -282,7 +285,7 @@ if __name__ == "__main__":
         # Si la date de début est vide, on remplace par le premier jour du mois précédent
         if start_date is None:
             start_date = (datetime.today().replace(day=1) - timedelta(days=1)).replace(day=1)
-            logging.info(f"Utilisation de la start_date par défaut : {start_date}")
+            logger.info(f"Utilisation de la start_date par défaut : {start_date}")
 
         end_date = None
         if args.end_date is not None:
@@ -290,7 +293,7 @@ if __name__ == "__main__":
         # Si la date de fin est vide, on remplace par le dernier jour du mois précédent
         if end_date is None:
             end_date = start_date.replace(day=calendar.monthrange(start_date.year,start_date.month)[1])
-            logging.info(f"Utilisation de la end_date par défaut : {end_date}")
+            logger.info(f"Utilisation de la end_date par défaut : {end_date}")
 
         main(args.type,
              start_date,
@@ -304,4 +307,4 @@ if __name__ == "__main__":
              args.onde_zone_code,
         )
 
-    logging.info("\nGénération terminée.")
+    logger.info("\nGénération terminée.")

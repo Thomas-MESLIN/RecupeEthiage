@@ -4,10 +4,13 @@ from pathlib import Path
 from datetime import datetime
 import calendar
 from functools import cache
-
 from src.model.enums import GeographicScaleClip
 from src.model.enums import OndeCampagneType
 import src.io.download_Hubeau as download_Hubeau
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="process_onde")
 
 def save_df_onde(df_to_save:pd.DataFrame, csv_path:Path, geojson_path:Path, filter_annee_mois:datetime|None):
     """
@@ -48,7 +51,7 @@ def get_df_observations_data(geographic_scale:GeographicScaleClip, zone_code:str
 @cache
 def get_df_campagnes_data() -> pd.DataFrame:
     """
-    Récupère les modalité des campagnes de toute la France depuis 2012 jusqu'à aujourd'hui.
+    Récupère les modalités des campagnes de toute la France depuis 2012 jusqu'à aujourd'hui.
     :return: Un DataFrame contenant toutes les campagnes Onde.
     """
     df_campagnes = download_Hubeau.get_df_all_campagne()
