@@ -1,162 +1,433 @@
-# Automatisation Récupération données hydrologiques
-Ces scripts Python ont pour vocations de : 
-- Récupérer les données hydrologiques via l'API de Hub'eau en passant par le client Python cl_hubeau.
-- Récupérer les données Onde les plus récentes sur un mois via Hub'eau.
-- Récupérer les données météorologiques via DataGouv par le client Python datagouv-client.
-- Procéder au calcul de l'hydraulicité et du VCN3 (période de retour et fréquence de non-dépassement) d'un mois particulier.
-- Extraire n'importe quel intervalle de temps, à n'importe quelle granularité temporelle (mensuelle,quotienne,SIM2,...) et sur n'importe quel territoire.
+# Outil de Récupération et Visualisation de Données Hydrologiques et Météorologiques
 
-## Prérequis
-Avoir Python d'installé avec une version pas si vieille de préférence. (>3.11)
+Ce programme permet de **récupérer, analyser et visualiser** des données sur l'eau et la météo en France. Il est conçu pour les professionnels de l'hydrologie, les gestionnaires de bassin versant ou toute personne ayant besoin d'analyser des données environnementales.
 
-## Installation
-Clonez le dépôt localement (via git clone), ou télécharger via l'onglet Code.
+## 📋 À quoi sert ce programme ?
 
-Dans le dossier, faite clic droit (sans sélectionner de fichier) et ouvrez le terminal.
+Avec cet outil, vous pouvez :
 
-Dans le terminal (utilisez tab pour avoir de l'autocomplétion), rentrez : 
+✅ **Récupérer des données hydrologiques** : niveaux d'eau, débits des rivières via l'API Hub'Eau
+✅ **Analyser les écoulements** : données ONDE (Observatoire National des Établissements) pour les cours d'eau
+✅ **Obtenir des données météo** : précipitations, indices de sécheresse via MétéoFrance
+✅ **Calculer des indicateurs** :
+   - **Hydraulicité** : mesure du débit d'eau par rapport à la normale
+   - **VCN3** : Volume Current Non-dépassé sur 3 mois (période de retour et fréquence de non-dépassement)
+   - **SPI** : Indice de Précipitation Standardisé (sécheresse météorologiques)
+   - **SSWI** : Indice Standardisé d'Humidité des Sols
+✅ **Générer des cartes** au format GeoJSON, compatibles avec QGIS et autres logiciels SIG
+
+---
+
+## 🔧 Prérequis
+
+Pour utiliser ce programme, vous avez besoin de :
+- Un ordinateur sous **Windows** (le programme a été testé sur Windows)
+- **Python 3.11 ou supérieur** installé
+- Une connexion internet (pour télécharger les données et les paquets nécessaires)
+
+> ⚠️ **Important** : Si vous êtes sur le réseau interne de votre organisation, vous devrez peut-être configurer un proxy (voir section dédiée plus bas).
+
+---
+
+## 📥 Installation
+
+Suivez ces étapes **dans l'ordre** :
+
+### 1. Télécharger le programme
+
+Deux options :
+- **Option A (recommandée si vous avez Git)** : Ouvrez l'invite de commandes et tapez :
+  ```bash
+  git clone https://github.com/Thomas-MESLIN/RecupeEthiage.git
+  ```
+- **Option B (sans Git)** : 
+  1. Allez sur [la page GitHub](https://github.com/Thomas-MESLIN/RecupeEthiage)
+  2. Cliquez sur le bouton vert **"Code"**
+  3. Sélectionnez **"Download ZIP"**
+  4. Extrayez le fichier ZIP dans un dossier de votre choix
+
+### 2. Ouvrir le terminal dans le bon dossier
+
+1. Ouvrez l'explorateur de fichiers et allez dans le dossier où vous avez téléchargé le programme
+2. **Cliquez droit** dans un espace vide du dossier (sans sélectionner de fichier)
+3. Sélectionnez **"Ouvrir dans le terminal"** ou **"Ouvrir PowerShell ici"**
+
+> 💡 Si vous ne voyez pas cette option, maintenez la touche **Maj (Shift)** enfoncée, faites un clic droit dans le dossier, puis choisissez **"Ouvrir une fenêtre PowerShell ici"**.
+
+### 3. Créer l'environnement Python
+
+Dans le terminal qui s'est ouvert, tapez la commande suivante pour créer un "environnement virtuel" (un espace isolé pour installer les outils nécessaires) :
+
 ```bash
-# On créer l'environnement virtuel pour Python. (l'endroit où il stocke ses paquets)
-python3-64.exe -m venv venv
+python -m venv venv
+```
 
-# On installe les paquets nécessaire, attention, vous ne pouvez pas installer les paquets en étant sur le réseau interne.
+> ⚠️ Si vous avez plusieurs versions de Python, utilisez `python3-64.exe` à la place de `python`.
+
+### 4. Installer les paquets nécessaires
+
+Tapez cette commande pour installer tous les outils dont le programme a besoin :
+
+```bash
 .\venv\Scripts\pip.exe install -r .\requirements.txt
+```
 
-# On vérifie que le programme s'est correctement installé.
+> ⚠️ **Attention** : Cette étape peut prendre plusieurs minutes et nécessite une connexion internet **hors du réseau interne** de votre organisation.
+
+### 5. Vérifier que tout est installé correctement
+
+Pour vérifier que l'installation a fonctionné, tapez :
+
+```bash
 .\venv\Scripts\python.exe main.py -h
 ```
 
-Vous avez besoin d'avoir accès à internet normal, le temps de télécharger les paquets.
+Vous devriez voir s'afficher un message d'aide avec toutes les options disponibles. Si c'est le cas, **bravo, l'installation est terminée !** 🎉
 
-## Lancer le programme
+---
 
-Si vous êtes dans un réseau interne -> voir la section _Utiliser un proxy_.
+## 🚀 Utilisation du Programme
+
+Il existe **deux manières** d'utiliser ce programme :
+
+### 🔹 Option 1 : Mode Interactif (recommandé pour les débutants)
+
+Le mode interactif vous guide pas à pas en vous posant des questions. C'est la méthode la plus simple.
+
+#### Comment lancer le mode interactif ?
+
+Dans le terminal (toujours dans le dossier du programme), tapez simplement :
 
 ```bash
-# On lance le programme principal en version interactive.
 .\venv\Scripts\python.exe main.py
 ```
 
-On peut aussi lancer la version complète en CLI (commande Line Interface). 
-```bash
-# On lance le programme principal en CLI.
-.\venv\Scripts\python.exe main.py -h
+Le programme vous posera alors une série de questions :
+
+**Exemple complet d'utilisation :**
+
+```
+Bienvenue dans le client de génération de cartes interactif, que souhaitez vous faire ?
+(Il est aussi possible de lancer le script en mode CLI (-h))
+1 : Générer une carte d'hydraulicité
+2 : Générer une carte de vcn3/période de retour
+3 : Générer les deux (lent au premier lancement)
+4 : Générer des extraits MétéoFrance (défaut)
+ -> 1
+
+Choix de génération de carte : 1
+Choisissez la date que vous voulez générer :
+Format AAAA-MM, (mois précédent : 2026-06 par défaut)
+ -> 2026-01
+
+Mois sélectionné : 2026-01-01 00:00:00
+Choisissez un réseau SANDRE : BSH001 (par défaut)
+Rentrez 'custom' pour utiliser la liste custom.
+ -> 
+
+Réseau Sandre sélectionné : BSH001
+Génération en cours...
+Génération terminée.
 ```
 
-### Exemple d'utilisation : 
-TODO, ajouter image pour chaque sortie. + ajouter commande Onde
+**Que faire à chaque question ?**
+
+| Question | Que répondre ? | Exemple |
+|----------|---------------|---------|
+| Que souhaitez-vous faire ? | Choisissez le type de carte à générer | `1` pour l'hydraulicité |
+| Choisissez la date | Entrez la date au format AAAA-MM (année-mois) | `2026-01` pour janvier 2026 |
+| Choisissez un réseau SANDRE | Entrez le code du réseau ou `custom` | `BSH001` ou `custom` |
+| Souhaitez-vous générer les graphiques ? | Répondez `o` pour oui ou `n` pour non | `o` |
+
+---
+
+### 🔹 Option 2 : Mode CLI (Ligne de Commande) - Pour les utilisateurs avancés
+
+Le mode CLI (Command Line Interface) permet de lancer directement une commande avec tous les paramètres. C'est plus rapide une fois que vous maîtrisez les options.
+
+#### Structure de base :
+
 ```bash
-# Les type hydraulicité et VCN3 fonctionne au mois. Ainsi la end-date n'est pas pris en compte. (comportement à travailler)
-# On récupère l'hydraulicité du mois de Janvier 2026 sur les stations de la liste custom.
-.\venv\Scripts\python.exe .\main.py --type hydraulicite --start_date 2026-01 --reseau_sandre custom
-
-# On récupère le vcn3 du mois de Février 2024 sur les stations de le réseaux sandre BSH001.
-.\venv\Scripts\python.exe .\main.py --type hydraulicite --start_date 2024-02 --reseau_sandre BSH001
-
-# On récupère les données SIM2 de météoFrance pour le mois unique de juillet 2023
-.\venv\Scripts\python.exe .\main.py --type meteo_sim2_QUOT --start_date 2023-07-01 --end_date 2023-07-31
-
-# On récupère les données SIM2 de météoFrance pour le mois unique de la fin juin 
-.\venv\Scripts\python.exe .\main.py --type meteo_sim2_QUOT --start_date 2026-06-15 --end_date 2026-06-25
-
-# On récupère les données SIM2 de météoFrance qu'on aggrège pour avoir idée de la pluie cumulée depuis le début de l'année hydrologique
-    .\venv\Scripts\python.exe .\main.py --type meteo_sim2_MENS --start_date 2025-09-01 --end_date 2026-07-01 --meteo_aggregate
-
-# On récupère les données des campagnes Ondes USUELLES et COMPLÉMENTAIRE du bassin versant du mois de juin !
-python.exe .\main.py --type onde_ALL --start_date 2026-06-01 --geographic_scale BASSIN --onde_zone_code 06
-```
-## main.py
-Le fichier main sert à lancer tout le reste des fichiers.
-
-Il permet de générer des geojson d'hydraulicité, de fréquence de non-dépassement et période de retour.
-
-Il permet aussi de générer des geojson contenant les données Quotidiennes, Mensuelles, Quotidiennes-SIM2, Mensuelles-SIM2.
-Les cartes générés sont formattés aux échelles NATIONAL, BASSIN, REGIONAL-BASSIN, DEPARTEMENTAL-BASSIN. On peut modifier le code pour selectionner les régions ADMINISTRATIVE.
-
-Il génère aussi les cartes des différentes stations et sites qui existent.
-## Scripts
-Nous avons différents scripts permettant d'obtenir plusieurs types d'informations différentes : 
-
-## Hydraulicité et Hub'Eau
-Les données récupérées via Hub'Eau sont indexé par mois et par réseau Sandre.
-
-On peut décider d'utiliser une liste de station personnalisée, vous pouvez alors remplir les deux fichiers : 
-- `liste_site_custom.csv`
-- `liste_station_custom.csv`
-
-Pour chaque site, le script récupère les stations correspondantes. S'il y a plus d'une station, il les choisit toutes.
-Si vous voulez qu'il ne choisisse qu'une seule des stations d'un site, indiquez cette station dans le fichier `liste_station_custom.csv`.
-
-Le fichier généré résumant les stations et sites utilisés est généré à `output/site_station_custom/liste_site_et_station_custom.csv`.
-
-## MétéoFrance collecte
-Le script génère des fichiers pour chaque département/régions/bassin spécifié dans les fichiers :
- - `liste_bassin.csv` (contient 1 seul chiffre, votre bassin versant)
- - `liste_departement.csv`
- - `liste_region.csv`
-
-Les zones géographiques peuvent être généré avec l'underscore BASSIN/ADMINISTRATIF : 
- - BASSIN : La zone géographique est découpé pour qu'il ne reste que la partie présente dans le bassin versant.
- - ADMINISTRATIF : La zone géographique est conservée en entier.
-
-Vous pouvez retrouver les codes des régions et des bassins après leur téléchargement (automatique) dans le dossier `output/meteoFrance/downloaded_data/delimitation_qgis/*.geojson` (ctrl+f "CdBH"/"code").
-
-## MétéoFrance ressource interprétation
-Les données SIM2 extraite via MétéoFrance fournissent des indicateurs : 
- - SSWI (Standardized Soil Wetness Index) -> mesurer la sécheresse du sol (https://www.drias-eau.fr/accompagnement/sections/383)
- - SPI (Standardized Precipitation Index) -> mesurer la sécheresse météorologique (https://www.drias-climat.fr/accompagnement/sections/348)
-
-### Analyser les données nettoyées
-Les données téléchargées et nettoyées peuvent être comparés avec les données d'Hydroportail, 
-pour savoir la quantité de différence entre les deux sources de données et les divergences qui existent.
-```bash
-# Analyser les données de sortie et faire des petites stats dessus
-validate-clean-data.py
-# Faire des petits graphiques chou.
-plot_res_validation_clean.py
+.\venv\Scripts\python.exe main.py --type [TYPE] [autres options]
 ```
 
-### Sortie des scripts
+#### Tableau des types de données disponibles :
 
-Tous les fichiers générés et téléchargés par tous les scripts vont dans le dossier `output`. 
+| Type | Description | Durée |
+|------|-------------|-------|
+| `hydraulicite` | Calcul de l'hydraulicité (débit par rapport à la normale) | 1 mois |
+| `vcn3` | Calcul du VCN3 (période de retour) | 1 mois |
+| `meteo_brut_MENS` | Données météo brutes mensuelles | Intervalle |
+| `meteo_sim2_MENS` | Données météo SIM2 mensuelles | Intervalle |
+| `meteo_brut_QUOT` | Données météo brutes quotidiennes | Intervalle |
+| `meteo_sim2_QUOT` | Données météo SIM2 quotidiennes | Intervalle |
+| `onde_USUELLE` | Données ONDE (campagnes usuelle uniquement) | 1 mois |
+| `onde_ALL` | Données ONDE (toutes campagnes) | 1 mois |
 
-## Hub'Eau
-Hub'Eau prend soin de collecter des données depuis plusieurs API : 
+> ℹ️ Toutes les sorties sont générées au format **GeoJSON** pour une utilisation directe dans QGIS ou d'autres logiciels SIG.
 
-### Onde (API Ecoulement des cours d'eau)
-Les données ondes peuvent être récupéré au mois via 
+#### 📌 Exemples concrets d'utilisation en CLI
 
+**Exemple 1 : Générer une carte d'hydraulicité pour janvier 2026**
+```bash
+.\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-01 --reseau_sandre BSH001
+```
+> ➡️ Cela génère une carte montrant l'hydraulicité (niveau d'eau par rapport à la normale) pour toutes les stations du réseau BSH001 au mois de janvier 2026.
 
-Les geojson vont dans le dossier `output/QGIS`.
+---
 
+**Exemple 2 : Calculer le VCN3 pour février 2024 avec des graphiques individuels**
+```bash
+.\venv\Scripts\python.exe main.py --type vcn3 --start_date 2024-02 --reseau_sandre BSH001 --vcn3_graphic
+```
+> ➡️ Le flag `--vcn3_graphic` génère en plus des graphiques détaillés pour chaque station.
 
-### Re-télécharger les données déjà récupérées
-Les dernières données seront re-téléchargé automatiquement lorsqu'elles ne sont plus à jour.
+---
 
-## En cas de panne
-Si on est face à une superbe panne, qu'il y a une erreur obscure ou autre, 
-la solution la plus simple est de tout remettre à 0.
+**Exemple 3 : Récupérer les données météo SIM2 quotidiennes pour une période spécifique**
+```bash
+.\venv\Scripts\python.exe main.py --type meteo_sim2_QUOT --start_date 2023-07-01 --end_date 2023-07-31
+```
+> ➡️ Récupère les données météo SIM2 (indice de sécheresse, précipitations) pour tout le mois de juillet 2023, jour par jour.
 
-Vous pouvez alors supprimer tout ce dossier, re-extraire au propre, re-installer un venv et re-lancer votre requête. 
-En priant pour qu'il y ait une mise à jour qui règle le problème. 
+---
 
-### Si un paquet bug et ne veut pas fonctionner
-1. On désinstalle le paquet : `.\venv\Scripts\pip.exe uninstall [nom_du_paquet] -y`
-2. On réinstalle tout : `.\venv\Scripts\pip.exe install -r .\requirements.txt`
+**Exemple 4 : Récupérer les données météo SIM2 mensuelles agrégées depuis septembre 2025**
+```bash
+.\venv\Scripts\python.exe main.py --type meteo_sim2_MENS --start_date 2025-09-01 --end_date 2026-07-01 --meteo_aggregate
+```
+> ➡️ Le flag `--meteo_aggregate` permet d'agréger (sommer) les données sur toute la période pour avoir une vue d'ensemble.
 
-## Utiliser un proxy
-Vous pouvez utiliser un proxy pour pouvoir télécharger vos données via votre réseau interne.
+---
 
-Le proxy peut être défini en copiant `.env_example` vers `.env` et en remplissant avec votre proxy.
+**Exemple 5 : Récupérer les données ONDE pour le bassin versant Rhône-Méditerranée (code 06)**
+```bash
+.\venv\Scripts\python.exe main.py --type onde_ALL --start_date 2026-06-01 --geographic_scale BASSIN --onde_zone_code 06
+```
+> ➡️ Récupère toutes les données ONDE (usuelle + complémentaire) pour le bassin versant 06 (Rhône-Méditerranée) pour juin 2026.
 
-## Documentation Source
-### API Hub'eau
-Source des données, donne des informations sur les différents champs pouvant être remplis :
-- https://hubeau.eaufrance.fr/page/api-hydrometrie#/hydrometrie/observationsElaborees%20csv
-### Client API
-Client Python qui va chercher les données dans Hub'eau, maintenu par la DREAL Haut-de-France.
-- https://tgrandje.github.io/cl-hubeau/hydrometry/
-- https://github.com/tgrandje/cl-hubeau
+---
 
-### Unités
-Tous les acronymes des unités peuvent être retrouvé ici → https://www.sandre.eaufrance.fr/?urn=urn:sandre:donnees:513::::::referentiel:3.1:html
+**Exemple 6 : Utiliser une liste personnalisée de stations**
+```bash
+.\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-01 --reseau_sandre custom
+```
+> ➡️ Utilise les stations définies dans vos fichiers personnalisés (`liste_site_custom.csv` et `liste_station_custom.csv`).
+
+---
+
+#### 📋 Options disponibles pour tous les types :
+
+| Option | Description | Valeur par défaut | Exemple |
+|--------|-------------|-------------------|---------|
+| `--start_date` | Date de début (format : AAAA-MM ou AAAA-MM-JJ) | Début du mois précédent | `--start_date 2026-01` |
+| `--end_date` | Date de fin (format : AAAA-MM ou AAAA-MM-JJ) | Fin du mois précédent | `--end_date 2026-01-31` |
+| `--reseau_sandre` | Réseau SANDRE à utiliser | `BSH001` | `--reseau_sandre custom` |
+| `--vcn3_graphic` | Générer des graphiques pour le VCN3 | Non | Ajoutez le flag pour activer |
+| `--geographic_scale` | Échelle géographique pour météo/onde | `BASSIN` | `BASSIN`, `REGION_ADMINISTRATIVE`, `DEPARTEMENT_BASSIN` |
+| `--onde_zone_code` | Code de la zone géographique pour ONDE | `01` | `--onde_zone_code 06` |
+| `--meteo_aggregate` | Agrégé les données météo sur la période | Non | Ajoutez le flag pour activer |
+| `--meteo_no_update` | Désactiver la mise à jour des données météo | Non | Ajoutez le flag pour désactiver |
+
+---
+
+## 🗂️ Fichiers de Configuration et Données Personnalisées
+
+### Utiliser vos propres listes de stations/sites
+
+Le programme permet d'utiliser vos propres listes de stations et sites hydrologiques :
+
+1. **`liste_site_custom.csv`** : Liste des sites que vous souhaitez surveiller
+2. **`liste_station_custom.csv`** : Liste des stations spécifiques
+
+**Comment faire ?**
+- Créez ces fichiers dans le dossier principal du programme
+- Pour chaque site, le programme récupère automatiquement les stations correspondantes
+- Si un site a plusieurs stations et que vous voulez n'en garder qu'une, ajoutez-la dans `liste_station_custom.csv`
+
+> ℹ️ Le fichier de sortie résumant les stations et sites utilisés sera généré dans : `output/site_station_custom/liste_site_et_station_custom.csv`
+
+---
+
+### Codes géographiques utiles
+
+| Type | Code | Description |
+|------|------|-------------|
+| **Bassin** | `01` | Artois-Picardie |
+| **Bassin** | `02` | Meuse |
+| **Bassin** | `03` | Moselle |
+| **Bassin** | `04` | Rhin |
+| **Bassin** | `05` | Loire-Bretagne |
+| **Bassin** | `06` | Rhône-Méditerranée |
+| **Bassin** | `07` | Adour-Garonne |
+| **Bassin** | `08` | Garonne |
+| **Bassin** | `09` | Charente |
+| **Bassin** | `10` | Seine-Normandie |
+
+> 💡 Vous pouvez trouver tous les codes dans les fichiers générés dans `output/meteoFrance/downloaded_data/delimitation_qgis/*.geojson` (ouvrez-les avec un éditeur de texte et cherchez "CdBH" ou "code").
+
+---
+
+## 📁 Où trouver les résultats ?
+
+Tous les fichiers générés par le programme sont stockés dans le dossier **`output`** à la racine du projet. Les résultats sont au format **GeoJSON** pour une utilisation directe dans QGIS ou d'autres logiciels SIG.
+
+### Structure du dossier de sortie :
+
+```
+output/
+├── QGIS/                    # Cartes générées
+│   ├── hydraulicite/        # Cartes d'hydraulicité
+│   ├── vcn3/                # Cartes de VCN3
+│   ├── meteo/               # Cartes météo
+│   └── onde/                # Cartes ONDE
+├── meteoFrance/             # Données météo téléchargées
+│   └── downloaded_data/     # Données brutes
+├── site_station_custom/    # Listes personnalisées
+└── logs/                   # Journaux d'exécution (pour le dépannage)
+```
+
+---
+
+## 🌐 Utiliser un Proxy (pour les réseaux internes)
+
+Si vous êtes sur le réseau interne de votre organisation et que vous avez des restrictions d'accès internet, vous devez configurer un proxy.
+
+### Comment faire ?
+
+1. Copiez le fichier `.env_example` et renommez-le en `.env`
+2. Ouvrez le fichier `.env` avec un éditeur de texte (comme le Bloc-notes)
+3. Remplacez les lignes par les informations de votre proxy :
+
+```
+# Exemple de configuration proxy
+HTTP_PROXY="http://votre-proxy.fr:8080"
+HTTPS_PROXY="http://votre-proxy.fr:8080"
+```
+
+4. Sauvegardez le fichier
+
+> ⚠️ **Important** : Le fichier `.env` ne doit pas être partagé publiquement (il contient des informations sensibles sur votre réseau).
+
+---
+
+## 🛠️ Dépannage
+
+### ❌ Problème : "Python n'est pas reconnu"
+
+**Solution :** Vérifiez que Python est bien installé et ajouté au PATH. Vous pouvez aussi utiliser le chemin complet :
+```bash
+C:\Chemin\vers\Python\python.exe -m venv venv
+```
+
+---
+
+### ❌ Problème : Erreur lors de l'installation des paquets
+
+**Solution 1 :** Vérifiez que vous êtes bien connecté à internet (hors réseau interne).
+
+**Solution 2 :** Essayez de réinstaller les paquets un par un :
+```bash
+.\venv\Scripts\pip.exe install cl-hubeau
+.\venv\Scripts\pip.exe install pandas
+.\venv\Scripts\pip.exe install geopandas
+```
+
+**Solution 3 :** Si un paquet spécifique pose problème :
+```bash
+.\venv\Scripts\pip.exe uninstall nom_du_paquet -y
+.\venv\Scripts\pip.exe install -r .\requirements.txt
+```
+
+---
+
+### ❌ Problème : Le programme plante avec une erreur obscure
+
+**Solution :**
+1. Supprimez le dossier `venv`
+2. Supprimez le dossier `output` (si vous voulez tout recommencer)
+3. Relancez l'installation depuis le début
+
+---
+
+### ❌ Problème : Les données ne se mettent pas à jour
+
+**Solution :** Utilisez les flags de mise à jour pour forcer la synchronisation. Par défaut, les données météo quotidiennes brutes se mettent à jour automatiquement.
+
+---
+
+## 📚 Comprendre les Concepts Clés
+
+### Qu'est-ce que l'Hydraulicité ?
+
+L'**hydraulicité** est un indicateur qui mesure le **niveau d'eau actuel par rapport à la normale**.
+- **> 100%** : Le débit est supérieur à la normale (situation humide)
+- **= 100%** : Le débit est normal
+- **< 100%** : Le débit est inférieur à la normale (situation sèche)
+
+C'est utile pour évaluer si une rivière a plus ou moins d'eau que d'habitude.
+
+---
+
+### Qu'est-ce que le VCN3 ?
+
+Le **VCN3** (Volume Current Non-dépassé sur 3 mois) est un indicateur utilisé pour évaluer la **sécheresse**. Il représente le volume d'eau minimal qui n'a pas été dépassé pendant 3 mois consécutifs.
+
+Le programme calcule aussi :
+- **Période de retour** : Combien de temps en moyenne il faut attendre pour revoir un tel niveau bas
+- **Fréquence de non-dépassement** : La probabilité que ce niveau ne soit pas dépassé
+
+---
+
+### Qu'est-ce que SIM2 ?
+
+**SIM2** est un produit de MétéoFrance qui fournit des **données météo sur une grille de 8x8 km**. Contrairement aux données de stations météo ponctuelles, SIM2 donne une couverture complète du territoire.
+
+Les indicateurs disponibles :
+- **SPI** (Standardized Precipitation Index) : Mesure la sécheresse **météorologique** (manque de pluie)
+- **SSWI** (Standardized Soil Wetness Index) : Mesure la sécheresse **des sols** (manque d'humidité dans le sol)
+
+---
+
+### Qu'est-ce que ONDE ?
+
+**ONDE** (Observatoire National des Établissements) est un réseau de mesure de l'**écoulement des cours d'eau** en France. Les données sont collectées par des observateurs qui notent régulièrement le niveau d'eau dans les rivières.
+
+Il existe deux types de campagnes :
+- **USUELLE** : Mesures régulières
+- **COMPLÉMENTAIRE** : Mesures supplémentaires en cas de situation particulière
+
+---
+
+### Qu'est-ce que le réseau SANDRE ?
+
+Le **SANDRE** (Service d'Administration Nationale des Données et Référentiels sur l'Eau) est un système d'information sur l'eau en France. Chaque **réseau SANDRE** correspond à un ensemble de stations de mesure hydrologiques.
+
+- **BSH001** : Réseau par défaut (bassin Artois-Picardie)
+- **custom** : Utilise vos propres listes de stations/sites
+
+---
+
+## 📞 Support et Contribution
+
+### Vous avez trouvé un bug ou vous avez une suggestion ?
+
+N'hésitez pas à :
+1. Vérifier que le problème persiste après avoir relancé le programme
+2. Consulter les logs dans le dossier `output/logs/`
+3. Rapporter le problème sur la page GitHub : [https://github.com/Thomas-MESLIN/RecupeEthiage](https://github.com/Thomas-MESLIN/RecupeEthiage)
+
+---
+
+## 🎯 Résumé rapide des commandes les plus utilisées
+
+| Besoin | Commande |
+|--------|----------|
+| **Hydraulicité du mois dernier** | `.\venv\Scripts\python.exe main.py --type hydraulicite` |
+| **VCN3 du mois dernier** | `.\venv\Scripts\python.exe main.py --type vcn3` |
+| **Météo SIM2 quotidienne pour hier** | `.\venv\Scripts\python.exe main.py --type meteo_sim2_QUOT --start_date 2026-07-09 --end_date 2026-07-09` |
+| **Météo SIM2 mensuelle agrégée** | `.\venv\Scripts\python.exe main.py --type meteo_sim2_MENS --start_date 2026-06-01 --end_date 2026-07-01 --meteo_aggregate` |
+| **Données ONDE pour le bassin 06** | `.\venv\Scripts\python.exe main.py --type onde_ALL --start_date 2026-06-01 --geographic_scale BASSIN --onde_zone_code 06` |
+| **Lancer en mode interactif** | `.\venv\Scripts\python.exe main.py` |
+
+---
