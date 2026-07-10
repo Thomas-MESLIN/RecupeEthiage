@@ -1,0 +1,44 @@
+# Test requirements for the project
+
+# Testing framework
+pytest>=8.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.12.0
+
+# Required dependencies (should be in requirements.txt already)
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+geopandas>=0.14.0
+scipy>=1.10.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# For testing HTTP requests
+responses>=0.24.0
+httpretty>=1.1.4
+
+# For testing file system operations
+pyfakefs>=5.0.0
+
+# For mocking
+mock>=5.0.0
+
+# For time-based tests
+freezegun>=1.2.2
+
+# For async support
+pytest-asyncio>=0.21.0
+
+# For better test output
+pytest-sugar>=0.9.7
+pytest-xdist>=3.3.0
+
+# For parameterized tests
+pytest-param>=0.1.0
+
+# For hypothesis-based testing
+ypothesis>=6.85.0
+
+# For testing logging
+pytest-logging>=2015.11.4

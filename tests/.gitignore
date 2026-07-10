@@ -1,0 +1,43 @@
+# Ignore files in tests directory
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test coverage reports
+htmlcov/
+.coverage
+.coverage.*
+
+# pytest cache
+.pytest_cache/
+
+# Temporary files
+temp_*/
+
+# Test output files
+output_*/
+result_*/
+
+# Log files
+*.log
+logs/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files
+.env
+env/
+venv/
+
+# Data files
+data/
+
+# OS files
+.DS_Store
+Thumbs.db
