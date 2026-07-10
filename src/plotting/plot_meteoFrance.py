@@ -10,6 +10,10 @@ import src.processing.meteoFrance_aggregation_donnee as MeteoAgg
 from src.processing.meteoFrance_aggregation_donnee import GroupByMethod
 from functools import cache
 import matplotlib.pyplot as plt
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="plot_meteoFrance")
 
 def to_lambert2_geodataframe(data_freq:MeteoFranceDataType, df_to_convert:pd.DataFrame) -> gpd.GeoDataFrame:
     """
@@ -35,7 +39,7 @@ def clip_with_distance(gdf_to_clip : gpd.GeoDataFrame, clip_mask:gpd.GeoDataFram
     :return: Un GeoDataFrame Découpé.
     """
     if len(clip_mask) > 1:
-        print("Auscour ascour clip_mask a plusieurs géométrie.........")
+        logger.warning("Auscour ascour clip_mask a plusieurs géométrie.........")
     return gdf_to_clip[gdf_to_clip.geometry.distance(clip_mask.geometry.iloc[0]) < 7000]
 
 def plot_geojson_from_lambert2(output_path:Path, gdf_ready: gpd.GeoDataFrame):
@@ -46,12 +50,12 @@ def plot_geojson_from_lambert2(output_path:Path, gdf_ready: gpd.GeoDataFrame):
     :param gdf_ready: Le DataFrame à plot.
     :return: Rien
     """
-    print("Saving...")
+    logger.info("Saving...")
     if not gdf_ready.empty:
         gdf_ready.to_file(output_path.with_suffix(".geojson"), driver="GeoJSON", mode="w")
         gdf_ready.to_csv(output_path.with_suffix(".csv"), mode="w", index=False)
     else:
-        print("gdf empty ! " + output_path)
+        logger.warning("gdf empty ! " + str(output_path))
 
 def get_chemin_sauvegarde(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool) -> Path:
     match data_freq:
@@ -135,9 +139,9 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
     :param chemin_save_original:
     :return:
     """
-    print(f"Export de tous les region géographique en cours : {geographic_scale}...")
+    logger.info(f"Export de tous les region géographique en cours : {geographic_scale}...")
     # Conversion des coordonnées du dataframe
-    print("Conversion des coordonnées")
+    logger.info("Conversion des coordonnées")
     gdf = to_lambert2_geodataframe(data_freq, df)
     chemin_save_plot = chemin_save_original.parent / "plots"
     # De manière générale, sauf nationale et bassin le masque doit être redécoupé.
@@ -162,29 +166,29 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
         raise ValueError("Date de début et de fin non trouvée")
 
     chemin_zone_geographique = chemin_save_plot / geographic_scale
-    print("Récupération Mask bassin versant")
+    logger.info("Récupération Mask bassin versant")
     # Récupération du bassin versant (on prend le premier bassin versant de la liste des bassin versant.
     code_bassin_decoupe = DMeteo.get_geographic_list(GeographicScaleClip.BASSIN)[0]
     gdf_bassin_mask = get_bassin_versant(code_bassin_decoupe)
     for code in tqdm(element_list):
-        print(f"code : {code}")
-        print("Récupération Mask")
+        logger.debug(f"code : {code}")
+        logger.info("Récupération Mask")
         gdf_geographie_mask = get_geographic_element(geographic_scale, code)
 
         # On procède au clipping du gdf d'origine.
-        print("Clipping GeoDataFrame with geographic mask.")
+        logger.info("Clipping GeoDataFrame with geographic mask.")
         gdf_first_clip = clip_with_distance(gdf, gdf_geographie_mask)
 
         # Si on doit prendre l'échelle bassin, on découpe les données restantes avec le masque du bassin.
-        print("Clipping GeoDataFrame with Bassin mask.")
+        logger.info("Clipping GeoDataFrame with Bassin mask.")
         if is_bassin_clip_required:
             gdf_second_clip = clip_with_distance(gdf_first_clip, gdf_bassin_mask)
         else:
             gdf_second_clip = gdf_first_clip
 
         if len(gdf_second_clip) == 0:
-            print("Les données se sont fait supprimé par la découpe sur bassin et la géographie !")
-            print("Passage à l'élément suivant !")
+            logger.warning("Les données se sont fait supprimé par la découpe sur bassin et la géographie !")
+            logger.info("Passage à l'élément suivant !")
             continue
 
         # On récupère le chemin de sauvegarde.
@@ -192,12 +196,12 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
         chemin_save.parent.mkdir(exist_ok=True)
 
         # On plot le résultat
-        print("Sauvegarde gdf")
+        logger.info("Sauvegarde gdf")
         plot_geojson_from_lambert2(chemin_save, gdf_second_clip)
 
         # On crée les plots matplotlib associé à cette zone gégraphique.
         if not is_data_aggregated:
-            print("Créations des plots pour la zone géographique.")
+            logger.info("Créations des plots pour la zone géographique.")
             gdf_aggrege_by_datetime = MeteoAgg.aggregate_range(data_freq ,gdf_second_clip, GroupByMethod.BY_DATE)
             #Créer le dossier de cahque zone geographiique et faire a l'interieur un dossier par code.
             chemin_code = chemin_zone_geographique / code
@@ -205,7 +209,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
             nom_echelle = f"{geographic_scale}-{code}"
             create_all_plot_for_unique_scale(gdf_aggrege_by_datetime, nom_echelle, start_date,end_date, chemin_code)
 
-    print(f"Export de tous les {geographic_scale} terminés.")
+    logger.info(f"Export de tous les {geographic_scale} terminés.")
 
 def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str, start_date:datetime, end_date:datetime, chemin_de_base:Path):
     """
@@ -304,7 +308,7 @@ def df_range_processed(data_freq:MeteoFranceDataType, start_date:datetime, end_d
     """
     df_intervalle = DMeteo.get_data_in_range(data_freq, start_date, end_date, has_index_update, is_data_update_allowed)
     if df_intervalle.empty:
-        print(f"L'intervalle de données ({start_date} - {end_date}) est vide. Abandon.")
+        logger.warning(f"L'intervalle de données ({start_date} - {end_date}) est vide. Abandon.")
         return df_intervalle
 
     if is_data_aggregated:
@@ -476,7 +480,7 @@ def plot_bar_dataframe(
 
 
 if __name__ == "__main__":
-    print("Plotting !")
+    logger.info("Plotting !")
 
     # Donnée MENS aggrégé de 2025 à 2026.
     # export_geojson_range(MeteoFranceDataType.SIM2_MENS, datetime(2025, 1, 1), datetime(2025, 12, 31), False)

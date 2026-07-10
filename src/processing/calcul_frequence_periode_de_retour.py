@@ -18,6 +18,10 @@ import src.processing.station as station
 from lmoments3 import distr as lm_distr
 from datetime import datetime
 import src.utils.utils_file as utils_file
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="calcul_frequence_periode_de_retour")
 
 # ---------------------------------------------------------------------------
 # 1. Estimateur des L-moments pour la loi Log-Normale
@@ -336,8 +340,7 @@ def get_result_station(code_station:str, mois:str, code_sandre:str, vcn3_observa
         except ValueError:
             return {"debit_obs":vcn3_observation}
     else:
-        print(code_station)
-        print("Donnéé insuffisante")
+        logger.warning(f"Station {code_station} - Données insuffisantes")
         return {"debit_obs":vcn3_observation}
 
 
@@ -366,7 +369,7 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
     if utils_file.is_res_updated_with_source(utils.get_path_sources(code_sandre, "QmnJ", annee_mois), path_periode_de_retour):
         return pd.DataFrame(pd.read_csv(utils.get_path_periode_de_retour(code_sandre, annee_mois)))
 
-    print("Calcul des fréquences de non dépassement et des périodes de retour.")
+    logger.info("Calcul des fréquences de non dépassement et des périodes de retour.")
     date = pd.to_datetime(f"{annee_mois}-01")
     annee_mois = date.strftime("%Y-%m")
     mois_str = date.strftime("%m")
@@ -390,14 +393,14 @@ def ensure_frequence_non_depassement_periode_retour_calcule(annee_mois:str, code
                 row["annee_occurence_vcn3_minimum_du_mois_connu"] = date_min
                 all_rows.append(row)
             else:
-                print(f"La station {station_code} n'a pas de donnée lors du mois {date.strftime('%B')}.")
+                logger.warning(f"La station {station_code} n'a pas de donnée lors du mois {date.strftime('%B')}.")
             pbar.update(1)
 
     df_all_analysis = pd.DataFrame(data=all_rows)
     path_periode_retour = utils.get_path_periode_de_retour(code_sandre, annee_mois)
     df_all_analysis.to_csv(path_periode_retour,
                            index=False)
-    print(f"Fréquence de non dépassement et période de retour calculé, Fichier sauvegardé à : {path_periode_retour}")
+    logger.info(f"Fréquence de non dépassement et période de retour calculé, Fichier sauvegardé à : {path_periode_retour}")
     return df_all_analysis
 
 if __name__ == "__main__":
@@ -407,7 +410,7 @@ if __name__ == "__main__":
 
     for date in pd.date_range("2025-09-01", "2026-06-30", freq="MS"):
         annee_mois = date.strftime("%Y-%m")
-        print(annee_mois)
+        logger.info(f"Traitement du mois : {annee_mois}")
         ensure_frequence_non_depassement_periode_retour_calcule(annee_mois, "custom", is_result_plotted=False)
     # ensure_frequence_non_depassement_periode_retour_calcule("2026-06", "custom", is_result_plotted=False)
     # ensure_frequence_non_depassement_periode_retour_calcule("2026-04","custom", is_result_plotted=False)

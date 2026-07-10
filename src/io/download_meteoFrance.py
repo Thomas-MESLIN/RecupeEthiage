@@ -14,6 +14,10 @@ import src.utils.utils_file as utils_file
 from src.config.paths import DATA_DIR
 import src.config.init_project
 from src.model.enums import GeographicScaleClip,MeteoFranceDataType
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="download_meteoFrance")
 
 def get_geographic_list(geographic_scale: GeographicScaleClip):
     match geographic_scale:
@@ -68,8 +72,8 @@ def fetch_and_update_decennie_ressource_id(data_freq:MeteoFranceDataType):
     Tous les id des décénies de chaque ressources associé.
     :return: Rien.
     """
-    print("MISE A JOUR DE L'INDEX (date-debut,dete-fin -> id-datagouv)")
-    print("Cela peut prendre beaucoup de temps pour les données classique...")
+    logger.info("MISE A JOUR DE L'INDEX (date-debut,dete-fin -> id-datagouv)")
+    logger.info("Cela peut prendre beaucoup de temps pour les données classique...")
     # On met en place les expression régulière pour reconnaitre uniquement les données du bon format.
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT:
@@ -115,7 +119,7 @@ def fetch_and_update_decennie_ressource_id(data_freq:MeteoFranceDataType):
                 }
             )
     df_decennie_id = pd.DataFrame(data=tous_les_couples)
-    print(f"Index decennie -> id_datagouv updated : {chemin_decennie_id}")
+    logger.info(f"Index decennie -> id_datagouv updated : {chemin_decennie_id}")
     df_decennie_id.to_csv(chemin_decennie_id, index=False)
 
 def get_path_decennie_to_id_datagouv(data_freq:MeteoFranceDataType):
@@ -155,8 +159,8 @@ def delete_old_file(freq_data:MeteoFranceDataType, df_origine:pd.DataFrame, df_n
     if df_comparison_reseted.empty:
         return
     else:
-        print("Des choses on changé !")
-        print(df_comparison)
+        logger.info("Des choses on changé !")
+        logger.debug(df_comparison)
     for i in df_comparison_reseted.index:
         row_a_supprimer = df_origine.loc[i]
         date_debut = datetime.strptime(row_a_supprimer["debut_decennie"], "%Y-%m-%d")
@@ -166,10 +170,10 @@ def delete_old_file(freq_data:MeteoFranceDataType, df_origine:pd.DataFrame, df_n
         chemin_a_supprimer_gz = get_chemin_data_downloaded(freq_data, date_debut, date_fin, id_datagouv, True)
         chemin_a_supprimer_csv.unlink(missing_ok=True)
         chemin_a_supprimer_gz.unlink(missing_ok=True)
-        print("Les vieux fichiers : ")
-        print(chemin_a_supprimer_csv)
-        print(chemin_a_supprimer_gz)
-        print("On été supprimé.")
+        logger.info("Les vieux fichiers : ")
+        logger.debug(chemin_a_supprimer_csv)
+        logger.debug(chemin_a_supprimer_gz)
+        logger.info("On été supprimé.")
 
 @cache
 def update_decennie_to_id_datagouv(freq_data:MeteoFranceDataType):
@@ -260,11 +264,11 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
             file_to_gather.append((date_debut_row, date_fin_row, id))
 
     if not file_to_gather:
-        print("Range vide. Données absente.")
+        logger.warning("Range vide. Données absente.")
         return pd.DataFrame()
 
-    print(file_to_gather)
-    print("Loading files...")
+    logger.debug(file_to_gather)
+    logger.info("Loading files...")
     all_df = []
     for date_debut_fichier, date_fin_fichier, id_datagouv in file_to_gather:
         all_df.append(get_df_decennie(data_freq, date_debut_fichier, date_fin_fichier, id_datagouv, is_data_update_allowed))
@@ -279,8 +283,8 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
                 df_complet.drop_duplicates(subset=["LAT", "LON", "AAAAMM"], inplace=True)
             case _:
                 raise NotImplementedError
-    print("Files loaded successfully...")
-    print(df_complet)
+    logger.info("Files loaded successfully...")
+    logger.debug(df_complet)
 
     df_date_filtre = filter_range_in_df(df_complet, data_freq, date_debut, date_end)
 
@@ -324,7 +328,7 @@ def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date
     chemin = get_chemin_data_downloaded(freq_data, start_date, end_date, id_gouv_data, False)
     chemin_archive = get_chemin_data_downloaded(freq_data, start_date, end_date, id_gouv_data, True)
 
-    print(f"Loading : {chemin}")
+    logger.debug(f"Loading : {chemin}")
     if not chemin.exists():
         download_and_extract(id_gouv_data, chemin_archive, chemin)
     elif not is_path_updated_with_datagouv(chemin, id_gouv_data) and is_data_update_allowed:
@@ -336,7 +340,7 @@ def get_df_decennie(freq_data:MeteoFranceDataType, start_date: datetime,end_date
     return df
 
 def download_and_extract(id_datagouv:str, chemin_archive:Path,chemin_final:Path):
-    print(f"Downloading {chemin_final.name}...")
+    logger.info(f"Downloading {chemin_final.name}...")
     utils_proxy.set_up_working_proxy()
     r = get_gouv_ressource(id_datagouv)
     success = False
@@ -401,10 +405,10 @@ def get_chemin_data_downloaded(freq_data:MeteoFranceDataType, debut_decenie:date
 
 if __name__ == "__main__":
     liste = get_geographic_list(GeographicScaleClip.BASSIN)
-    print(liste)
+    logger.debug(liste)
 
     liste = get_geographic_list(GeographicScaleClip.REGION_BASSIN)
-    print(liste)
+    logger.debug(liste)
 
     liste = get_geographic_list(GeographicScaleClip.DEPARTEMENT_BASSIN)
-    print(liste)
+    logger.debug(liste)

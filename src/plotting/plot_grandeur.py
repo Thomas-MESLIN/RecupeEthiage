@@ -11,6 +11,10 @@ import src.processing.station as station
 import src.io.download_Hubeau as download_Hubeau
 import src.processing.calcul_hydraulicite as calcul_hydraulicite
 import logging
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="plot_grandeur")
 
 
 def create_geojson_from_path(chemin_donees_csv:Path, output_path: Path, annee_mois:str, code_sandre:str):
@@ -170,18 +174,18 @@ def create_geojson_from_sites(code_sandre:str|None=None):
     logging.info(f"GeoJSON créé : {output_geojson}")
 
 def print_results(res: dict) -> None:
-    print("=" * 65)
-    print("  Loi : Log-Normale  |  Estimateur : L-moments  |  IC : PBOOT")
-    print(f"  µ (log) = {res['mu']:.4f}   σ (log) = {res['sigma']:.4f}")
-    print(f"  p0 (prob. débit nul) = {res['p0']:.3f}")
-    print(f"  n total = {len(res['y'])}   n positifs = {len(res['z'])}")
-    print("=" * 65)
-    print(f"\n{'T (ans)':>10}  {'p non-dép.':>12}  {'VCN3 (m³/s)':>14}  {'IC bas':>10}  {'IC haut':>10}")
-    print("-" * 65)
+    logger.info("=" * 65)
+    logger.info("  Loi : Log-Normale  |  Estimateur : L-moments  |  IC : PBOOT")
+    logger.info(f"  µ (log) = {res['mu']:.4f}   σ (log) = {res['sigma']:.4f}")
+    logger.info(f"  p0 (prob. débit nul) = {res['p0']:.3f}")
+    logger.info(f"  n total = {len(res['y'])}   n positifs = {len(res['z'])}")
+    logger.info("=" * 65)
+    logger.info(f"\n{'T (ans)':>10}  {'p non-dép.':>12}  {'VCN3 (m³/s)':>14}  {'IC bas':>10}  {'IC haut':>10}")
+    logger.info("-" * 65)
     q = res["quantiles"]
     for T, p, qv, ic_l, ic_h in zip(q["T"], q["p"], q["q"], q["IC_low"], q["IC_high"]):
-        print(f"{T:>10.0f}  {p:>12.4f}  {qv:>14.4f}  {ic_l:>10.4f}  {ic_h:>10.4f}")
-    print()
+        logger.info(f"{T:>10.0f}  {p:>12.4f}  {qv:>14.4f}  {ic_l:>10.4f}  {ic_h:>10.4f}")
+    logger.info("")
 
 def plot_results(res: dict, output_path: str|Path, title: str = "Analyse fréquentielle VCN3",
                  ) -> None:
@@ -250,7 +254,7 @@ def plot_results(res: dict, output_path: str|Path, title: str = "Analyse fréque
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close()
     # plt.show()
-    print(f"Graphique sauvegardé : {output_path}")
+    logger.info(f"Graphique sauvegardé : {output_path}")
 
 def plot_period_from_flow(q_obs: float, res_station:dict, res_estimation: dict, code_station: str,
                           output_path: str|Path) -> None:
@@ -305,7 +309,7 @@ def plot_period_from_flow(q_obs: float, res_station:dict, res_estimation: dict, 
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     # plt.show()
     plt.close()
-    print(f"Graphique sauvegardé : {output_path}")
+    logger.info(f"Graphique sauvegardé : {output_path}")
 
 def plot_result_station(code_station: str, mois:str, result_station:dict, resultats_frequence_periode_retour:dict):
     resultats = resultats_frequence_periode_retour

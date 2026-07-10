@@ -4,6 +4,11 @@ import src.processing.clean as clean
 import src.utils.utils as utils
 import logging
 import src.utils.utils_file as utils_file
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="calcul_hydraulicite")
+
 # Ce script sert à récupérer les données nettoyée et les exploiter pour calculer l'hydraulicité.
 # On a besoin pour cela de l'hydraulicité historique.
 
@@ -23,7 +28,7 @@ def calcul_hydraulicite_mensuel(annee_mois: str, code_sandre: str):
     if today.year == int(annee_mois[0:4]) and today.month == int(annee_mois[5:7]):
         grandeur = "QmnJ"
         is_aggregated = True
-        print("LES DONNEES SOUHAITEZ PROVIENNENT DU MOIS ACTUEL, PASSAGE SUR LES SOURCES AU JOUR.")
+        logger.info("LES DONNEES SOUHAITEZ PROVIENNENT DU MOIS ACTUEL, PASSAGE SUR LES SOURCES AU JOUR.")
 
     clean.ensure_single_month_cleaned(annee_mois, code_sandre, grandeur)
     chemin_data_du_mois_clean = utils.get_path_clean_csv(code_sandre, annee_mois,grandeur)

@@ -1,7 +1,12 @@
 from pathlib import Path
 from src.config.paths import OUTPUT_DIR
-# USAGE : The script sert à créer l'arborescence de dossier utilisé par les différents scritps
-print("Initialisation projet")
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="init_project")
+
+# USAGE : The script sert à créer l'arborescence de dossier utilisé par les différents scripts
+logger.info("Initialisation projet")
 
 output_folder = OUTPUT_DIR
 output_folder.mkdir(exist_ok=True)
@@ -67,4 +72,4 @@ result_folder = [
 for folder in result_folder:
     (output_folder / folder).mkdir(exist_ok=True)
 
-print("Initialisation projet terminé !")
+logger.info("Initialisation projet terminé !")

@@ -3,6 +3,10 @@ import pandas as pd
 import src.io.download_Hubeau as download_Hubeau
 from src.config.paths import DATA_DIR
 import src.utils.utils_file as utils_file
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="station")
 
 def get_stations(code_sandre:str|None = None, annee_mois_active:str|None=None) -> pd.DataFrame:
     """
@@ -69,8 +73,8 @@ def clean_custom_input_list():
     To select the station that is added to the site, add it to the 'liste_station_custom.csv'
     :return: Rien
     """
-    print("MISE A JOUR DE LA LISTE DE STATION ET SITES CUSTOM.")
-    print("=" * 50)
+    logger.info("MISE A JOUR DE LA LISTE DE STATION ET SITES CUSTOM.")
+    logger.info("=" * 50)
     df_station = pd.read_csv(get_path_liste_station_custom())
     df_site = pd.read_csv(get_path_liste_site_custom())
     df_station_no_duplicate = df_station.drop_duplicates()
@@ -85,26 +89,26 @@ def clean_custom_input_list():
 
     df_all_sites = df_site_no_duplicate.merge(df_all_code_site_from_station, on="code_site", how="outer")
     # df_sites_custom_full = df_site_no_duplicate.merge(df_all_station, on="code_site", how="left")
-    print(f"Nombre de nouveaux sites : abs({len(df_site_no_duplicate)} - {len(df_all_sites)}) = {abs(len(df_site_no_duplicate) - len(df_all_sites))}")
+    logger.info(f"Nombre de nouveaux sites : abs({len(df_site_no_duplicate)} - {len(df_all_sites)}) = {abs(len(df_site_no_duplicate) - len(df_all_sites))}")
 
     code_site_et_station = df_all_sites.merge(df_station_custom_full, on="code_site", how="outer")
-    print(code_site_et_station)
+    logger.debug(f"DataFrame code_site_et_station :\n{code_site_et_station}")
     code_site_et_station_uniquement = code_site_et_station[["code_site","code_station"]].sort_values(by="code_site")
-    print("Nettoyage terminé")
+    logger.info("Nettoyage terminé")
 
-    print("Sites sans station indiqués dans liste_station_custom.csv")
+    logger.info("Sites sans station indiqués dans liste_station_custom.csv")
     code_site_station_manquante = code_site_et_station_uniquement[pd.isna(code_site_et_station_uniquement["code_station"])]
     list_site_station_manquante = code_site_station_manquante["code_site"].drop_duplicates().dropna().to_list()
-    print(list_site_station_manquante)
-    print("Récupération des stations manquantes.")
+    logger.info(f"Sites manquants : {list_site_station_manquante}")
+    logger.info("Récupération des stations manquantes.")
     df_resultat = find_perfect_station(list_site_station_manquante)
 
     code_site_et_station_total = pd.concat([df_resultat, code_site_et_station_uniquement], ignore_index=True)
     code_site_et_station_total.sort_values(by="code_site", inplace=True)
     code_site_et_station_total.dropna(subset=["code_station"], inplace=True)
     code_site_et_station_total.to_csv(utils.get_path_liste_site_station_custom(), index=False)
-    print("=" * 50)
-    print("MISE A JOUR DE LA LISTE DE STATION ET SITES TERMINEE.")
+    logger.info("=" * 50)
+    logger.info("MISE A JOUR DE LA LISTE DE STATION ET SITES TERMINEE.")
 
 
 def find_perfect_station(code_site_list:list[str]) -> pd.DataFrame:
@@ -125,30 +129,28 @@ def find_perfect_station(code_site_list:list[str]) -> pd.DataFrame:
     list_correspondance = []
     for code_site in code_site_list:
         if len(df_all_site[df_all_site["code_site"] == code_site]) == 0:
-            print(f"Le site n'existe pas. - {code_site}")
+            logger.warning(f"Le site n'existe pas. - {code_site}")
             nombre_site_inexistant += 1
             continue
         df_stations_lie = df_all_station[df_all_station["code_site"] == code_site]
         if len(df_stations_lie) == 0:
             nombre_absent += 1
-            print()
-            print(f"Il n'y a aucune station associé. - {code_site}")
+            logger.info(f"Il n'y a aucune station associé. - {code_site}")
         elif len(df_stations_lie) == 1:
             nombre_unique +=1
             code_station = df_stations_lie["code_station"].iloc[0]
             row = {"code_site": code_site, "code_station": code_station}
             list_correspondance.append(row)
-            # print("Il y a exactement une station associé.")
+            # logger.debug("Il y a exactement une station associé.")
         else:
             nombre_plusieurs += 1
-            print()
-            print(f"Il y a plus d'une station associé. - {code_site}")
-            print(df_stations_lie["code_station"])
+            logger.info(f"Il y a plus d'une station associé. - {code_site}")
+            logger.debug(f"Stations disponibles : {df_stations_lie['code_station'].tolist()}")
             for code_station in df_stations_lie["code_station"]:
                 row = {"code_site": code_site, "code_station": code_station}
                 list_correspondance.append(row)
 
-    print(f"\nNombre site inexistant {nombre_site_inexistant}, \n"
+    logger.info(f"\nNombre site inexistant {nombre_site_inexistant}, \n"
           f"Nombre pas de stations correspondante {nombre_absent}, \n"
           f"Nombre 1 station correspondant {nombre_unique}, \n"
           f"Nombre plusieurs stations correspondantes {nombre_plusieurs}\n")
@@ -158,7 +160,7 @@ def find_perfect_station(code_site_list:list[str]) -> pd.DataFrame:
 
 if __name__ == "__main__":
     res = get_stations("custom", "2026-04")
-    print(res)
-    print("miaou")
+    logger.info(f"Resultat get_stations :\n{res}")
+    logger.debug("miaou")
 
     clean_custom_input_list()

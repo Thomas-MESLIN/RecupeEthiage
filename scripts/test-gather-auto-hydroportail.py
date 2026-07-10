@@ -3,6 +3,10 @@ from time import sleep
 import requests
 import pandas as pd
 from pathlib import Path
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="test_gather_auto_hydroportail")
 
 # ==========================================
 # PARAMÈTRES
@@ -27,7 +31,7 @@ def download_hydro(sandre_code:str,start_date:str):
         telechargement_requis = False
 
     if not telechargement_requis:
-        print(f"Déjà téléchargé : {output_file}")
+        logger.info(f"Déjà téléchargé : {output_file}")
         return
     # ==========================================
     # URL API
@@ -83,8 +87,8 @@ def download_hydro(sandre_code:str,start_date:str):
     # Wait to not exceed the time limit of the API.
     sleep(4)
 
-    print(response.status_code)
-    print(response.url)
+    logger.debug(f"Status code: {response.status_code}")
+    logger.debug(f"URL: {response.url}")
 
     response.raise_for_status()
 
@@ -127,8 +131,8 @@ def download_hydro(sandre_code:str,start_date:str):
         encoding="utf-8"
     )
 
-    print(df.head())
-    print(f"\nCSV sauvegardé : {output_file}")
+    logger.debug(f"DataFrame head:\n{df.head()}")
+    logger.info(f"\nCSV sauvegardé : {output_file}")
 
 for annee in range(1991,2021):
     for mois in range(1,13):
@@ -145,4 +149,4 @@ for annee in range(1991,2021):
         # On télécharge toutes les stations de France
         code_sandre = ""
         download_hydro(code_sandre, annee_mois)
-        print(f"Tous les fichiers de {annee}-{mois} ont été téléchargés")
+        logger.info(f"Tous les fichiers de {annee}-{mois} ont été téléchargés")

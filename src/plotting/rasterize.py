@@ -11,6 +11,10 @@ from rasterio.io import MemoryFile
 from scipy.interpolate import griddata
 
 from src.config.paths import OUTPUT_DIR
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="rasterize")
 
 
 def rasterize_geojson(series_to_rasterize:gpd.GeoDataFrame, value_column_name:str, gdf_mask:gpd.GeoDataFrame, titre_graphique:str,
@@ -183,7 +187,7 @@ def rasterize_geojson(series_to_rasterize:gpd.GeoDataFrame, value_column_name:st
     )
 
 
-    print(f"PNG généré : {output_path}")
+    logger.info(f"PNG généré : {output_path}")
 
 
 def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str], list[float]]|None:

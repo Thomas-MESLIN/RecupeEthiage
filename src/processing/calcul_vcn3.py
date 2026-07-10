@@ -9,6 +9,11 @@ from tqdm import tqdm
 from functools import cache
 import logging
 import src.utils.utils_file as utils_file
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="calcul_vcn3")
+
 # Effectue la moyenne des moyennes sur toutes la période de 1991 à 2020.
 
 
@@ -169,7 +174,7 @@ def calcule_minimum_glissant_moyen_1991_2020(code_sandre:str):
 
     df_qmm_moyennes = pd.DataFrame(rows)
 
-    print(df_qmm_moyennes)
+    logger.debug(f"DataFrame df_qmm_moyennes :\n{df_qmm_moyennes}")
 
     # ==========================================
     # EXPORT CSV
@@ -183,7 +188,7 @@ def calcule_minimum_glissant_moyen_1991_2020(code_sandre:str):
         encoding="utf-8"
     )
 
-    print(f"\nCSV sauvegardé : {output_file}")
+    logger.info(f"\nCSV sauvegardé : {output_file}")
 
     # Export des vcn3 mensuel
     for annee in save_vc3_station:
@@ -191,41 +196,41 @@ def calcule_minimum_glissant_moyen_1991_2020(code_sandre:str):
             data_frame = pd.DataFrame(save_vc3_station[annee][mois])
             data_frame.to_csv(utils.get_path_vcn3_mensuel(code_sandre, f"{annee}-{mois}"), index=False)
 
-    print(f"\nCSV vcn mensuel sauvegardé.")
+    logger.info(f"\nCSV vcn mensuel sauvegardé.")
 
 def test():
 
-    print("TESTS MOYENNE GLISSANTE GENTILLE : ")
-    print("echantillon : ")
+    logger.info("TESTS MOYENNE GLISSANTE GENTILLE : ")
+    logger.info("echantillon : ")
     d = {
         "date_obs_elab" : ["1990-12-30","1990-12-31","1991-01-01","1991-01-02","1991-01-03","1991-01-04"],
         "resultat_obs_elab" : [6,7,1,2,3,4],
         "code_station": ["station1","station1","station1","station1","station1","station1"]
     }
     df = pd.DataFrame(data=d)
-    print(df)
+    logger.debug(f"DataFrame test 1 :\n{df}")
     res = get_vcn3_station_mois(df, "station1", 1991, 1)
-    print(res)
+    logger.info(f"Resultat test 1 : {res}")
 
 
-    print("TESTS MOYENNE GLISSANTE A FILTRER : ")
-    print("echantillon : ")
+    logger.info("TESTS MOYENNE GLISSANTE A FILTRER : ")
+    logger.info("echantillon : ")
     d3 = {
         "date_obs_elab" : ["1990-12-30","1990-12-31","1990-12-29","1990-12-28","1990-12-27","1990-12-26","1990-12-31","1991-01-01","1991-01-02","1991-01-03","1991-01-04"],
         "resultat_obs_elab" : [6,7,1,2,5,6,7,8,3,4,5],
         "code_station": ["station1","station1","station1","station1","station1","station1","station2","station1","station1","station1","station3"]
     }
     df2 = pd.DataFrame(data=d3)
-    print(df2)
+    logger.debug(f"DataFrame test 2 :\n{df2}")
     res = get_vcn3_station_mois(df2, "station1", 1991, 1)
-    print(res)
+    logger.info(f"Resultat test 2 : {res}")
 
     df_qmnj_2025_07 = get_df_moyenne_glissante("2025-07","BSH001")
     res = get_vcn3_station_mois(df_qmnj_2025_07, "U401402001", 2025, 7)
-    print(res)
+    logger.info(f"Resultat test 3 (2025-07) : {res}")
     df_qmnj_2025_08 = get_df_moyenne_glissante("2025-08","BSH001")
     res = get_vcn3_station_mois(df_qmnj_2025_08, "U401402001", 2025, 8)
-    print(res)
+    logger.info(f"Resultat test 4 (2025-08) : {res}")
 
 def calcul_vcn3_historique_station(code_station:str, all_df:pd.DataFrame) -> pd.DataFrame:
     """
@@ -235,7 +240,7 @@ def calcul_vcn3_historique_station(code_station:str, all_df:pd.DataFrame) -> pd.
     :param all_df: Le dataframe contenant au moins les données VCN3 de la station.
     :return: Un dataframe contenant les données de la station.
     """
-    print("Vérification des données historique...")
+    logger.info("Vérification des données historique...")
     df_station = all_df[all_df["code_station"] == code_station]
     all_rows = []
     for date in pd.date_range("1991-01-01", "2020-12-01", freq="MS"):
@@ -249,7 +254,7 @@ def calcul_vcn3_historique_station(code_station:str, all_df:pd.DataFrame) -> pd.
         all_rows.append(row)
     df_vcn3_station = pd.DataFrame(data=all_rows)
     df_vcn3_station.to_csv(utils.get_path_vcn3_station(code_station), index=False)
-    print("Données historiques vérifiées !")
+    logger.info("Données historiques vérifiées !")
     return df_vcn3_station
 
 @cache
@@ -290,7 +295,7 @@ def find_vcn3_min(date_debut:datetime,date_fin:datetime, mois_souhaite:int, code
     :param station_code:
     :return:
     """
-    print("Recherche du vcn3 le plus bas pour la station...")
+    logger.info("Recherche du vcn3 le plus bas pour la station...")
     val_min = 99999999999
     annee_min = datetime(1900,1,1)
     for date_annee in pd.date_range(date_debut, date_fin, freq="YS"):
@@ -303,7 +308,7 @@ def find_vcn3_min(date_debut:datetime,date_fin:datetime, mois_souhaite:int, code
         if valeur < val_min:
             annee_min = date_anne_mois_correcte
             val_min = valeur
-    print("Recherche du vcn3 le plus bas pour la station terminé.")
+    logger.info("Recherche du vcn3 le plus bas pour la station terminé.")
     if val_min == 99999999999:
         val_min = pd.NA
         annee_min = pd.NA

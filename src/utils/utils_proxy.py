@@ -2,6 +2,10 @@ import os
 import requests
 from dotenv import load_dotenv
 from functools import cache
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="utils_proxy")
 
 def test_connection(
     url: str,
@@ -18,7 +22,7 @@ def test_connection(
             allow_redirects=True,
         )
 
-        print("STATUS:", response.status_code)
+        logger.debug(f"STATUS: {response.status_code}")
 
         return response.ok
 
@@ -36,27 +40,24 @@ def set_up_working_proxy():
     Le proxy sert à accéder à internet sur le réseau interne de la DREAL.
     Il est éxécuté une seule fois, même si plusieurs appels arrivent.
     """
-    print()
-    print("---------CONNEXION A INTERNET - TEST PROXY--------------")
-    print("Configuration du proxy...\n")
+    logger.info("CONNEXION A INTERNET - TEST PROXY")
+    logger.info("Configuration du proxy...")
 
-    print("Test avec les paramètres d'environnement...")
+    logger.info("Test avec les paramètres d'environnement...")
     # Charge le fichier .env
     load_dotenv()
     if test_connection(TEST_URL):
-        print("Connexion proxy OK")
-        print("-------------CONNECTE--------------")
+        logger.info("Connexion proxy OK - CONNECTE")
         return
 
-    print("Test en supprimant HTTP_PROXY et HTTPS_PROXY")
+    logger.info("Test en supprimant HTTP_PROXY et HTTPS_PROXY")
     os.unsetenv("HTTP_PROXY")
     os.unsetenv("HTTPS_PROXY")
     if test_connection(TEST_URL):
-        print("Connexion Direct OK")
-        print("-------------CONNECTE--------------")
+        logger.info("Connexion Direct OK - CONNECTE")
         return
 
-    print("Proxy KO")
+    logger.warning("Proxy KO - Aucune connexion réseau disponible")
 
     # raise RuntimeError(
     #     "Aucune connexion réseau disponible"

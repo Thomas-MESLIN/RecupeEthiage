@@ -3,6 +3,10 @@ import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
 import utils
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="validate_clean_data")
 
 output_folder = Path("output")
 # TODO, reecrire au propre ce fichier...
@@ -60,7 +64,7 @@ def find_difference_hubeau_hydroportail_filtre(sandre_code : str, annee_mois_a_f
     :return La liste de stations avec des données uniquement dans hydroportail et la liste de stations avec des données uniquement dans hubeau
     """
     if len(annee_mois_a_filtrer) != 7:
-        print("L'année et le mois doivent être au format AAAA-MM")
+        logger.error("L'année et le mois doivent être au format AAAA-MM")
         return {}
     # On prend le premier jour du mois
     date_a_filtrer = annee_mois_a_filtrer
@@ -149,7 +153,7 @@ df_resultats.to_csv(
     index=False,
     encoding="utf-8"
 )
-print(f"CSV écrit : {path_output_file}")
+logger.info(f"CSV écrit : {path_output_file}")
 
 station_unique_hubeau_BSH001 = {}
 date_station_unique_hubeau_BSH001 = {}
@@ -203,17 +207,17 @@ def convert_anne_mois_list_to_intervalle(list_anne_mois:list[str]) -> list:
     liste_interval.append(str(debut_intervalle) + "->" + str(fin_intervalle))
     return liste_interval
 
-#print(convert_anne_mois_list_to_intervalle(['1993-12', '1994-01', '1994-02', '1994-03', '1994-04', '1994-05', '1994-06', '1994-07', '1994-08', '1994-09', '1994-10', '1994-11', '1994-12', '1995-01', '1995-02', '1995-03', '1995-04', '1995-05', '1995-06', '1995-07', '1995-08', '1995-09', '1995-11', '1995-12', '1996-01', '1996-02', '1996-03', '1996-04', '1996-05', '1996-06', '1996-07', '1996-08', '1996-09', '1996-10', '1996-11', '1996-12', '1997-01', '1997-02', '1997-03', '1997-04', '1997-05', '1997-06', '1997-07', '1997-08', '1997-09', '1997-10', '1997-11', '1997-12', '2005-12', '2006-01', '2006-02', '2006-03', '2006-04', '2006-05', '2006-06', '2006-07', '2006-08', '2006-09', '2006-10', '2006-11', '2006-12', '2007-01', '2007-02', '2007-03', '2007-04', '2007-05', '2007-06', '2007-07', '2007-08', '2007-09', '2007-10', '2007-11', '2007-12', '2019-12', '2020-01', '2020-02', '2020-03', '2020-04', '2020-05', '2020-06', '2020-07', '2020-08', '2020-10', '2020-11', '2020-12']))
+#logger.debug(convert_anne_mois_list_to_intervalle(['1993-12', '1994-01', '1994-02', '1994-03', '1994-04', '1994-05', '1994-06', '1994-07', '1994-08', '1994-09', '1994-10', '1994-11', '1994-12', '1995-01', '1995-02', '1995-03', '1995-04', '1995-05', '1995-06', '1995-07', '1995-08', '1995-09', '1995-11', '1995-12', '1996-01', '1996-02', '1996-03', '1996-04', '1996-05', '1996-06', '1996-07', '1996-08', '1996-09', '1996-10', '1996-11', '1996-12', '1997-01', '1997-02', '1997-03', '1997-04', '1997-05', '1997-06', '1997-07', '1997-08', '1997-09', '1997-10', '1997-11', '1997-12', '2005-12', '2006-01', '2006-02', '2006-03', '2006-04', '2006-05', '2006-06', '2006-07', '2006-08', '2006-09', '2006-10', '2006-11', '2006-12', '2007-01', '2007-02', '2007-03', '2007-04', '2007-05', '2007-06', '2007-07', '2007-08', '2007-09', '2007-10', '2007-11', '2007-12', '2019-12', '2020-01', '2020-02', '2020-03', '2020-04', '2020-05', '2020-06', '2020-07', '2020-08', '2020-10', '2020-11', '2020-12']))
 
-#print(convert_anne_mois_list_to_intervalle(['1993-12', '1994-01','1994-02','1994-05','1993-11']))
+#logger.debug(convert_anne_mois_list_to_intervalle(['1993-12', '1994-01','1994-02','1994-05','1993-11']))
 
-print("\n")
-print("Station uniquement dans le BSH001 avec des données")
-print("Uniquement dans hubeau puis uniquement dans hydroportail")
-print(station_unique_hubeau_BSH001)
-##print(date_station_unique_hubeau_BSH001)
-print(station_unique_hubeau_BSH001)
-#print(date_station_unique_hydroportail_BSH001)
+logger.info("\n")
+logger.info("Station uniquement dans le BSH001 avec des données")
+logger.info("Uniquement dans hubeau puis uniquement dans hydroportail")
+logger.info(f"Stations uniques Hubeau BSH001 : {station_unique_hubeau_BSH001}")
+#logger.debug(date_station_unique_hubeau_BSH001)
+logger.info(f"Stations uniques Hubeau BSH001 (repetition) : {station_unique_hubeau_BSH001}")
+#logger.debug(date_station_unique_hydroportail_BSH001)
 
 list_total_station = list(station_unique_hubeau_BSH001.keys()) + list(station_unique_hydroportail_BSH001.keys())
 list_total_station_unique = list(set(list_total_station))
@@ -230,8 +234,8 @@ for code_station in list_total_station_unique:
     ]
     total_list.append(arr)
 
-#print(total_list)
-#print("\n")
+#logger.debug(total_list)
+#logger.debug("\n")
 
 dataframe_dico = pd.DataFrame(
     total_list,
@@ -246,6 +250,6 @@ dataframe_dico = pd.DataFrame(
 
 chemin_resultat_difference = "output/res-validation/res_station_unique_hubeau_hydroportail_BSH001_BSH101.csv"
 dataframe_dico.to_csv(Path(chemin_resultat_difference), index_label="code_station", sep=';')
-print("\n\nRésultat enregistré dans " + chemin_resultat_difference)
+logger.info(f"\n\nRésultat enregistré dans {chemin_resultat_difference}")
 
 # TODO try to inspect the duplicates.

@@ -10,6 +10,10 @@ import src.utils.utils_proxy as utils_proxy
 from src.model.enums import GeographicScaleClip
 from functools import cache
 import src.config.init_project
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="download_Hubeau")
 import src.utils.utils_file as utils_file
 
 # TELECHARGEMENT DONNEES MENSUELLES
@@ -45,8 +49,8 @@ def download_hubeau_AURA_mois(annee_mois : str, grandeur : str):
     date_debut_observation = f"{annee_mois}-01"
     date_fin_observation = f"{annee_mois}-{dernier_jour}"
 
-    print(f"Téléchargement de la période  : {date_debut_observation}->{date_fin_observation}")
-    print(f"Téléchargement de la grandeur : {grandeur}")
+    logger.info(f"Téléchargement de la période  : {date_debut_observation}->{date_fin_observation}")
+    logger.info(f"Téléchargement de la grandeur : {grandeur}")
 
     grandeur_hydro = [grandeur]
 
@@ -73,7 +77,7 @@ def download_hubeau_AURA_mois(annee_mois : str, grandeur : str):
 
     chemin_fichier = utils.get_path_mensuel_raw_csv(annee_mois,grandeur)
     dataframe_observation.to_csv(chemin_fichier)
-    print(f"Fichier téléchargé : {chemin_fichier}")
+    logger.info(f"Fichier téléchargé : {chemin_fichier}")
 
 
 def ensure_grandeur_historique_downloaded(grandeur:str):
@@ -98,7 +102,7 @@ def download_hubeau_1991_2020(grandeur_souhaite):
     Télécharge les observations de 1991 à 2020 de la grandeur souhaite et de toute la france
     :param grandeur_souhaite: La grandeur souhaité à télécharger parmis : HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ.
     """
-    print(f"Téléchargement des données historiques : 1991 à 2020 de la grandeur {grandeur_souhaite}")
+    logger.info(f"Téléchargement des données historiques : 1991 à 2020 de la grandeur {grandeur_souhaite}")
     # Permet d'accéder à internet via le réseau interne de la DREAL
     # initialisation du proxy
     utils_proxy.set_up_working_proxy()
@@ -141,12 +145,12 @@ def download_hubeau_onde_campagnes() -> pd.DataFrame:
     Télécharge les observations de 1991 à 2020 de la grandeur souhaite et de toute la france
     :param grandeur_souhaite: La grandeur souhaité à télécharger parmis : HIXM, HIXnJ, QINM, QINnJ, QixM, QIXnJ, QmM ou QmnJ.
     """
-    print(f"Téléchargement des données des campagnes ONDE")
+    logger.info("Téléchargement des données des campagnes ONDE")
     utils_proxy.set_up_working_proxy()
     gdf = watercourses_flow.get_all_campaigns()
     chemin_campagne_onde = utils.get_path_campagne_onde()
     gdf.to_csv(chemin_campagne_onde, index=False)
-    print(f"Données campagne ONDE téléchargés à : {chemin_campagne_onde}")
+    logger.info(f"Données campagne ONDE téléchargés à : {chemin_campagne_onde}")
     return gdf
 
 def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:GeographicScaleClip, code_zone:str):
@@ -157,7 +161,7 @@ def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, d
     :param zone_geographic: La zone géographic à extraire.
     :param code_zone: Le code correspondant à la zone géographique (INSEE)
     """
-    print(f"Téléchargement des données des observations ONDE")
+    logger.info("Téléchargement des données des observations ONDE")
     utils_proxy.set_up_working_proxy()
 
     kwargs = {
@@ -175,16 +179,16 @@ def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, d
 
     df = watercourses_flow.get_all_observations(**kwargs)
     if df.empty:
-        print("DataFrame vide ! Pas de données sur cette période.")
+        logger.warning("DataFrame vide ! Pas de données sur cette période.")
         return
 
     chemin_observations_onde = utils.get_path_observation_onde(date_debut_obs, date_fin_obs, zone_geographic, code_zone)
     df.to_csv(chemin_observations_onde, index=False)
-    print(f"Données observations ONDE téléchargés à : {chemin_observations_onde}")
+    logger.info(f"Données observations ONDE téléchargés à : {chemin_observations_onde}")
     return df
 
 def download_hubeau_onde_stations_geographic_zone(zone_geographic:GeographicScaleClip, code_zone:str):
-    print(f"Téléchargement des stations ONDE")
+    logger.info("Téléchargement des stations ONDE")
     utils_proxy.set_up_working_proxy()
 
     kwargs = {
@@ -200,12 +204,12 @@ def download_hubeau_onde_stations_geographic_zone(zone_geographic:GeographicScal
 
     df = watercourses_flow.get_all_stations(**kwargs)
     if df.empty:
-        print("DataFrame vide ! Pas de données sur cette période.")
+        logger.warning("DataFrame vide ! Pas de données sur cette période.")
         return
 
     chemin_observations_onde = utils.get_path_stations_onde(zone_geographic, code_zone)
     df.to_csv(chemin_observations_onde, index=False)
-    print(f"Données stations ONDE téléchargés à : {chemin_observations_onde}")
+    logger.info(f"Données stations ONDE téléchargés à : {chemin_observations_onde}")
     return df
 
 @cache
@@ -239,24 +243,24 @@ def download_stations():
     Télécharge toute les stations de France qui ont existé.
     :return: Rien
     """
-    print("Téléchargement des stations.")
+    logger.info("Téléchargement des stations.")
     utils_proxy.set_up_working_proxy()
 
     df_all_stations = hydrometry.get_all_stations()
     df_all_stations.to_csv(utils.get_path_stations())
-    print(f"Stations téléchargées -> {utils.get_path_stations()}")
+    logger.info(f"Stations téléchargées -> {utils.get_path_stations()}")
 
 def download_sites():
     """
     Télécharges tous les sites de France.
     :return: Rien
     """
-    print("Téléchargement des sites.")
+    logger.info("Téléchargement des sites.")
     utils_proxy.set_up_working_proxy()
 
     df_all_sites = hydrometry.get_all_sites()
     df_all_sites.to_csv(utils.get_path_sites())
-    print(f"Sites téléchargées -> {utils.get_path_sites()}")
+    logger.info(f"Sites téléchargées -> {utils.get_path_sites()}")
 
 def ensure_station_downloaded():
     """

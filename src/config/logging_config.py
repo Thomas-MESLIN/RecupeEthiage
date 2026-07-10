@@ -21,6 +21,9 @@ def setup_logger(name: str = "app", log_file: str = OUTPUT_DIR/"logs/app.log", l
     # Éviter les doublons de handlers
     if logger.handlers:
         return logger
+    
+    # Désactiver la propagation pour éviter les doublons (messages affichés 2x)
+    logger.propagate = False
 
     # Formattage des logs
     formatter = logging.Formatter(

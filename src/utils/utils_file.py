@@ -1,5 +1,9 @@
 from pathlib import Path
 from datetime import datetime, timedelta
+from src.config.logging_config import setup_logger
+
+# Initialiser le logger
+logger = setup_logger(name="utils_file")
 
 # Vérification de l'ancienneté des données.
 def is_path_valid_age(chemin:Path) -> bool:
@@ -44,7 +48,7 @@ def prompt_renew_old_data(chemin:Path) -> bool:
         return True
     else: # On ne renouvelle aucun fichier
         _cache_prompt["renouveler_rien"] = False
-        print("\nAucun fichier ne sera renouvelé.\n")
+        logger.info("\nAucun fichier ne sera renouvelé.\n")
         return False
 
 def is_file_need_download(chemin:Path):
@@ -59,7 +63,7 @@ def is_file_need_download(chemin:Path):
     elif is_path_valid_age(chemin):
         return False # On a pas besoin de télécharger le fichier car il est assez récent
     elif prompt_renew_old_data(chemin):
-        print(f"\nLe fichier {chemin.name} va être re-téléchargé. \n"
+        logger.info(f"\nLe fichier {chemin.name} va être re-téléchargé.\n"
               "si le temps d'attente est trop long, vous pouvez annuler la commande avec ctrl+c.\n"
               "Il suffira de relancer le script et de refuser le prompt qui va s'afficher, \n"
               "l'ancien fichier sera alors utilisé.\n")
