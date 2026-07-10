@@ -293,11 +293,11 @@ if __name__ == "__main__":
     # download_hubeau_onde_observations_geographic_zone(
     #     datetime(2026,6,1),
     #     datetime(2026,6,30),
-    #     OndeGeographicZone.REGION,
+    #     GeographicScaleClip.REGION_ADMINISTRATIVE,
     #     "84",
     # )
     download_hubeau_onde_stations_geographic_zone(GeographicScaleClip.REGION_ADMINISTRATIVE,"84")
-    # df_test = get_df_observations_geographic_zone(datetime(2025,5,1), datetime(2025,9,2),OndeGeographicZone.DEPARTEMENT,"33")
+    # df_test = get_df_observations_geographic_zone(datetime(2025,5,1), datetime(2025,9,2),GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF,"33")
     # df_test.to_csv(Path("output/test/testetst-onde.csv"),index=False)
     # gdf_test = gpd.GeoDataFrame(data=df_test,geometry=df_test.geometry)
     # gdf_test.to_file(Path("output/test/testetst-onde.geojson"),driver="GeoJSON")

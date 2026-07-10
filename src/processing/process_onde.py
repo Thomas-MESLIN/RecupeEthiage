@@ -63,7 +63,7 @@ def get_df_campagnes_data() -> pd.DataFrame:
                                                                                         ignore_index=True)
     return df_campagne_reduit
 
-def save_observations_campagnes_export(df_to_save:pd.DataFrame, df_campagne_derniere_donnee_chaque_station:pd.DataFrame, onde_campagne_type:OndeCampagneType, annee_mois:datetime, geographic_scale:OndeGeographicZone, zone_code:str) -> None:
+def save_observations_campagnes_export(df_to_save:pd.DataFrame, df_campagne_derniere_donnee_chaque_station:pd.DataFrame, onde_campagne_type:OndeCampagneType, annee_mois:datetime, geographic_scale:GeographicScaleClip, zone_code:str) -> None:
     """
     Sauvegarde les données d'observations dans les formats csv et GeoJSON
     :param df_to_save: Le DataFrame a sauvegarder contenant toutes les données de toutes les campagnes

@@ -47,7 +47,7 @@ def setup_logger(name: str = "app", log_file: str = OUTPUT_DIR/"logs/app.log", l
 
     # Handler pour les erreurs
     error_handler = RotatingFileHandler(
-        "logs/errors.log",
+        OUTPUT_DIR / "logs" / "errors.log",
         maxBytes=10 * 1024 * 1024,
         backupCount=5,
         encoding="utf-8"
