@@ -1,183 +1,423 @@
+"""
+Script principal pour générer des cartes et données hydrologiques/météorologiques.
+
+Ce script propose deux modes d'utilisation :
+1. Mode interactif : Lancez le script sans arguments pour être guidé pas à pas
+2. Mode CLI (ligne de commande) : Utilisez des arguments pour automatiser les tâches
+
+Fonctionnalités disponibles :
+- Génération de cartes d'hydraulicité
+- Génération de cartes de VCN3/périodes de retour
+- Export de données Météo France (brutes ou SIM2, mensuelles ou quotidiennes)
+- Export de données ONDE (campagnes habituelles ou toutes campagnes)
+"""
+
 import argparse
 from datetime import timedelta, datetime
 import calendar
+
+# Import des modules locaux
 import src.plotting.plot_grandeur as plot_grandeur
 import src.plotting.plot_meteoFrance as plot_meteoFrance
-from src.model.enums import OndeCampagneType
-from src.io.download_meteoFrance import GeographicScaleClip
-from src.io.download_meteoFrance import MeteoFranceDataType
 import src.plotting.plot_onde as plot_onde
+from src.model.enums import OndeCampagneType, GeographicScaleClip, MeteoFranceDataType
 from pynsee.utils import clear_all_cache
 from src.config.logging_config import setup_logger
 
-# Initialiser le logger
+# Configuration du logger (système de journalisation)
 logger = setup_logger(name="main")
 
-def prompt_for_graphic() -> bool:
-    print("Souhaitez vous générer les graphiques associées au stations individuel pour le calcul des périodes de retour ? (N/o)")
-    input_graphic = input(" -> ")
-    res_graphic = input_graphic.lower() in ["o","oui","y","yes"]
-    if res_graphic:
-        logger.info("Les graphiques individuels seront générés.")
+
+# ============================================================================
+# FONCTIONS UTILITAIRES
+# ============================================================================
+
+def demander_ou_non(question: str, valeur_par_defaut=True) -> bool:
+    """
+    Pose une question oui/non à l'utilisateur et retourne la réponse.
+    
+    Args:
+        question: La question à poser
+        valeur_par_defaut: True si la réponse par défaut est Oui, False si Non
+    
+    Returns:
+        True si l'utilisateur répond Oui, False si Non
+    """
+    reponse_oui = ["o", "oui", "y", "yes"]
+    reponse_non = ["n", "non"]
+    
+    logger.info(f"{question} (O/n) " if valeur_par_defaut else f"{question} (n/O)")
+    reponse_utilisateur = input(" -> ").lower()
+    
+    if reponse_utilisateur in reponse_oui:
+        logger.info("Réponse : Oui")
+        return True
+    elif reponse_utilisateur in reponse_non:
+        logger.info("Réponse : Non")
+        return False
     else:
-        logger.info("Les graphiques individuels ne seront pas générés.")
-    return res_graphic
+        # Si l'utilisateur appuie juste sur Entrée, on prend la valeur par défaut
+        logger.info(f"Réponse par défaut : {'Oui' if valeur_par_defaut else 'Non'}")
+        return valeur_par_defaut
 
-def generer_hubeau_graph(res_generation_carte:str):
-    # Selection de la date de la carte à générer.
-    date_today = datetime.now()
-    date_mois_precedent = date_today - timedelta(date_today.day)
-    date_annee_mois = date_mois_precedent.strftime("%Y-%m")
-    date_res = date_mois_precedent
-    print("Choisissez la date que vous voulez générer : ")
-    print(f"Format AAAA-MM, (mois précédent : {date_annee_mois} par défaut)")
-    input_user_mois = input(" -> ")
-    if input_user_mois != "" and len(input_user_mois) == 7:
-        try:
-            parsed_date = datetime.strptime(input_user_mois, "%Y-%m")
-            date_annee_mois = input_user_mois
-            date_res = parsed_date
-        except ValueError:
-            logger.exception(f"Format de date rentrée invalide, date par défaut sélectionnée. -> {date_annee_mois}")
 
-    print(f"Mois sélectionné : {date_res}")
+def demander_avec_choix(question: str, options: dict, valeur_par_defaut=None) -> str:
+    """
+    Pose une question avec des options numérotées à l'utilisateur.
+    
+    Args:
+        question: La question à poser
+        options: Dictionnaire {"1": "Option 1", "2": "Option 2", ...}
+        valeur_par_defaut: La clé de l'option par défaut
+    
+    Returns:
+        La clé de l'option choisie
+    """
+    logger.info(question)
+    for numero, description in options.items():
+        logger.info(f"({numero}) {description}")
+    
+    reponse = input(" -> ")
+    
+    if reponse in options:
+        return reponse
+    elif valeur_par_defaut:
+        logger.info(f"Option par défaut sélectionnée : {valeur_par_defaut}")
+        return valeur_par_defaut
+    else:
+        # Si aucune valeur par défaut, on prend la première option
+        return list(options.keys())[0]
 
-    # Selection du réseau SANDRE à utiliser
-    reseaux_sandre = "BSH001"
-    print("Choisissez un réseau SANDRE : BSH001 (par défaut)")
-    print("Rentrez 'custom' pour utiliser la liste custom.")
-    input_reseaux_sandre = input(" -> ")
-    if input_reseaux_sandre != "":
-        reseaux_sandre = input_reseaux_sandre
-    print(f"Réseau Sandre sélectionné : {reseaux_sandre}")
 
-    is_graphic_genere = False
-    if res_generation_carte in ["2", "3"]:
-        is_graphic_genere = prompt_for_graphic()
+def demander_date(message: str, format_exemple: str, valeur_par_defaut: datetime) -> datetime:
+    """
+    Demande une date à l'utilisateur avec validation.
+    
+    Args:
+        message: Le message à afficher
+        format_exemple: Exemple de format (ex: "AAAA-MM")
+        valeur_par_defaut: La date à utiliser si l'utilisateur ne saisit rien
+    
+    Returns:
+        L'objet datetime correspondant
+    """
+    logger.info(f"{message} (format: {format_exemple}, défaut: {valeur_par_defaut.strftime(format_exemple)})")
+    reponse = input(" -> ")
+    
+    if not reponse:
+        logger.info(f"Date par défaut utilisée : {valeur_par_defaut}")
+        return valeur_par_defaut
+    
+    try:
+        if len(reponse) == 7:  # Format AAAA-MM
+            return datetime.strptime(reponse, "%Y-%m")
+        elif len(reponse) == 10:  # Format AAAA-MM-JJ
+            return datetime.strptime(reponse, "%Y-%m-%d")
+        else:
+            logger.warning(f"Format non reconnu, utilisation de la date par défaut")
+            return valeur_par_defaut
+    except ValueError:
+        logger.warning(f"Date invalide, utilisation de la date par défaut")
+        return valeur_par_defaut
 
-    logger.info("Génération en cours...")
-    # On génère les stations ouverte lors de date_annee_mois
-    plot_grandeur.create_geojson_from_stations(reseaux_sandre, date_annee_mois)
-    # On génère les sites correspondant au réseaux_sandre
-    plot_grandeur.create_geojson_from_sites(reseaux_sandre)
-    # On génère les stations du réseaux sandre, même celle qui ne sont pas ouverte
-    plot_grandeur.create_geojson_from_stations(reseaux_sandre, None)
-    # On génère toutes les stations et tous les sites que l'on a.
+
+def formater_date_vers_datetime(date_str: str, est_debut=True) -> datetime | None:
+    """
+    Convertit une chaîne de caractères en objet datetime.
+    
+    Args:
+        date_str: La date sous forme de chaîne (AAAA-MM ou AAAA-MM-JJ)
+        est_debut: Si True, retourne le 1er jour du mois pour AAAA-MM
+    
+    Returns:
+        Objet datetime ou None si le format est invalide
+    """
+    if len(date_str) == 7:  # Format AAAA-MM
+        date = datetime.strptime(date_str, "%Y-%m")
+        if est_debut:
+            return date.replace(day=1)
+        else:
+            # Dernier jour du mois
+            dernier_jour = calendar.monthrange(date.year, date.month)[1]
+            return date.replace(day=dernier_jour)
+    elif len(date_str) == 10:  # Format AAAA-MM-JJ
+        return datetime.strptime(date_str, "%Y-%m-%d")
+    return None
+
+
+# ============================================================================
+# FONCTIONS POUR LA GENERATION DES CARTES HUBEAU (Hydraulicité et VCN3)
+# ============================================================================
+
+def generer_carte_hubeau(type_carte: str):
+    """
+    Génère une carte à partir des données Hubeau (stations hydrologiques).
+    
+    Args:
+        type_carte: "hydraulicite", "vcn3", ou "les_deux"
+    """
+    logger.info("\n" + "="*60)
+    logger.info("GENERATION DE CARTE HUBEAU")
+    logger.info("="*60)
+    
+    # 1. Sélection de la date
+    aujourdhui = datetime.now()
+    debut_mois_precedent = aujourdhui - timedelta(days=aujourdhui.day)
+    
+    date_selectionnee = demander_date(
+        "Choisissez le mois pour lequel générer les données",
+        "AAAA-MM",
+        debut_mois_precedent
+    )
+    date_annee_mois = date_selectionnee.strftime("%Y-%m")
+    logger.info(f"Mois sélectionné : {date_annee_mois}")
+    
+    # 2. Sélection du réseau SANDRE
+    options_reseau = {
+        "1": "BSH001 (par défaut)",
+        "2": "custom (utiliser la liste personnalisée)"
+    }
+    choix_reseau = demander_avec_choix(
+        "Choisissez un réseau SANDRE",
+        options_reseau,
+        "1"
+    )
+    reseau_sandre = "BSH001" if choix_reseau == "1" else "custom"
+    logger.info(f"Réseau Sandre sélectionné : {reseau_sandre}")
+    
+    # 3. Génération des graphiques individuels (seulement pour VCN3)
+    generer_graphiques = False
+    if type_carte in ["vcn3", "les_deux"]:
+        generer_graphiques = demander_ou_non(
+            "Souhaitez-vous générer les graphiques individuels pour chaque station "
+            "(pour le calcul des périodes de retour)?"
+        )
+    
+    logger.info("\nGénération en cours...")
+    
+    # Générer les fichiers GeoJSON de base (communs à toutes les cartes)
+    logger.info("  - Génération des stations ouvertes pour le mois sélectionné...")
+    plot_grandeur.create_geojson_from_stations(reseau_sandre, date_annee_mois)
+    
+    logger.info("  - Génération des sites correspondant au réseau sélectionné...")
+    plot_grandeur.create_geojson_from_sites(reseau_sandre)
+    
+    logger.info("  - Génération de toutes les stations du réseau (même fermées)...")
+    plot_grandeur.create_geojson_from_stations(reseau_sandre, None)
+    
+    logger.info("  - Génération de toutes les stations et sites disponibles...")
     plot_grandeur.create_geojson_from_stations(None, None)
     plot_grandeur.create_geojson_from_sites(None)
-
-    if res_generation_carte == "1":
-        plot_grandeur.create_geojson_from_hydraulicite(date_annee_mois, reseaux_sandre)
-    elif res_generation_carte == "2":
-        plot_grandeur.create_geojson_from_periode_de_retour(date_annee_mois, reseaux_sandre, is_graphic_genere)
-    elif res_generation_carte == "3":
-        plot_grandeur.create_geojson_from_hydraulicite(date_annee_mois, reseaux_sandre)
-        plot_grandeur.create_geojson_from_periode_de_retour(date_annee_mois, reseaux_sandre, is_graphic_genere)
-
-def generer_meteo_carte(res_generation_carte:str):
-    print("Vous souhaitez générer des carte à partir de données météo.")
-    print()
-    print("Quel échelle temporelle souhaitez vous ?")
-    print("(1) MENSUELLE")
-    print("(2) QUOTIDIENNE (défaut)")
-    res_prompt = input(" -> ")
-    choix_res = "2"
-    if res_prompt in ["1", "2"]:
-        choix_res = res_prompt
-
-    is_mens_generated = False
-    is_quot_generated = False
-    if choix_res == "1":
-        is_mens_generated = True
-    if choix_res == "2":
-        is_quot_generated = True
-
-    print()
-    print("Quel type de données voulez vous ?")
-    print("(1) Données sans pré-calcul")
-    print("(2) SIM2 (défaut)")
-    res_prompt = input(" -> ")
-    choix_res = "2"
-    if res_prompt in ["1", "2"]:
-        choix_res = res_prompt
-
-    is_sim2_generated = False
-    is_classic_generated = False
-    if choix_res == "1":
-        is_classic_generated = True
-    if choix_res == "2":
-        is_sim2_generated = True
-
-    format_date = "AAAAMMJJ" if is_quot_generated else "AAAAMM"
-    formater_date = "%Y%m%d" if is_quot_generated else "%Y%m"
-
-    print(f"Quelles date de début souhaitez vous ? ({format_date})")
-    res_prompt = input(" -> ")
-    date_start = datetime.strptime(res_prompt, formater_date)
-    print(f"Date de départ : {date_start}")
-
-    print(f"Quelles date de fin souhaitez vous (inclus dans l'intervalle) ? ({format_date})")
-    res_prompt = input(" -> ")
-    date_end = datetime.strptime(res_prompt, formater_date)
-    print(f"Date de fin : {date_end}")
+    
+    # Générer la carte demandée
+    if type_carte in ["hydraulicite", "les_deux"]:
+        logger.info("  - Génération de la carte d'hydraulicité...")
+        plot_grandeur.create_geojson_from_hydraulicite(date_annee_mois, reseau_sandre)
+    
+    if type_carte in ["vcn3", "les_deux"]:
+        logger.info("  - Génération de la carte de périodes de retour (VCN3)...")
+        plot_grandeur.create_geojson_from_periode_de_retour(
+            date_annee_mois, reseau_sandre, generer_graphiques
+        )
+    
+    logger.info("Génération Hubeau terminée !")
 
 
-    print("Souhaitez vous aggréger les données dans cet intervalle ? O/n")
-    print("Si vous n'aggrégez pas les données, des graphiques jour par jour seront générés en plus.")
-    res_prompt = input(" -> ")
-    is_data_aggregated = True
-    if "n" in res_prompt.lower():
-        is_data_aggregated = False
+# ============================================================================
+# FONCTIONS POUR LA GENERATION DES CARTES METEO FRANCE
+# ============================================================================
 
-    print("Souhaitez vous mettre à jour les données téléchargés ? N/y")
-    res = input(" -> ")
-    has_data_updated = 'y' in res.lower()
+def generer_carte_meteo():
+    """
+    Génère une carte à partir des données Météo France.
+    """
+    logger.info("\n" + "="*60)
+    logger.info("GENERATION DE CARTE METEO FRANCE")
+    logger.info("="*60)
+    
+    # 1. Sélection de l'échelle temporelle
+    options_echelle = {
+        "1": "MENSUELLE",
+        "2": "QUOTIDIENNE (par défaut)"
+    }
+    choix_echelle = demander_avec_choix(
+        "Quel échelle temporelle souhaitez-vous ?",
+        options_echelle,
+        "2"
+    )
+    est_mensuel = (choix_echelle == "1")
+    est_quotidien = (choix_echelle == "2")
+    
+    # 2. Sélection du type de données
+    options_donnees = {
+        "1": "Données brutes (sans pré-calcul)",
+        "2": "SIM2 (par défaut - données interpolées sur grille 8x8km)"
+    }
+    choix_donnees = demander_avec_choix(
+        "Quel type de données souhaitez-vous ?",
+        options_donnees,
+        "2"
+    )
+    est_classique = (choix_donnees == "1")
+    est_sim2 = (choix_donnees == "2")
+    
+    # 3. Sélection des dates
+    format_date = "AAAAMM" if est_mensuel else "AAAAMMJJ"
+    
+    aujourdhui = datetime.now()
+    # Date de début par défaut : premier jour du mois précédent
+    debut_defaut = (aujourdhui.replace(day=1) - timedelta(days=1)).replace(day=1)
+    date_debut = demander_date(
+        f"Quelle date de début souhaitez-vous ?",
+        format_date,
+        debut_defaut
+    )
+    
+    # Date de fin par défaut : dernier jour du mois précédent
+    fin_defaut = debut_defaut.replace(day=calendar.monthrange(debut_defaut.year, debut_defaut.month)[1])
+    date_fin = demander_date(
+        f"Quelle date de fin souhaitez-vous (inclus) ?",
+        format_date,
+        fin_defaut
+    )
+    
+    # 4. Aggregation des données
+    aggreger_donnees = demander_ou_non(
+        "Souhaitez-vous agréger les données dans cet intervalle ? "
+        "(Si Non, des graphiques jour par jour seront générés en plus)",
+        valeur_par_defaut=True
+    )
+    
+    # 5. Mise à jour des données
+    mettre_a_jour_donnees = demander_ou_non(
+        "Souhaitez-vous mettre à jour les données téléchargées ?",
+        valeur_par_defaut=False
+    )
+    
+    mettre_a_jour_index = False
+    if mettre_a_jour_donnees:
+        mettre_a_jour_index = demander_ou_non(
+            "Souhaitez-vous aussi mettre à jour l'index des données ?",
+            valeur_par_defaut=True
+        )
+    
+    # 6. Déterminer le type de données Météo France
+    if est_quotidien:
+        if est_classique:
+            type_donnees = MeteoFranceDataType.QUOT
+            logger.info("Génération des données classiques quotidiennes")
+        if est_sim2:
+            type_donnees = MeteoFranceDataType.SIM2_QUOT
+            logger.info("Génération des données SIM2 quotidiennes")
+    else:  # mensuel
+        if est_classique:
+            type_donnees = MeteoFranceDataType.MENS
+            logger.info("Génération des données classiques mensuelles")
+        if est_sim2:
+            type_donnees = MeteoFranceDataType.SIM2_MENS
+            logger.info("Génération des données SIM2 mensuelles")
+    
+    logger.info(f"Période : du {date_debut} au {date_fin}")
+    logger.info("Génération en cours...")
+    
+    # Générer les fichiers GeoJSON
+    plot_meteoFrance.export_all_format_geojson_range(
+        GeographicScaleClip.DEPARTEMENT_BASSIN,
+        type_donnees,
+        date_debut,
+        date_fin,
+        aggreger_donnees,
+        mettre_a_jour_index,
+        mettre_a_jour_donnees
+    )
+    
+    logger.info("Génération Météo France terminée !")
 
-    if has_data_updated:
-        print("Souhaitez vous mettre à jour l'index des données ? N/y")
-        res = input(" -> ")
-        has_index_updated = 'y' in res.lower()
+
+# ============================================================================
+# FONCTIONS PRINCIPALES
+# ============================================================================
+
+def mode_interactif():
+    """
+    Lance le script en mode interactif.
+    Guide l'utilisateur pas à pas pour générer les cartes souhaitées.
+    """
+    logger.info("\n" + "="*60)
+    logger.info("BIENVENUE DANS L'OUTIL DE GENERATION DE CARTES")
+    logger.info("="*60)
+    logger.info("\nCe script permet de générer différentes cartes à partir de données")
+    logger.info("hydrologiques (Hubeau) et météorologiques (Météo France).")
+    logger.info("\nVous pouvez aussi utiliser le mode CLI avec des arguments.")
+    logger.info("Voir --help pour plus d'informations.\n")
+    
+    # Sélection du type de carte à générer
+    options_principales = {
+        "1": "Générer une carte d'HYDRAULICITE (niveaux d'eau)",
+        "2": "Générer une carte de VCN3/Périodes de retour (étiage)",
+        "3": "Générer LES DEUX cartes Hubeau (plus long au premier lancement)",
+        "4": "Générer des extraits METEO FRANCE (par défaut)"
+    }
+    
+    choix = demander_avec_choix(
+        "Que souhaitez-vous générer ?",
+        options_principales,
+        "4"
+    )
+    
+    if choix in ["1", "2", "3"]:
+        type_map = {"1": "hydraulicite", "2": "vcn3", "3": "les_deux"}
+        generer_carte_hubeau(type_map[choix])
     else:
-        has_index_updated = False
-
-    data_freq = MeteoFranceDataType.QUOT
-    if is_quot_generated:
-        if is_classic_generated:
-            print(f"Génération des données classiques quotidiennes de {date_start} à {date_end}")
-            data_freq = MeteoFranceDataType.QUOT
-        if is_sim2_generated:
-            print(f"Génération des données SIM2 quotidiennes de {date_start} à {date_end}")
-            data_freq = MeteoFranceDataType.SIM2_QUOT
-    if is_mens_generated:
-        if is_classic_generated:
-            print(f"Génération des données classique mensuelles de {date_start} à {date_end}")
-            data_freq = MeteoFranceDataType.MENS
-        if is_sim2_generated:
-            print(f"Génération des données SIM2 mensuelles de {date_start} à {date_end}")
-            data_freq = MeteoFranceDataType.SIM2_MENS
-
-    plot_meteoFrance.export_all_format_geojson_range(GeographicScaleClip.DEPARTEMENT_BASSIN, data_freq, date_start, date_end, is_data_aggregated, has_index_updated, has_data_updated)
+        generer_carte_meteo()
 
 
-def interactif_start():
-    print("Bienvenue dans le client de génération de cartes interactif, que souhaitez vous faire ?")
-    print("(Il est aussi possible de lancer le script en mode CLI (-h))")
+def mode_cli(args):
+    """
+    Exécute le script en mode CLI avec les arguments fournis.
+    
+    Args:
+        args: Les arguments parsés par argparse
+    """
+    aujourdhui = datetime.now()
+    
+    # Initialisation des variables
+    start_date = None
+    end_date = None
+    
+    # Date de début
+    if args.start_date:
+        start_date = formater_date_vers_datetime(args.start_date, est_debut=True)
+    
+    if start_date is None:
+        start_date = (aujourdhui.replace(day=1) - timedelta(days=1)).replace(day=1)
+        logger.info(f"Date de début par défaut : {start_date}")
+    
+    # Date de fin
+    if args.end_date:
+        end_date = formater_date_vers_datetime(args.end_date, est_debut=False)
+    
+    if end_date is None:
+        end_date = start_date.replace(day=calendar.monthrange(start_date.year, start_date.month)[1])
+        logger.info(f"Date de fin par défaut : {end_date}")
+    
+    # Réseau Sandre par défaut
+    reseau_sandre = args.reseau_sandre if args.reseau_sandre else "BSH001"
+    
+    # Appel de la fonction principale
+    main(
+        type_carte=args.type,
+        start_date=start_date,
+        end_date=end_date,
+        reseau_sandre=reseau_sandre,
+        has_vcn3_graphic=args.vcn3_graphic,
+        has_meteo_aggregate=args.meteo_aggregate,
+        has_meteo_index_update=not args.meteo_no_index_update,
+        is_data_update_allowed=not args.meteo_no_update,
+        geographic_scale=args.geographic_scale,
+        code_zone=args.onde_zone_code if args.onde_zone_code else "01"
+    )
 
-    # Selection de la carte à générer
-    print("1 : Générer une carte d'hydraulicité")
-    print("2 : Générer une carte de vcn3/période de retour")
-    print("3 : Générer les deux (lent au premier lancement)")
-    print("4 : Générer des extraits MétéoFrance (défaut)")
-    input_carte_a_generer = input(" -> ")
-    res_generation_carte_choice = "4"
-    if input_carte_a_generer in ["1", "2", "3", "4"]:
-        res_generation_carte_choice = input_carte_a_generer
-    print(f"Choix de génération de carte : {res_generation_carte_choice}")
-
-    if res_generation_carte_choice in ["1", "2", "3"]:
-        generer_hubeau_graph(res_generation_carte_choice)
-    else:
-        generer_meteo_carte(res_generation_carte_choice)
 
 def main(
     type_carte: str,
@@ -188,123 +428,233 @@ def main(
     has_meteo_aggregate: bool = False,
     has_meteo_index_update: bool = True,
     is_data_update_allowed: bool = True,
-    geographic_scale:GeographicScaleClip = GeographicScaleClip.BASSIN,
-    code_zone:str = "01",
+    geographic_scale: GeographicScaleClip = GeographicScaleClip.BASSIN,
+    code_zone: str = "01",
 ):
     """
-    Génère les geojson à partir des arguments d'entrée du CLI.
-    :param type_carte:
-    :param start_date:
-    :param end_date:
-    :param reseau_sandre:
-    :param has_vcn3_graphic:
-    :param has_meteo_aggregate:
-    :param has_meteo_index_update:
-    :param is_data_update_allowed: Autorise le script meteo à mettre ses données à jour.
-    :param geographic_scale: L'échelle géographique souhaitée.
-    :param code_zone: Le code associé à la zone géogrpahique Onde à afficher
-    :return:
+    Fonction principale qui génère les GeoJSON en fonction des paramètres.
+    
+    Args:
+        type_carte: Type de carte à générer
+        start_date: Date de début
+        end_date: Date de fin
+        reseau_sandre: Réseau SANDRE à utiliser
+        has_vcn3_graphic: Si True, génère les graphiques individuels pour VCN3
+        has_meteo_aggregate: Si True, aggrège les données météo
+        has_meteo_index_update: Si True, met à jour l'index météo
+        is_data_update_allowed: Si True, autorise la mise à jour des données
+        geographic_scale: Échelle géographique pour les données météo/onde
+        code_zone: Code de la zone géographique pour ONDE
     """
     if not is_data_update_allowed:
         has_meteo_index_update = False
-
-    match type_carte:
-        case "hydraulicite":
-            plot_grandeur.create_geojson_from_hydraulicite(start_date.strftime("%Y-%m"), reseau_sandre)
-        case "vcn3":
-            plot_grandeur.create_geojson_from_periode_de_retour(start_date.strftime("%Y-%m"), reseau_sandre, has_vcn3_graphic)
-        case "meteo_brut_MENS":
-            plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.MENS, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
-        case "meteo_sim2_MENS":
-            plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.SIM2_MENS, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
-        case "meteo_brut_QUOT":
-            plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
-        case "meteo_sim2_QUOT":
-            plot_meteoFrance.export_all_format_geojson_range(geographic_scale, MeteoFranceDataType.SIM2_QUOT, start_date, end_date, is_data_aggregated=has_meteo_aggregate, has_index_update=has_meteo_index_update, is_data_update_allowed=is_data_update_allowed)
-        case "onde_USUELLE":
-            plot_onde.plot_everything(OndeCampagneType.USUELLE, start_date, geographic_scale, code_zone)
-        case "onde_ALL":
-            plot_onde.plot_everything(OndeCampagneType.ALL_CAMPAGNE, start_date, geographic_scale, code_zone)
-        case _:
-            raise NotImplementedError
-
-def try_format_date(date_to_format:str,is_last_day:bool) -> datetime|None:
-    """
-    Tente de reconnaitre le format d'une date et renvoie la date formatté.
-    :param date_to_format: La date à formatter.
-    :param is_last_day: Si à True, Renvoie le dernier jour du mois.
-    :return: Une date formatté si l'opération a été réussi ou None si la date n'a pas été reconnue.
-    """
-    if len(date_to_format) == 7:
-        res = datetime.strptime(date_to_format, "%Y-%m")
-        res.replace(day=1)
-        if is_last_day:
-            res.replace(day=calendar.monthrange(res.year, res.month)[1])
-    elif len(date_to_format) == 10:
-        res = datetime.strptime(date_to_format, "%Y-%m-%d")
+    
+    # Exécution en fonction du type de carte
+    if type_carte == "hydraulicite":
+        logger.info("Génération de la carte d'hydraulicité...")
+        plot_grandeur.create_geojson_from_hydraulicite(
+            start_date.strftime("%Y-%m"),
+            reseau_sandre
+        )
+    
+    elif type_carte == "vcn3":
+        logger.info("Génération de la carte VCN3/périodes de retour...")
+        plot_grandeur.create_geojson_from_periode_de_retour(
+            start_date.strftime("%Y-%m"),
+            reseau_sandre,
+            has_vcn3_graphic
+        )
+    
+    elif type_carte == "meteo_brut_MENS":
+        logger.info("Génération des données Météo France brutes mensuelles...")
+        plot_meteoFrance.export_all_format_geojson_range(
+            geographic_scale,
+            MeteoFranceDataType.MENS,
+            start_date,
+            end_date,
+            is_data_aggregated=has_meteo_aggregate,
+            has_index_update=has_meteo_index_update,
+            is_data_update_allowed=is_data_update_allowed
+        )
+    
+    elif type_carte == "meteo_sim2_MENS":
+        logger.info("Génération des données Météo France SIM2 mensuelles...")
+        plot_meteoFrance.export_all_format_geojson_range(
+            geographic_scale,
+            MeteoFranceDataType.SIM2_MENS,
+            start_date,
+            end_date,
+            is_data_aggregated=has_meteo_aggregate,
+            has_index_update=has_meteo_index_update,
+            is_data_update_allowed=is_data_update_allowed
+        )
+    
+    elif type_carte == "meteo_brut_QUOT":
+        logger.info("Génération des données Météo France brutes quotidiennes...")
+        plot_meteoFrance.export_all_format_geojson_range(
+            geographic_scale,
+            MeteoFranceDataType.QUOT,
+            start_date,
+            end_date,
+            is_data_aggregated=has_meteo_aggregate,
+            has_index_update=has_meteo_index_update,
+            is_data_update_allowed=is_data_update_allowed
+        )
+    
+    elif type_carte == "meteo_sim2_QUOT":
+        logger.info("Génération des données Météo France SIM2 quotidiennes...")
+        plot_meteoFrance.export_all_format_geojson_range(
+            geographic_scale,
+            MeteoFranceDataType.SIM2_QUOT,
+            start_date,
+            end_date,
+            is_data_aggregated=has_meteo_aggregate,
+            has_index_update=has_meteo_index_update,
+            is_data_update_allowed=is_data_update_allowed
+        )
+    
+    elif type_carte == "onde_USUELLE":
+        logger.info("Génération des données ONDE (campagnes usuelles)...")
+        plot_onde.plot_everything(
+            OndeCampagneType.USUELLE,
+            start_date,
+            geographic_scale,
+            code_zone
+        )
+    
+    elif type_carte == "onde_ALL":
+        logger.info("Génération des données ONDE (toutes campagnes)...")
+        plot_onde.plot_everything(
+            OndeCampagneType.ALL_CAMPAGNE,
+            start_date,
+            geographic_scale,
+            code_zone
+        )
+    
+    elif type_carte == "stations-sites":
+        logger.info("Génération des stations et sites...")
+        # Générer les fichiers de base
+        plot_grandeur.create_geojson_from_stations(reseau_sandre, start_date.strftime("%Y-%m"))
+        plot_grandeur.create_geojson_from_sites(reseau_sandre)
+        plot_grandeur.create_geojson_from_stations(reseau_sandre, None)
+        plot_grandeur.create_geojson_from_stations(None, None)
+        plot_grandeur.create_geojson_from_sites(None)
+    
     else:
-        return None
+        raise NotImplementedError(f"Type de carte non implémenté : {type_carte}")
 
-    return res
 
+# ============================================================================
+# CONFIGURATION CLI ET POINT D'ENTREE
+# ============================================================================
 
 if __name__ == "__main__":
-    # On clear le cache de Pynsee
+    # Nettoyer le cache de Pynsee
     clear_all_cache()
-
-    parser = argparse.ArgumentParser(description="Exporter des données hydrologiques/météorologiques.",
-                                     epilog="N'hésitez pas à rapporter des bugs ou des suggestions sur la page github : https://github.com/Thomas-MESLIN/RecupeEthiage")
-    parser.add_argument("--type", choices=["hydraulicite", "vcn3", "meteo_brut_MENS", "meteo_sim2_MENS", "meteo_brut_QUOT", "meteo_sim2_QUOT", "stations-sites", "onde_USUELLE", "onde_ALL"],
-                        help="hydraulicite : Calcul l'hydraucilité sur 1 mois désigné par start_date des stations, | "
-                             "vcn3 : Calcul du VCN3 et des périodes de retour et des fréquences de on-dépassements sur 1 mois. | "
-                             "meteo_brut_... : Récupères les données Météo brute station par stations. | "
-                             "meteo_sim2_... : Récupères les données Météo SIM2 via des carré de 8x8km. | "
-                             "stations_sites : Sauvegarde les stations et les sites de n'importe quelle liste SANDRE souhaités ou de la liste custom. | "
-                             "onde_USUELLE : Récupères les données Onde sur les campagnes USUELLES UNIQUEMENT d'écoulements des cours d'eaux | "    
-                             "onde_ALL : Récupères les données Onde sur les campagnes USUELLES ET COMPLEMENTAIRES d'écoulements des cours d'eaux, ne garde que les données les plus récente pour chaque coordonnées | ")
-    parser.add_argument("--start_date", help="Format: AAAA-MM-JJ|AAAA-MM (défaut le début du mois précédent)")
-    parser.add_argument("--end_date", help="Format: AAAA-MM-JJ|AAAA-MM (borne incluse) (défaut - fin du mois précédent)")
-    parser.add_argument("--reseau_sandre", help="Le réseau SANDRE que vous souhaitez utiliser (défaut BSH001), custom pour utiliser la liste de sites/stations custom")
-    parser.add_argument("--vcn3_graphic", action='store_true', help="[VCN3] Si présent, des graphiques individuels seront générés pour chaque stations")
-    parser.add_argument("--geographic_scale", choices=[GeographicScaleClip.BASSIN, GeographicScaleClip.REGION_ADMINISTRATIVE, GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF, GeographicScaleClip.REGION_BASSIN, GeographicScaleClip.DEPARTEMENT_BASSIN], help="[météo|onde] L'échelle géographique à laquelle on veut exporter les données, par défaut, BASSIN", default=GeographicScaleClip.BASSIN)
-    parser.add_argument("--onde_zone_code",  help="[onde] Le code de la zone géographique souhaité. (CC) ex : '06' pour le bassin Rhone-Méditerranéen")
-    parser.add_argument("--meteo_aggregate", action='store_true', help="[météo] Si présent, les données seront aggrégés sur la période sélectionnée")
-    parser.add_argument("--meteo_no_index_update", action='store_false', help="[météo] Si présent, l'index de correspondance entre les fichiers enregistré des dataset et leur id_datagouv ne sera pas mis à jour.")
-    parser.add_argument("--meteo_no_update", action='store_false',help="[météo] Si présent, aucune données ne sera mis à jour. Peut servir pour les données quotidiennes brut où il peut y avoir beaucoup de mis à jour.")
-
+    
+    # Configuration du parseur d'arguments
+    parser = argparse.ArgumentParser(
+        description="Exporter des données hydrologiques/météorologiques sous forme de cartes GeoJSON.",
+        epilog="Pour plus d'informations : https://github.com/Thomas-MESLIN/RecupeEthiage"
+    )
+    
+    # Argument principal : type de carte
+    parser.add_argument(
+        "--type",
+        choices=[
+            "hydraulicite",
+            "vcn3",
+            "meteo_brut_MENS",
+            "meteo_sim2_MENS",
+            "meteo_brut_QUOT",
+            "meteo_sim2_QUOT",
+            "stations-sites",
+            "onde_USUELLE",
+            "onde_ALL"
+        ],
+        help="""
+        Type de données à générer :
+        - hydraulicite : Carte d'hydraulicité (niveaux d'eau) pour un mois
+        - vcn3 : Carte de VCN3 et périodes de retour (étiage) pour un mois
+        - meteo_brut_MENS : Données Météo France brutes mensuelles
+        - meteo_sim2_MENS : Données Météo France SIM2 mensuelles
+        - meteo_brut_QUOT : Données Météo France brutes quotidiennes
+        - meteo_sim2_QUOT : Données Météo France SIM2 quotidiennes
+        - stations-sites : Liste des stations et sites
+        - onde_USUELLE : Données ONDE (campagnes usuelles)
+        - onde_ALL : Données ONDE (toutes campagnes)
+        """
+    )
+    
+    # Arguments de dates
+    parser.add_argument(
+        "--start_date",
+        help="Date de début au format AAAA-MM-JJ ou AAAA-MM (défaut : premier jour du mois précédent)"
+    )
+    parser.add_argument(
+        "--end_date",
+        help="Date de fin au format AAAA-MM-JJ ou AAAA-MM (défaut : dernier jour du mois précédent)"
+    )
+    
+    # Arguments spécifiques
+    parser.add_argument(
+        "--reseau_sandre",
+        help="Réseau SANDRE à utiliser (défaut : BSH001). Utilisez 'custom' pour la liste personnalisée"
+    )
+    parser.add_argument(
+        "--vcn3_graphic",
+        action='store_true',
+        help="[VCN3] Générer des graphiques individuels pour chaque station"
+    )
+    parser.add_argument(
+        "--geographic_scale",
+        choices=[
+            GeographicScaleClip.NATIONAL,
+            GeographicScaleClip.BASSIN,
+            GeographicScaleClip.REGION_ADMINISTRATIVE,
+            GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF,
+            GeographicScaleClip.REGION_BASSIN,
+            GeographicScaleClip.DEPARTEMENT_BASSIN
+        ],
+        help="[météo/onde] Échelle géographique (défaut : BASSIN)",
+        default=GeographicScaleClip.BASSIN
+    )
+    parser.add_argument(
+        "--onde_zone_code",
+        help="[onde] Code de la zone géographique (ex : '06' pour bassin Rhône-Méditerranée)"
+    )
+    parser.add_argument(
+        "--meteo_aggregate",
+        action='store_true',
+        help="[météo] Aggréger les données sur la période sélectionnée"
+    )
+    parser.add_argument(
+        "--meteo_no_index_update",
+        action='store_false',
+        help="[météo] Ne pas mettre à jour l'index de correspondance des datasets"
+    )
+    parser.add_argument(
+        "--meteo_no_update",
+        action='store_false',
+        help="[météo] Ne pas mettre à jour les données (désactive aussi mise à jour index)"
+    )
+    
+    # Parsing des arguments
     args = parser.parse_args()
-
+    
+    # Initialisation des variables
+    start_date = None
+    end_date = None
+    
+    # Mode interactif si aucun type n'est spécifié
     if args.type is None:
-        logger.error("Le type de données souhaité n'est pas spécifié !")
-        logger.info("Passage en mode interactif !")
-        interactif_start()
+        logger.info("Aucun type de carte spécifié.")
+        logger.info("Lancement du mode interactif...\n")
+        mode_interactif()
     else:
-        start_date = None
-        if args.start_date is not None:
-            start_date = try_format_date(args.start_date,is_last_day=False)
-        # Si la date de début est vide, on remplace par le premier jour du mois précédent
-        if start_date is None:
-            start_date = (datetime.today().replace(day=1) - timedelta(days=1)).replace(day=1)
-            logger.info(f"Utilisation de la start_date par défaut : {start_date}")
-
-        end_date = None
-        if args.end_date is not None:
-            end_date = try_format_date(args.end_date,is_last_day=True)
-        # Si la date de fin est vide, on remplace par le dernier jour du mois précédent
-        if end_date is None:
-            end_date = start_date.replace(day=calendar.monthrange(start_date.year,start_date.month)[1])
-            logger.info(f"Utilisation de la end_date par défaut : {end_date}")
-
-        main(args.type,
-             start_date,
-             end_date,
-             args.reseau_sandre,
-             args.vcn3_graphic,
-             args.meteo_aggregate,
-             args.meteo_no_index_update,
-             args.meteo_no_update,
-             args.geographic_scale,
-             args.onde_zone_code,
-        )
-
-    logger.info("\nGénération terminée.")
+        # Mode CLI
+        mode_cli(args)
+    
+    logger.info("\n" + "="*60)
+    logger.info("GENERATION TERMINEE AVEC SUCCES !")
+    logger.info("="*60)
