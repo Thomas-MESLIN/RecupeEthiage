@@ -98,36 +98,39 @@ class TestStation:
 
 class TestClean:
     """Tests for clean.py"""
-    
-    def test_get_grandeur_historique_df_qmm(self):
+
+    @patch('src.io.download_Hubeau.ensure_grandeur_historique_downloaded')
+    @patch('pathlib.Path.exists')
+    @patch('src.processing.clean.utils.get_path_historique_raw_csv')
+    def test_get_grandeur_historique_df_qmm(self, mock_path, mock_exist, mock_ensure_downloaded):
         """Test get_grandeur_historique_df with QmM."""
         with patch.object(clean, '_cache', {}):
-            with patch('src.processing.clean.download_Hubeau.ensure_grandeur_historique_downloaded'):
-                with patch('src.processing.clean.utils.get_path_historique_raw_csv') as mock_path:
-                    with patch('pandas.read_csv') as mock_read:
-                        mock_path.return_value = Path("mock/clean-QmM-BSH001-2023-06.csv")
-                        mock_read.return_value = pd.DataFrame({"col1": [1, 2, 3]})
-                        
-                        result = clean.get_grandeur_historique_df("QmM")
-                        assert isinstance(result, pd.DataFrame)
+            with patch('pandas.read_csv') as mock_read:
+                mock_path.return_value = Path("mock/clean-QmM-BSH001-2023-06.csv")
+                mock_read.return_value = pd.DataFrame({"col1": [1, 2, 3]})
+
+                result = clean.get_grandeur_historique_df("QmM")
+                assert isinstance(result, pd.DataFrame)
     
     def test_clean_hubeau_data(self, sample_dataframe):
         """Test clean_hubeau_data function."""
-        with patch('src.processing.clean.download_Hubeau.ensure_grandeur_mensuel_downloaded'):
+        with patch('src.io.download_Hubeau.ensure_grandeur_mensuel_downloaded'):
             with patch('src.processing.clean.station.get_stations') as mock_get_stations:
-                mock_get_stations.return_value = pd.DataFrame({
-                    "code_station": ["S1", "S2"],
-                    "code_site": ["Site1", "Site2"]
-                })
-                
-                result = clean.clean_hubeau_data(
-                    date_a_filtrer="2023-06",
-                    code_sandre="BSH001",
-                    path_file_to_clean=None,
-                    grandeur_a_filtrer="QmM"
-                )
-                
-                assert isinstance(result, pd.DataFrame)
+                with patch('pandas.read_csv') as mock_read:
+                    mock_read.return_value = pd.DataFrame({"col1": [1, 2, 3]})
+                    mock_get_stations.return_value = pd.DataFrame({
+                        "code_station": ["S1", "S2"],
+                        "code_site": ["Site1", "Site2"]
+                    })
+                    
+                    result = clean.clean_hubeau_data(
+                        date_a_filtrer="2023-06",
+                        code_sandre="BSH001",
+                        path_file_to_clean=None,
+                        grandeur_a_filtrer="QmM"
+                    )
+
+                    assert isinstance(result, pd.DataFrame)
 
 
 class TestCalculVCN3:
