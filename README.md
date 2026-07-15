@@ -287,6 +287,33 @@ output/
 └── logs/                   # Journaux d'exécution (pour le dépannage)
 ```
 
+### Description des résultats
+
+#### ONDE
+
+Les résultats ONDE se trouvent tous dans le dossier output/onde.
+
+Ils sont rangé par date, puis, on trie en fonction de la zone géographique choisie : 
+- D Département
+- R Région
+- B bassin
+
+Il n'y a pas de distinction entre une zone administrative et une zone bassin pour ONDE, seule la zone administrative est utilisée.
+
+Vous pouvez trouver dans le dossier les images des graphiques ONDE avec 3 lettres possible :
+- A, les graphiques des campagnes les plus récentes possible (ALL = Usuelle et Complémentaire) (recommandé)
+- C, les graphiques concernant uniquement les campagnes complémentaires
+- U, les graphiques concernant uniquement les campagnes usuelles
+
+Dans le dossier csv et geojson, on retrouve des fichiers se terminant par :
+- all, contiens toutes les données du mois des campagnes ONDE.
+- complémentaires, contient toutes les données du mois pour les campagnes complémentaires uniquement.
+- usuelles, contient toutes les données du mois pour les campagnes usuelles uniquement.
+- latest, contient les dernières données enregistrées pour chaque station (on garde la donnée la plus récente entre les campagnes usuelles et complémentaire).
+
+
+Dans le dossier HISTORIC_DATA, vous retrouverez TOUTES les observations enrichies de leurs données de campagnes.
+
 ---
 
 ## 🌐 Utiliser un Proxy (pour les réseaux internes)

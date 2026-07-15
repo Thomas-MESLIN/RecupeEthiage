@@ -255,12 +255,12 @@ def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geograp
                           annee_mois.replace(day=calendar.monthrange(annee_mois.year, annee_mois.month)[1]), # On prend le dernier jour du mois
                           annee_mois.year,
                           campagne_type,
-                          output_path=dossier_chemin / f"onde_evolution-assec_{annee_mois.strftime('%Y')}_{campagne_type}_{geographic_scale[0]}{zone_code}.png")
+                          output_path=dossier_chemin / f"onde_evolution-assec_{annee_mois.strftime('%Y')}_{campagne_type}.png")
 
     plot_evolution_ecoulements(df_complet,
                                campagne_type,
                                6,nb_mesures=385,
-                               output_path=dossier_chemin / f"onde_evolution-ecoulement_{annee_mois.strftime('%Y-%m')}_{campagne_type}_{geographic_scale[0]}{zone_code}.png")
+                               output_path=dossier_chemin / f"onde_evolution-ecoulement_{annee_mois.strftime('%Y-%m')}_{campagne_type}.png")
     logger.info("Données générées avec succès dans : " + str(dossier_chemin))
 
 
