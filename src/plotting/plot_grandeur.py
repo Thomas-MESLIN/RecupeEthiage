@@ -11,6 +11,8 @@ import src.processing.station as station
 import src.io.download_Hubeau as download_Hubeau
 import src.processing.calcul_hydraulicite as calcul_hydraulicite
 import logging
+from src.plotting.rasterize import rasterize_geodataframe_geographiv_zone
+from src.model.enums import GeographicScaleClip
 from src.config.logging_config import setup_logger
 from src.config.paths import OUTPUT_DIR
 
@@ -20,6 +22,7 @@ logger = setup_logger(name="plot_grandeur")
 
 def create_geojson_from_path(chemin_donees_csv:Path, output_path: Path, annee_mois:str, code_sandre:str):
     """
+    Créer un geojson et le sauvegarde à partir d'un csv.
     Suppose que le fichier a déjà été calculé.
     :param output_path: Chemin vers lequel le fichier sera écrit.
     :param chemin_donees_csv: Un chemin vers des données contenant des stations.
@@ -330,6 +333,86 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_re
 
     create_geojson_from_path(chemin_periode_de_retour, output_path, annee_mois, code_sandre)
 
+    generate_raster_from_periode_de_retour_geojson(output_path, output_path.with_stem(output_path.stem+"_frequence_non_depassement").with_suffix(".png"), "frequence_non_depassement",GeographicScaleClip.BASSIN,"06",f"Fréquence de non dépassemment de {annee_mois} de la liste {code_sandre}.")
+
+    generate_raster_from_periode_de_retour_geojson(output_path, output_path.with_stem(output_path.stem+"_periode_de_non_retour").with_suffix(".png"), "Periode_de_retour",GeographicScaleClip.BASSIN,"06",f"Période de retour de {annee_mois} de la liste {code_sandre}.")
+
+
+def generate_raster_from_hydraulicite_geojson(geojson_path: Path, output_path: Path, value_column: str,
+                                              geographic_scale: GeographicScaleClip, code_zone: str, titre: str):
+    """
+    Génère un raster à partir d'un fichier GeoJSON d'hydraulicité existant.
+
+    :param geojson_path: Chemin vers le fichier GeoJSON à rasteriser
+    :param output_path: Chemin de sortie pour l'image raster
+    :param value_column: Nom de la colonne contenant les valeurs à rasteriser (ex: hydraulicite)
+    :param geographic_scale: L'échelle géographique
+    :param code_zone: Le code de la zone géographique
+    :param titre: Titre du graphique raster
+    :return: Rien
+    """
+    try:
+        # Charger le GeoJSON
+        gdf = gpd.read_file(geojson_path).to_crs(2154)
+
+        if value_column not in gdf.columns:
+            logger.error(f"La colonne '{value_column}' n'existe pas dans le GeoDataFrame")
+            raise ValueError(f"Colonne {value_column} introuvable dans {geojson_path}")
+
+        # Générer le raster
+        rasterize_geodataframe_geographiv_zone(
+            gdf,
+            value_column,
+            geographic_scale,
+            code_zone,
+            output_path,
+            titre
+        )
+        logger.info(f"Raster hydraulicité généré : {output_path}")
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération du raster hydraulicité : {e}")
+        raise
+
+
+def generate_raster_from_periode_de_retour_geojson(geojson_path: Path, output_path: Path, value_column: str,
+                                              geographic_scale: GeographicScaleClip, code_zone: str, titre: str):
+    """
+    Génère un raster à partir d'un fichier GeoJSON de période de retour existant
+
+    :param geojson_path: Chemin vers le fichier GeoJSON à rasteriser
+    :param output_path: Chemin de sortie pour l'image raster
+    :param value_column: Nom de la colonne contenant les valeurs à rasteriser (ex: hydraulicite)
+    :param geographic_scale: L'échelle géographique
+    :param code_zone: Le code de la zone géographique
+    :param titre: Titre du graphique raster
+    :return: Rien
+    """
+    try:
+        # Charger le GeoJSON
+        gdf = gpd.read_file(geojson_path).to_crs(2154)
+
+        if value_column not in gdf.columns:
+            logger.error(f"La colonne '{value_column}' n'existe pas dans le GeoDataFrame")
+            raise ValueError(f"Colonne {value_column} introuvable dans {geojson_path}")
+
+        # On borne les valeurs.
+        gdf["Periode_de_retour"] = gdf["Periode_de_retour"].clip(lower=0, upper=10)
+
+        # Générer le raster
+        rasterize_geodataframe_geographiv_zone(
+            gdf,
+            value_column,
+            geographic_scale,
+            code_zone,
+            output_path,
+            titre
+        )
+        logger.info(f"Raster periode de retour généré : {output_path}")
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération du raster periode de retour : {e}")
+        raise
+
+
 def create_geojson_from_hydraulicite(annee_mois:str, code_sandre:str):
     """
     Exporte un geojson de l'hydraulicite du mois AAAA-MM des stations correspondant au code_sandre.
@@ -343,6 +426,10 @@ def create_geojson_from_hydraulicite(annee_mois:str, code_sandre:str):
     output_path = OUTPUT_DIR / "QGIS" / "hydraulicite" / f"hydraulicite-{code_sandre}-{annee_mois}.geojson"
 
     create_geojson_from_path(chemin_hydraulicite, output_path, annee_mois, code_sandre)
+
+    generate_raster_from_hydraulicite_geojson(output_path, output_path.with_suffix(".png"), "hydraulicite",
+                                              GeographicScaleClip.BASSIN, "06",
+                                              f"Hydraulicité de {annee_mois} pour les stations de la liste {code_sandre}")
 
 
 if __name__ == "__main__":
