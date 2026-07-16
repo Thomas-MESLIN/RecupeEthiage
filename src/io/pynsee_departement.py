@@ -34,3 +34,4 @@ def get_departement_name(code_region:str, code_departement:str) -> str|None:
 if __name__ == "__main__":
     print(get_departements_from_regions("84"))
     print(get_departement_name("84","01"))
+    print(get_region_name("84"))

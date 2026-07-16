@@ -7,37 +7,27 @@ from rasterio.transform import from_bounds
 from rasterio.mask import mask
 from rasterio.plot import plotting_extent
 from rasterio.io import MemoryFile
-
 from scipy.interpolate import griddata
-
+from model.enums import GeographicScaleClip
 from src.config.paths import OUTPUT_DIR
 from src.config.logging_config import setup_logger
+from src.io.pynsee_departement import get_departements_from_regions
 
 # Initialiser le logger
 logger = setup_logger(name="rasterize")
 
 
-def rasterize_geojson(series_to_rasterize:gpd.GeoDataFrame, value_column_name:str, gdf_mask:gpd.GeoDataFrame, titre_graphique:str,
+def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, gdf_mask:gpd.GeoDataFrame, titre_graphique:str,
                       color_palette:str, is_invert_palette:bool, intervalle_name:list[str], intervalle_marqueur:list[float],
                       output_path:Path, geojson_to_draw:gpd.GeoDataFrame=None):
-    """
-    Les données doivent être en .to_crs(2154)
-    :param series_to_rasterize:
-    :param gdf_mask:
-    :param titre_graphique:
-    :param color_palette:
-    :param is_invert_palette:
-    :param intervalle_name:
-    :param intervalle_marqueur:
-    :return:
-    """
+
     GRID_SIZE = 1500
 
     INTERPOLATION = "linear"
 
     ENABLE_CLIP = True
 
-    points = series_to_rasterize
+    points = gdf_to_rasterize
 
     # =========================
     # POINTS
@@ -215,8 +205,110 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
             ],
             [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25]
         )
+    elif "hydraulicite" in unit_to_get_graphic:
+        ## TODO mettre les bonnes couleur
+        return (
+            "turbo",
+            True,
+            [
+                "-0.25 - Très faible",
+                "0.25",
+                "0.75",
+                "1.25",
+                "1.75 - Très forte",
+                "Faible",
+                "Moyenne",
+                "Forte",
+            ],
+            [-0.25, 0.25, 0.75, 1.25, 1.75]
+        )
     else:
         return None
+
+def get_departement_to_draw_from_region(code_zone: str) -> gpd.GeoDataFrame:
+    DEPARTEMENT = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
+    geo_departement_mask = gpd.read_file(DEPARTEMENT).to_crs(2154)
+    geo_departement_mask = geo_departement_mask[
+        geo_departement_mask["code"].isin(get_departements_from_regions(code_zone))]
+    return geo_departement_mask
+
+def rasterize_geodataframe_geographiv_zone(
+    geodataframe: gpd.GeoDataFrame,
+    unit_to_rasterize: str,
+    geographic_zone: GeographicScaleClip,
+    code_zone: str,
+    output_path: Path,
+    titre_graphique:str
+) -> None:
+    """
+    Rasterise un GeoDataFrame pour une zone géographique spécifique et une unité de mesure donnée.
+
+    Args:
+        geodataframe (gpd.GeoDataFrame): Le GeoDataFrame contenant les points à rasteriser.
+        unit_to_rasterize (str): Le nom de l'unité à rasteriser (ex: "SSWI1", "hydraulicite").
+        geographic_zone (GeographicScaleClip): L'échelle géographique (ex: bassin, région, département).
+        code_zone (str): Le code identifiant la zone (ex: "06" pour un bassin, "84" pour une région).
+        output_path (Path): Chemin de sortie pour l'image générée.
+        titre_graphique (str): Le titre du graphique.
+        geojson_to_draw (gpd.GeoDataFrame, optional): GeoDataFrame supplémentaire à dessiner sur la carte (ex: limites de départements).
+    """
+    logger.info(f"Rasterisation commencée pour {unit_to_rasterize} dans la zone {code_zone} ({geographic_zone}).")
+
+    # Vérifier que le GeoDataFrame contient la colonne de valeur
+    if unit_to_rasterize not in geodataframe.columns:
+        logger.error(f"La colonne {unit_to_rasterize} n'existe pas dans le GeoDataFrame.")
+        raise ValueError(f"La colonne {unit_to_rasterize} n'existe pas dans le GeoDataFrame.")
+
+    # Charger le masque en fonction de l'échelle géographique
+    mask_file_path = Path()
+    mask_column_name = None
+    geojson_to_draw = None
+    match geographic_zone:
+        case GeographicScaleClip.BASSIN:
+            mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/BassinHydrographique_FXX.geojson"
+            mask_column_name = "CdBH"
+        case GeographicScaleClip.REGION_ADMINISTRATIVE | GeographicScaleClip.REGION_BASSIN:
+            mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/regions-100m.geojson"
+            mask_column_name = "code"
+            geojson_to_draw = get_departement_to_draw_from_region(code_zone)
+        case GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF | GeographicScaleClip.DEPARTEMENT_BASSIN:
+            mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
+            mask_column_name = "code"
+        case _:
+            logger.error(f"Échelle géographique non prise en charge : {geographic_zone}")
+            raise ValueError(f"Échelle géographique non prise en charge : {geographic_zone}")
+
+    # Charger le masque et filtrer selon le code de la zone
+    geo_mask = gpd.read_file(mask_file_path).to_crs(2154)
+    geo_mask = geo_mask[geo_mask[mask_column_name] == code_zone]
+
+    if geo_mask.empty:
+        logger.error(f"Aucune zone trouvée avec le code {code_zone} dans {mask_file_path}.")
+        raise ValueError(f"Aucune zone trouvée avec le code {code_zone} dans {mask_file_path}.")
+
+    # Récupérer les paramètres graphiques pour l'unité
+    graphic_params = get_graphic_parameter(unit_to_rasterize)
+    if graphic_params is None:
+        logger.error(f"Aucun paramètre graphique défini pour l'unité {unit_to_rasterize}.")
+        raise ValueError(f"Aucun paramètre graphique défini pour l'unité {unit_to_rasterize}.")
+
+    palette, is_palette_inverse, intervalle_name, tick_pos = graphic_params
+
+    # Appeler la fonction de rasterisation
+    rasterize_geojson(
+        gdf_to_rasterize=geodataframe,
+        value_column_name=unit_to_rasterize,
+        gdf_mask=geo_mask,
+        titre_graphique=titre_graphique,
+        color_palette=palette,
+        is_invert_palette=is_palette_inverse,
+        intervalle_name=intervalle_name,
+        intervalle_marqueur=tick_pos,
+        output_path=output_path,
+        geojson_to_draw=geojson_to_draw,
+    )
+
+    logger.info(f"Rasterisation terminée pour {unit_to_rasterize} dans la zone {code_zone} ({geographic_zone}).")
 
 if __name__ == "__main__":
     POINTS_FILE = OUTPUT_DIR / "QGIS/meteoFrance/MENS-SIM2-202606/bassin/MENS-SIM2-202606-B06.geojson"
@@ -244,11 +336,7 @@ if __name__ == "__main__":
 
     OUTPUT_PNG = OUTPUT_DIR / "test/output_rasterise_test_REGION.png"
 
-    MASK_FILE = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/regions-100m.geojson"
-
     point_dataframe = gpd.read_file(POINTS_FILE).to_crs(2154)
-    geo_mask = gpd.read_file(MASK_FILE).to_crs(2154)
-    geo_mask = geo_mask[geo_mask["code"] == "84"]
 
     DEPARTEMENT = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
     geo_departement_mask = gpd.read_file(DEPARTEMENT).to_crs(2154)
@@ -259,4 +347,22 @@ if __name__ == "__main__":
 
     rasterize_geojson(point_dataframe, "SSWI1", geo_mask, "SSWI1 du mois de Juin 2026 en Auvergne-Rhône-Alpes",
                       palette, is_palette_inverse, intervalle_name, tick_pos, OUTPUT_PNG, geo_departement_mask)
+
+    # AUTRE TEST ENCORE
+
+
+    POINTS_FILE = OUTPUT_DIR / "QGIS/meteoFrance/QUOT-SIM2-20260601/region_administrative/QUOT-SIM2-20260601-R27.geojson"
+
+    OUTPUT_PNG = OUTPUT_DIR / "test/output_rasterise_test_REGION_test_QUOT.png"
+
+    point_dataframe = gpd.read_file(POINTS_FILE).to_crs(2154)
+
+    rasterize_geodataframe_geographiv_zone(
+        point_dataframe,
+        "SSWI_10J",
+        GeographicScaleClip.REGION_ADMINISTRATIVE,
+        "27",
+        OUTPUT_DIR / "test/test_region_administrative_fonction.png",
+        "SSWI_10J au 1er du mois de juin 2026 de la région 27."
+    )
 
