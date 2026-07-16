@@ -12,6 +12,7 @@ from functools import cache
 import matplotlib.pyplot as plt
 from src.config.logging_config import setup_logger
 from src.config.paths import OUTPUT_DIR
+from src.plotting.rasterize import rasterize_geodataframe_geographiv_zone
 
 # Initialiser le logger
 logger = setup_logger(name="plot_meteoFrance")
@@ -128,7 +129,7 @@ def get_chemin_sauvegarde_geographie(geographic_scale:GeographicScaleClip, chemi
     nouveau_chemin = nouveau_chemin.parent / dossier / nouveau_chemin.name
     return nouveau_chemin
 
-def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographic_scale:GeographicScaleClip, df:pd.DataFrame, chemin_save_original:Path, is_data_aggregated:bool):
+def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographic_scale:GeographicScaleClip, df:pd.DataFrame, chemin_save_original:Path, is_data_aggregated:bool, is_single_data:bool):
     """
     Export en géojson le df à toute les échelles.
 
@@ -138,6 +139,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
     :param geographic_scale:
     :param df:
     :param chemin_save_original:
+    :param is_single_data:
     :return:
     """
     logger.info(f"Export de tous les region géographique en cours : {geographic_scale}...")
@@ -201,7 +203,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
         plot_geojson_from_lambert2(chemin_save, gdf_second_clip)
 
         # On crée les plots matplotlib associé à cette zone gégraphique.
-        if not is_data_aggregated:
+        if (not is_single_data) and (not is_data_aggregated):
             logger.info("Créations des plots pour la zone géographique.")
             gdf_aggrege_by_datetime = MeteoAgg.aggregate_range(data_freq ,gdf_second_clip, GroupByMethod.BY_DATE)
             #Créer le dossier de cahque zone geographiique et faire a l'interieur un dossier par code.
@@ -209,8 +211,43 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
             chemin_code.mkdir(parents=True, exist_ok=True)
             nom_echelle = f"{geographic_scale}-{code}"
             create_all_plot_for_unique_scale(gdf_aggrege_by_datetime, nom_echelle, start_date,end_date, chemin_code)
+        else:
+            # On créer les raster si les données sont aggrégés.
+            rasterize_meteofrance(gdf_second_clip.to_crs(2154), data_freq, geographic_scale, code, chemin_save)
 
     logger.info(f"Export de tous les {geographic_scale} terminés.")
+
+def rasterize_meteofrance(gdf: gpd.GeoDataFrame, data_freq:MeteoFranceDataType, geographic_scale: GeographicScaleClip, code_zone: str, chemin_save:Path):
+    # TODO
+    def rasterize_colonne(nom_colonne:str):
+        rasterize_geodataframe_geographiv_zone(
+            gdf,
+            nom_colonne,
+            geographic_scale,
+            code_zone,
+            chemin_save.with_stem(f"{chemin_save.stem}-{nom_colonne}").with_suffix(".png"),
+            f"{chemin_save.stem}-{nom_colonne}"
+        )
+
+    match data_freq:
+        case MeteoFranceDataType.SIM2_QUOT:
+            rasterize_colonne("SSWI_10J")
+            rasterize_colonne("EVAP")
+            rasterize_colonne("ETP")
+            rasterize_colonne("PE")
+            rasterize_colonne("PRELIQ")
+        case MeteoFranceDataType.SIM2_MENS:
+            rasterize_colonne("SSWI1")
+            rasterize_colonne("EVAP")
+            rasterize_colonne("ETP")
+            rasterize_colonne("PE")
+            rasterize_colonne("PRELIQ")
+            rasterize_colonne("SPI1")
+        case MeteoFranceDataType.QUOT:
+            pass
+        case MeteoFranceDataType.MENS:
+            pass
+
 
 def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str, start_date:datetime, end_date:datetime, chemin_de_base:Path):
     """
@@ -341,7 +378,14 @@ def export_all_format_geojson_range(geo_scale:GeographicScaleClip, data_freq:Met
     chemin_sauvegarde = get_chemin_sauvegarde(data_freq, start_date, end_date, is_data_aggregated)
     chemin_sauvegarde.parent.mkdir(exist_ok=True)
 
-    export_to_every_geographic_element(data_freq, geo_scale, df_intervalle, chemin_sauvegarde, is_data_aggregated)
+    is_single_data = False
+    if start_date.strftime("%Y%m%d") == end_date.strftime("%Y%m%d") and (data_freq == MeteoFranceDataType.SIM2_QUOT or data_freq == MeteoFranceDataType.QUOT):
+        is_single_data = True
+
+    if start_date.strftime("%Y%m") == end_date.strftime("%Y%m") and (data_freq == MeteoFranceDataType.SIM2_MENS or data_freq == MeteoFranceDataType.MENS):
+        is_single_data = True
+
+    export_to_every_geographic_element(data_freq, geo_scale, df_intervalle, chemin_sauvegarde, is_data_aggregated, is_single_data)
 
 def export_geojson_month(data_freq:MeteoFranceDataType, month_date:datetime):
     """

@@ -221,6 +221,45 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
             ],
             [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25]
         )
+    elif "PRELIQ" in unit_to_get_graphic:
+        return (
+            "bone",
+            True,
+            [],
+            []
+        )
+    elif "EVAP" in unit_to_get_graphic or "ETP" in unit_to_get_graphic:
+        return (
+            "hot",
+            True,
+            [],
+            []
+        )
+    elif "PE" in unit_to_get_graphic:
+        return (
+            "turbo",
+            True,
+            [
+                "-50 - Pluie Extrême",
+                "-30",
+                "-20",
+                "-10",
+                "0",
+                "10",
+                "20",
+                "30",
+                "50 - Sècheresse Extrême",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+            ],
+            [-50, -30, -20,-10,0,10,20,30,50]
+        )
     elif "hydraulicite" in unit_to_get_graphic:
     ## TODO mettre les bonnes couleur
         return (
