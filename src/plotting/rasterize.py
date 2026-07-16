@@ -8,7 +8,7 @@ from rasterio.mask import mask
 from rasterio.plot import plotting_extent
 from rasterio.io import MemoryFile
 from scipy.interpolate import griddata
-from model.enums import GeographicScaleClip
+from src.model.enums import GeographicScaleClip
 from src.config.paths import OUTPUT_DIR
 from src.config.logging_config import setup_logger
 from src.io.pynsee_departement import get_departements_from_regions
@@ -20,7 +20,9 @@ logger = setup_logger(name="rasterize")
 def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, gdf_mask:gpd.GeoDataFrame, titre_graphique:str,
                       color_palette:str, is_invert_palette:bool, intervalle_name:list[str], intervalle_marqueur:list[float],
                       output_path:Path, geojson_to_draw:gpd.GeoDataFrame=None):
-
+    """
+    Créer un raster du geodataframe passé en paramètre. Les systèmes de coordonnées entre le masque et le geodataframe doivent être identiques.
+    """
     GRID_SIZE = 1500
 
     INTERPOLATION = "linear"
@@ -145,7 +147,7 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
 
     ticks = bounds + [(bounds[i] + bounds[i+1]) / 2 for i in range(len(bounds)-1)]
 
-    cbar = fig.colorbar(img, ax=ax, label=VALUE_FIELD, extend="both", shrink=0.7)
+    cbar = fig.colorbar(img, ax=ax, label=value_column_name, extend="both", shrink=0.7)
 
     cbar.set_ticks(ticks)
 
@@ -211,8 +213,7 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
             "turbo",
             True,
             [
-                "-0.25 - Très faible",
-                "0.25",
+                "0.25 - Très faible",
                 "0.75",
                 "1.25",
                 "1.75 - Très forte",
@@ -220,7 +221,7 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
                 "Moyenne",
                 "Forte",
             ],
-            [-0.25, 0.25, 0.75, 1.25, 1.75]
+            [0.25, 0.75, 1.25, 1.75]
         )
     else:
         return None
@@ -243,6 +244,7 @@ def rasterize_geodataframe_geographiv_zone(
     """
     Rasterise un GeoDataFrame pour une zone géographique spécifique et une unité de mesure donnée.
 
+    Supprime les entrées n'ayant pas de données pour supprimer les trous sur la carte.
     Args:
         geodataframe (gpd.GeoDataFrame): Le GeoDataFrame contenant les points à rasteriser.
         unit_to_rasterize (str): Le nom de l'unité à rasteriser (ex: "SSWI1", "hydraulicite").
@@ -258,6 +260,8 @@ def rasterize_geodataframe_geographiv_zone(
     if unit_to_rasterize not in geodataframe.columns:
         logger.error(f"La colonne {unit_to_rasterize} n'existe pas dans le GeoDataFrame.")
         raise ValueError(f"La colonne {unit_to_rasterize} n'existe pas dans le GeoDataFrame.")
+
+    geodataframe = geodataframe.dropna(subset=[unit_to_rasterize])
 
     # Charger le masque en fonction de l'échelle géographique
     mask_file_path = Path()
