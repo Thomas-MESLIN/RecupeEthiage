@@ -59,26 +59,26 @@ if __name__ == "__main__":
 
 ### Hydraulicité
 
-```bash
-python main.py --type hydraulicite --start_date 2026-01 --reseau_sandre BSH001
+```powershell
+.\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-01 --reseau_sandre BSH001
 ```
 
 ### VCN3
 
-```bash
-python main.py --type vcn3 --start_date 2026-01 --reseau_sandre BSH001 --vcn3_graphic
+```powershell
+.\venv\Scripts\python.exe main.py --type vcn3 --start_date 2026-01 --reseau_sandre BSH001 --vcn3_graphic
 ```
 
 ### ONDE
 
-```bash
-python main.py --type onde --start_date 2026-01 --end_date 2026-06 --reseau_sandre BSH001
+```powershell
+.\venv\Scripts\python.exe main.py --type onde --start_date 2026-01 --end_date 2026-06 --reseau_sandre BSH001
 ```
 
 ### MétéoFrance
 
-```bash
-python main.py --type meteofrance --start_date 2026-01 --end_date 2026-06
+```powershell
+.\venv\Scripts\python.exe main.py --type meteofrance --start_date 2026-01 --end_date 2026-06
 ```
 
 ---
@@ -99,17 +99,17 @@ python main.py --type meteofrance --start_date 2026-01 --end_date 2026-06
 
 ### Analyse complète pour un mois
 
-```bash
+```powershell
 # Hydraulicité + VCN3 + graphiques
-python main.py --type hydraulicite --start_date 2026-06 --reseau_sandre BSH001
-python main.py --type vcn3 --start_date 2026-06 --reseau_sandre BSH001 --vcn3_graphic
+.\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-06 --reseau_sandre BSH001
+.\venv\Scripts\python.exe main.py --type vcn3 --start_date 2026-06 --reseau_sandre BSH001 --vcn3_graphic
 ```
 
 ### Analyse multi-mois
 
-```bash
+```powershell
 # De janvier à juin 2026
-python main.py --type hydraulicite --start_date 2026-01 --end_date 2026-06 --reseau_sandre BSH001
+.\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-01 --end_date 2026-06 --reseau_sandre BSH001
 ```
 
 ---
@@ -119,3 +119,5 @@ python main.py --type hydraulicite --start_date 2026-01 --end_date 2026-06 --res
 - [Module CLI](index.md)
 - [Mode Interactif](main_interactive.md)
 - [Utilisation CLI](../../usage/cli.md)
+
+

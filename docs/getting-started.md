@@ -36,7 +36,7 @@ Suivez ces étapes **dans l'ordre** :
 ### 1. Télécharger le programme
 
 **Option A (recommandée si vous avez Git)** :
-```bash
+```powershell
 git clone https://github.com/Thomas-MESLIN/RecupeEthiage.git
 cd RecupeEthiage
 ```
@@ -49,17 +49,17 @@ cd RecupeEthiage
 
 ### 2. Créer l'environnement Python
 
-Ouvrez un terminal dans le dossier du projet et exécutez :
+Ouvrez un PowerShell dans le dossier du projet et exécutez :
 
-```bash
+```powershell
 python -m venv venv
 ```
 
-> ⚠️ Si vous avez plusieurs versions de Python, utilisez `python3-64.exe` à la place de `python`.
+> ⚠️ **Astuce** : Si vous avez plusieurs versions de Python ou que la commande `python` n'est pas reconnue, tapez `python` puis appuyez sur la touche **Tab** plusieurs fois dans PowerShell. Cela affichera toutes les versions de Python disponibles (ex: `python.exe`, `python3-64.exe`, `python3.11.exe`). Sélectionnez celle qui correspond à Python 3.11 ou supérieur.
 
 ### 3. Installer les dépendances
 
-```bash
+```powershell
 .\venv\Scripts\pip.exe install -r .\requirements.txt
 ```
 
@@ -69,7 +69,7 @@ python -m venv venv
 
 Pour vérifier que tout fonctionne correctement :
 
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py -h
 ```
 
@@ -81,13 +81,7 @@ Vous devriez voir s'afficher un message d'aide avec toutes les options disponibl
 
 ### Initialisation du projet
 
-Avant la première utilisation, exécutez :
-
-```bash
-.\venv\Scripts\python.exe -c "from src.config.init_project import *"
-```
-
-Cela crée l'arborescence complète des dossiers de sortie dans `output/`.
+Avant la première utilisation, l'initialisation se fait automatiquement.
 
 ### Configuration du Proxy (si nécessaire)
 
@@ -123,9 +117,11 @@ Une fois l'installation terminée, vous pouvez :
 
 ### Problème : "Python n'est pas reconnu"
 
-**Solution** : Vérifiez que Python est bien installé et ajouté au PATH. Vous pouvez aussi utiliser le chemin complet :
+**Solution 1** : Utilisez la touche **Tab** dans PowerShell : tapez `python` puis appuyez sur Tab pour voir les commandes disponibles.
 
-```bash
+**Solution 2** : Utilisez le chemin complet vers votre exécutable Python :
+
+```powershell
 C:\Chemin\vers\Python\python.exe -m venv venv
 ```
 
@@ -135,7 +131,7 @@ C:\Chemin\vers\Python\python.exe -m venv venv
 
 **Solution 2** : Essayez de réinstaller les paquets un par un :
 
-```bash
+```powershell
 .\venv\Scripts\pip.exe install cl-hubeau
 .\venv\Scripts\pip.exe install pandas
 .\venv\Scripts\pip.exe install geopandas
@@ -144,7 +140,7 @@ C:\Chemin\vers\Python\python.exe -m venv venv
 
 **Solution 3** : Si un paquet spécifique pose problème :
 
-```bash
+```powershell
 .\venv\Scripts\pip.exe uninstall nom_du_paquet -y
 .\venv\Scripts\pip.exe install -r .\requirements.txt
 ```
@@ -163,3 +159,6 @@ C:\Chemin\vers\Python\python.exe -m venv venv
 - [Mode Interactif](usage/interactive.md)
 - [Mode CLI](usage/cli.md)
 - [Concepts Clés](concepts/index.md)
+
+
+

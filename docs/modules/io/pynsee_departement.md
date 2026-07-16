@@ -70,3 +70,5 @@ print(f"Tous les départements : {departements}")
 - [Module IO](index.md)
 - [Module Plotting - plot_meteoFrance.py](../../modules/plotting/plot_meteoFrance.md)
 - [INSEE](https://www.insee.fr/)
+
+

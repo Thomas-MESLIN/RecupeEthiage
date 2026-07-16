@@ -22,7 +22,7 @@ Le mode interactif vous guide pas à pas en vous posant des questions. C'est la 
 
 ### Lancement
 
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py
 ```
 
@@ -81,7 +81,7 @@ Le mode CLI permet de lancer directement une commande avec tous les paramètres.
 
 ### Structure de base
 
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py --type [TYPE] [autres options]
 ```
 
@@ -101,22 +101,22 @@ Le mode CLI permet de lancer directement une commande avec tous les paramètres.
 ### Exemples d'utilisation
 
 **Exemple 1 : Générer une carte d'hydraulicité pour janvier 2026**
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-01 --reseau_sandre BSH001
 ```
 
 **Exemple 2 : Calculer le VCN3 pour février 2024 avec des graphiques individuels**
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py --type vcn3 --start_date 2024-02 --reseau_sandre BSH001 --vcn3_graphic
 ```
 
 **Exemple 3 : Récupérer les données météo SIM2 quotidiennes pour une période**
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py --type meteo_sim2_QUOT --start_date 2023-07-01 --end_date 2023-07-31
 ```
 
 **Exemple 4 : Récupérer les données ONDE pour le bassin Rhône-Méditerranée (code 06)**
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py --type onde_ALL --start_date 2026-06-01 --geographic_scale BASSIN --onde_zone_code 06
 ```
 
@@ -166,3 +166,6 @@ output/
 | **Météo SIM2 mensuelle agrégée** | `main.py --type meteo_sim2_MENS --start_date 2026-06-01 --end_date 2026-07-01 --meteo_aggregate` |
 | **Données ONDE** | `main.py --type onde_ALL --start_date 2026-06-01 --geographic_scale BASSIN --onde_zone_code 06` |
 | **Lancer en mode interactif** | `main.py` |
+
+
+

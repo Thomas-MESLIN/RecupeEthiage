@@ -52,7 +52,7 @@ set_up_working_proxy()
 ## 📁 Fichier .env
 
 **Exemple**
-```bash
+```powershell
 HTTP_PROXY=http://proxy.dreal.fr:8080
 HTTPS_PROXY=http://proxy.dreal.fr:8080
 ```
@@ -62,3 +62,5 @@ HTTPS_PROXY=http://proxy.dreal.fr:8080
 ## 🔗 Liens
 
 - [Module Utils](index.md)
+
+

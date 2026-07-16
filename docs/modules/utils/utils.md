@@ -564,3 +564,5 @@ for grandeur in ["QmM", "QmnJ"]:
 ---
 
 *Dernière mise à jour : {{ "now" | date: "%d %B %Y" }}*
+
+

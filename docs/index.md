@@ -79,3 +79,6 @@ Ce programme permet de **récupérer, analyser et visualiser** des données sur 
 ---
 
 *Documentation générée le {{ "now" | date: "%d %B %Y" }} | [Retour au dépôt](https://github.com/Thomas-MESLIN/RecupeEthiage)*
+
+
+

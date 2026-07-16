@@ -123,3 +123,6 @@ Le module **`plotting`** est le cœur de la visualisation de votre application. 
 - [cli](cli/index.md)
 - [model](model/index.md)
 - [utils](utils/index.md)
+
+
+

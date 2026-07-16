@@ -45,10 +45,10 @@ Fonctionnalités principales :
 - `main()` : Fonction principale qui route selon le type
 
 **Utilisation** :
-```bash
+```powershell
 # Exemple de commandes
-python main.py --type hydraulicite --start_date 2026-01 --reseau_sandre BSH001
-python main.py --type vcn3 --start_date 2026-01 --reseau_sandre BSH001 --vcn3_graphic
+.\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-01 --reseau_sandre BSH001
+.\venv\Scripts\python.exe main.py --type vcn3 --start_date 2026-01 --reseau_sandre BSH001 --vcn3_graphic
 ```
 
 ### 🎮 [main_interactive.py](main_interactive.md)
@@ -70,9 +70,9 @@ Fonctionnalités principales :
 - `demander_date()` : Saisie d'une date
 
 **Utilisation** :
-```bash
+```powershell
 # Lancer le mode interactif
-python main.py
+.\venv\Scripts\python.exe main.py
 ```
 
 ### 🧰 [utils.py](utils.md)
@@ -278,3 +278,6 @@ parser.add_argument("--nouvelle_option", help="Active X")
 ---
 
 [Retour aux modules](index.md)
+
+
+

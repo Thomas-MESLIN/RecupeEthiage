@@ -49,3 +49,5 @@ if validate_date("2026-06"):
 - [Module CLI](index.md)
 - [Mode Interactif](main_interactive.md)
 - [Mode CLI](main_cli.md)
+
+

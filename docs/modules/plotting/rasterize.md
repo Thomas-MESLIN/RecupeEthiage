@@ -695,3 +695,6 @@ print("✅ Hydraulicité rasterisée !")
 ---
 
 *Documentation générée automatiquement à partir du code source | Dernière mise à jour : {{ "now" | date: "%d %B %Y" }}*
+
+
+

@@ -299,3 +299,6 @@ output_path.parent.mkdir(parents=True, exist_ok=True)
 ---
 
 *Dernière mise à jour : {{ "now" | date: "%d %B %Y" }}*
+
+
+

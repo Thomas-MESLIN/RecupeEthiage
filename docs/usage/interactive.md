@@ -16,7 +16,7 @@ parent: Utilisation
 
 Pour lancer le mode interactif, exécutez simplement :
 
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py
 ```
 
@@ -182,3 +182,6 @@ Génère des extraits de données météorologiques à partir des données Mét�
 - [Mode CLI](cli.md) - Pour automatiser vos tâches
 - [Concepts Clés](concepts/index.md) - Comprendre les indicateurs
 - [Module Plotting](modules/plotting/index.md) - Documentation technique détaillée
+
+
+

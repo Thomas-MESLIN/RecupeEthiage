@@ -414,3 +414,5 @@ valid_data = df[df["QmM_moyenne"] > 0]
 ---
 
 *Dernière mise à jour : {{ "now" | date: "%d %B %Y" }}*
+
+

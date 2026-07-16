@@ -23,7 +23,7 @@ grand_parent: Modules
 - [🎯 Aperçu](#-aperçu)
 - [📦 Dépendances](#-dépendances)
 - [🔧 Fonctions](#-fonctions)
-  - [Fonctions principales (sans signature explicite)](#fonctions-principales-sans-signature-explicite)
+  - [Fonctions principales](#fonctions-principales)
 - [🎓 Tutoriel](#-tutoriel)
 - [📊 Exemples Complets](#-exemples-complets)
 
@@ -69,9 +69,9 @@ from src.config.paths import OUTPUT_DIR
 
 ---
 
-### Fonctions principales (sans signature explicite)
+### Fonctions principales
 
-Le fichier `plot_res_validation_clean.py` ne définit pas de fonctions avec des signatures formelles, mais contient un **script d'analyse** qui se lance directement. Voici les composants principaux :
+Le fichier `plot_res_validation_clean.py` contient un **script d'analyse** qui se lance directement. Voici les composants principaux :
 
 #### 1. Chargement des données
 
@@ -97,8 +97,6 @@ df["annee_mois"] = pd.to_datetime(df["annee_mois"], format="%Y-%m")
 #### 2. Fonction `do_plot_hubeau_hydroportail`
 
 **Génère des graphiques comparant Hub'Eau et Hydroportail.**
-
-##### 📌 Signature implicite
 
 ```python
 def do_plot_hubeau_hydroportail(
@@ -475,3 +473,7 @@ Pour améliorer ce module, vous pourriez :
 ---
 
 *Documentation générée automatiquement à partir du code source | Dernière mise à jour : {{ "now" | date: "%d %B %Y" }}*
+
+
+
+

@@ -415,3 +415,6 @@ Voici un aperçu des couleurs définies dans `ANNEE_COULEURS` :
 ---
 
 *Documentation générée automatiquement à partir du code source | Dernière mise à jour : {{ "now" | date: "%d %B %Y" }}*
+
+
+

@@ -352,3 +352,5 @@ prompt_renew_old_data(Path("fichier.csv"))
 ---
 
 *Dernière mise à jour : {{ "now" | date: "%d %B %Y" }}*
+
+

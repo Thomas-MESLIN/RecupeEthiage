@@ -14,7 +14,7 @@ parent: Utilisation
 
 ## 🚀 Lancement
 
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py --type [TYPE] [autres options]
 ```
 
@@ -54,7 +54,7 @@ parent: Utilisation
 ### 📊 Données Hydrologiques
 
 #### Hydraulicité pour un mois spécifique
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py \
   --type hydraulicite \
   --start_date 2026-01 \
@@ -64,7 +64,7 @@ parent: Utilisation
 **Résultat** : `output/QGIS/hydraulicite/hydraulicite-BSH001-2026-01.geojson`
 
 #### VCN3 avec graphiques pour chaque station
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py \
   --type vcn3 \
   --start_date 2024-02 \
@@ -77,7 +77,7 @@ parent: Utilisation
 - Graphiques : `output/VCN3/plot_stations/`
 
 #### Les deux (hydraulicité + VCN3) avec graphiques
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py \
   --type vcn3 \
   --start_date 2024-02 \
@@ -92,7 +92,7 @@ parent: Utilisation
 ### 🌦️ Données Météo France
 
 #### Données SIM2 quotidiennes pour une période
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py \
   --type meteo_sim2_QUOT \
   --start_date 2023-07-01 \
@@ -102,7 +102,7 @@ parent: Utilisation
 **Résultat** : Données quotidiennes SIM2 pour juillet 2023
 
 #### Données SIM2 mensuelles agrégées
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py \
   --type meteo_sim2_MENS \
   --start_date 2025-09-01 \
@@ -113,7 +113,7 @@ parent: Utilisation
 **Résultat** : Données mensuelles SIM2 agrégées sur la période, avec somme des précipitations
 
 #### Données brutes quotidiennes
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py \
   --type meteo_brut_QUOT \
   --start_date 2026-06-10 \
@@ -125,7 +125,7 @@ parent: Utilisation
 ### 🌊 Données ONDE
 
 #### Campagnes usuelles ONDE pour un bassin
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py \
   --type onde_USUELLE \
   --start_date 2026-06-01 \
@@ -136,7 +136,7 @@ parent: Utilisation
 **Résultat** : Données ONDE pour le bassin Rhône-Méditerranée (code 06)
 
 #### Toutes les campagnes ONDE (usuelles + complémentaires)
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py \
   --type onde_ALL \
   --start_date 2026-06-01 \
@@ -151,7 +151,7 @@ parent: Utilisation
 ### 📍 Stations et Sites
 
 #### Générer les fichiers de stations et sites
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py \
   --type stations-sites \
   --start_date 2026-01 \
@@ -207,19 +207,19 @@ parent: Utilisation
 ## 🎯 Astuces CLI
 
 ### 1. Voir l'aide complète
-```bash
+```powershell
 .\venv\Scripts\python.exe main.py --help
 ```
 
 ### 2. Utiliser des listes personnalisées
-```bash
+```powershell
 --reseau_sandre custom
 ```
 
 Cela utilise les stations définies dans `liste_site_custom.csv` et `liste_station_custom.csv` à la racine du projet.
 
 ### 3. Désactiver la mise à jour des données
-```bash
+```powershell
 --meteo_no_update
 ```
 
@@ -227,7 +227,7 @@ Utile pour les tests ou lorsque vous travaillez hors ligne.
 
 ### 4. Échelles géographiques disponibles
 
-```bash
+```powershell
 --geographic_scale NATIONAL        # Toute la France
 --geographic_scale BASSIN         # Par bassin (défaut)
 --geographic_scale REGION_ADMINISTRATIVE  # Par région administrative
@@ -242,7 +242,7 @@ Utile pour les tests ou lorsque vous travaillez hors ligne.
 
 ### Exemple 1 : Générer toutes les données du mois précédent
 
-```bash
+```powershell
 # Récupérer la date du mois précédent
 $month = (Get-Date).AddMonths(-1).ToString("yyyy-MM")
 
@@ -253,7 +253,7 @@ $month = (Get-Date).AddMonths(-1).ToString("yyyy-MM")
 
 ### Exemple 2 : Générer les données météo pour toute l'année
 
-```bash
+```powershell
 # Générer pour chaque mois de l'année 2025
 for $month in @("01","02","03","04","05","06","07","08","09","10","11","12") {
     .\venv\Scripts\python.exe main.py \
@@ -265,7 +265,7 @@ for $month in @("01","02","03","04","05","06","07","08","09","10","11","12") {
 
 ### Exemple 3 : Mettre à jour toutes les données ONDE pour un bassin
 
-```bash
+```powershell
 # Pour le bassin Rhône-Méditerranée (06)
 .\venv\Scripts\python.exe main.py \
   --type onde_ALL \
@@ -318,3 +318,6 @@ for $month in @("01","02","03","04","05","06","07","08","09","10","11","12") {
 - [Mode Interactif](interactive.md) - Pour une approche guidée
 - [Module Plotting](modules/plotting/index.md) - Documentation technique détaillée
 - [Concepts Clés](concepts/index.md) - Comprendre les indicateurs
+
+
+
