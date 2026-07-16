@@ -43,7 +43,7 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
     # GRID
     # =========================
 
-    xmin, ymin, xmax, ymax = points.total_bounds
+    xmin, ymin, xmax, ymax = gdf_mask.total_bounds
 
     # IMPORTANT :
     # ymax -> ymin pour respecter la convention raster
@@ -63,6 +63,16 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
         xi=(grid_x, grid_y),
         method=INTERPOLATION
     )
+
+    # On complète les trous avec NEAREST
+    grid_nearest = griddata(
+        (x, y),
+        z,
+        (grid_x, grid_y),
+        method="nearest"
+    )
+
+    grid_z[np.isnan(grid_z)] = grid_nearest[np.isnan(grid_z)]
 
     # =========================
     # TRANSFORM
