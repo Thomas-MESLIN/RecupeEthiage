@@ -1,7 +1,9 @@
 ---
-layout: page
+layout: default
 title: Utilisation
-description: "Comment utiliser l'outil de récupération et visualisation de données"
+description: "Comment utiliser l'outil"
+nav_order: 3
+has_children: true
 ---
 
 [Retour à l'accueil](index.md)

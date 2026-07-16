@@ -1,7 +1,10 @@
 ---
-layout: page
+layout: default
 title: Module Config
 description: "Documentation du module de configuration de l'application"
+nav_order: 3
+parent: Modules
+has_children: true
 ---
 
 # ⚙️ Module Config

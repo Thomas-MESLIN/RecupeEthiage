@@ -1,7 +1,9 @@
 ---
-layout: page
+layout: default
 title: Guide de Démarrage
-description: "Installation et configuration de l'outil de récupération et visualisation de données hydrologiques et météorologiques"
+description: "Installation et configuration de l'outil"
+nav_order: 2
+parent: ""
 ---
 
 [Retour à l'accueil](index.md)

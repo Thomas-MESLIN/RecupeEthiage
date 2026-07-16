@@ -1,7 +1,10 @@
 ---
-layout: page
+layout: default
 title: Module CLI
 description: "Documentation du module d'interface en ligne de commande"
+nav_order: 5
+parent: Modules
+has_children: true
 ---
 
 # 🎮 Module CLI

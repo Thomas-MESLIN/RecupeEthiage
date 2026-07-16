@@ -1,12 +1,15 @@
 ---
-layout: page
+layout: default
 title: Module IO
 description: "Documentation du module d'entrée/sortie - Récupération des données"
+nav_order: 1
+parent: Modules
+has_children: true
 ---
 
 # 📥 Module IO
 
-**Documentation des modules d'entrée/sortie**
+**Documentation du module de récupération des données**
 
 Le module `io` gère **toute la récupération des données** depuis les différentes sources : Hub'Eau, MétéoFrance, et les correspondances géographiques.
 

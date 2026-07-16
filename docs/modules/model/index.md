@@ -1,7 +1,10 @@
 ---
-layout: page
+layout: default
 title: Module Model
 description: "Documentation du module model - Énumérations et types de données"
+nav_order: 7
+parent: Modules
+has_children: true
 ---
 
 # 📊 Module Model

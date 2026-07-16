@@ -3,6 +3,7 @@ layout: home
 title: Accueil
 description: "Documentation complète pour l'outil de récupération, analyse et visualisation de données hydrologiques et météorologiques"
 permalink: /
+nav_order: 1
 ---
 
 # 🌊 Outil de Récupération et Visualisation de Données Hydrologiques et Météorologiques
