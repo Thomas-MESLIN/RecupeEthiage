@@ -9,9 +9,6 @@ description: "Documentation complète pour l'outil de récupération, analyse et
 url: "https://Thomas-MESLIN.github.io"
 baseurl: "/RecupeEthiage"
 
-# Configuration du thème
-theme: "jekyll/minima"
-
 # Paramètres du site
 title: "Documentation Hydrologie-Météorologie"
 repository: "Thomas-MESLIN/RecupeEthiage"
