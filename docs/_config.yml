@@ -1,5 +1,5 @@
 # Configuration Jekyll pour GitHub Pages
-# Thème: just-the-docs
+# Thème: minima
 
 # Informations du site
 name: "Documentation - Outil de Récupération et Visualisation de Données Hydrologiques"
@@ -10,14 +10,10 @@ url: "https://Thomas-MESLIN.github.io"
 baseurl: "/RecupeEthiage"
 
 # Thème
-remote_theme: just-the-docs/just-the-docs
-
-# Version du thème
-just_the_docs:
-  version: 0.4.1.0
+remote_theme: jekyll/minima
 
 # Configuration du thème
-theme: just-the-docs
+theme: minima
 
 # Paramètres du site
 title: "Documentation Hydrologie-Météorologie"
@@ -25,17 +21,23 @@ repository: "Thomas-MESLIN/RecupeEthiage"
 
 # Paramètres d'affichage
 logo: "/assets/images/logo.png"
-favicon_ico: "/assets/images/favicon.ico"
 
 # Navigation principale
-nav_enabled: true
-nav_external_links:
-  - title: "Dépôt GitHub"
-    url: "https://github.com/Thomas-MESLIN/RecupeEthiage"
+header_pages:
+  - index.md
+  - getting-started.md
+  - usage/index.md
+  - modules/index.md
+  - concepts/index.md
+  - data/index.md
+  - api/reference.md
 
-# Barre latérale
-aux_links:
-  "Dépôt GitHub": "https://github.com/Thomas-MESLIN/RecupeEthiage"
+# Configuration spécifique à minima
+minima:
+  date_format: "%d %B %Y"
+  skin: light
+  social_links:
+    github: Thomas-MESLIN
 
 # Pied de page
 footer_content: "Copyright &copy; 2026 Thomas Meslin. Distribué sous licence MIT."

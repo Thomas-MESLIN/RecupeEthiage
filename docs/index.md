@@ -1,8 +1,7 @@
 ---
-layout: default
+layout: home
 title: Accueil
 description: "Documentation complète pour l'outil de récupération, analyse et visualisation de données hydrologiques et météorologiques"
-nav_order: 1
 permalink: /
 ---
 
