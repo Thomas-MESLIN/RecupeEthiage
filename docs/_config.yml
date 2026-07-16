@@ -1,0 +1,89 @@
+# Configuration Jekyll pour GitHub Pages
+# Thème: just-the-docs
+
+# Informations du site
+name: "Documentation - Outil de Récupération et Visualisation de Données Hydrologiques"
+description: "Documentation complète pour l'outil de récupération, analyse et visualisation de données hydrologiques et météorologiques"
+
+# URL pour GitHub Pages (à adapter selon votre dépôt)
+url: "https://Thomas-MESLIN.github.io"
+baseurl: "/RecupeEthiage"
+
+# Thème
+remote_theme: just-the-docs/just-the-docs
+
+# Version du thème
+just_the_docs:
+  version: 0.4.1.0
+
+# Configuration du thème
+theme: just-the-docs
+
+# Paramètres du site
+title: "Documentation Hydrologie-Météorologie"
+repository: "Thomas-MESLIN/RecupeEthiage"
+
+# Paramètres d'affichage
+logo: "/assets/images/logo.png"
+favicon_ico: "/assets/images/favicon.ico"
+
+# Navigation principale
+nav_enabled: true
+nav_external_links:
+  - title: "Dépôt GitHub"
+    url: "https://github.com/Thomas-MESLIN/RecupeEthiage"
+
+# Barre latérale
+aux_links:
+  "Dépôt GitHub": "https://github.com/Thomas-MESLIN/RecupeEthiage"
+
+# Pied de page
+footer_content: "Copyright &copy; 2026 Thomas Meslin. Distribué sous licence MIT."
+
+# Paramètres de générateur
+generator: true
+generator_label: "Documentation générée avec Jekyll"
+
+# Paramètres Markdown
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+      start_line: 1
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Paramètres SEO
+seo:
+  name: "Documentation Hydrologie-Météorologie"
+  description: "Documentation complète pour l'outil de récupération, analyse et visualisation de données hydrologiques et météorologiques en France"
+  url: "https://Thomas-MESLIN.github.io/RecupeEthiage"
+
+# Exclusions
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+
+# Inclusions
+include:
+  - _pages
+
+# Paramètres de construction
+incremental: false
+strict_front_matter: true
+
+# Paramètres de langages
+lang: fr_FR

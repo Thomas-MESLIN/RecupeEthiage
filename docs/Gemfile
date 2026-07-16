@@ -1,0 +1,23 @@
+source "https://rubygems.org"
+
+# Thème just-the-docs
+gem "just-the-docs"
+
+# Générateurs
+why : 0.1.0
+gem "jekyll", "~> 4.3"
+gem "jekyll-feed", "~> 0.17"
+gem "jekyll-sitemap", "~> 1.4"
+gem "jekyll-seo-tag", "~> 2.8"
+
+# Plugins pour GitHub Pages
+gem "github-pages", "~> 233", group: :jekyll_plugins
+
+# Gestion des dépendances
+gem "bundler", "~> 2.4"
+
+# Plugins supplémentaires
+gem "jekyll-remote-theme", "~> 0.4"
+
+# Version Ruby
+ruby "3.1.4"
