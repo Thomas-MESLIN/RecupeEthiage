@@ -142,8 +142,11 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
     else:
         cmap = mpl.colormaps[color_palette]
 
-    bounds = intervalle_marqueur
-    norm = mpl.colors.BoundaryNorm(bounds, cmap.N, extend="both")
+    if intervalle_marqueur != []:
+        bounds = intervalle_marqueur
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N, extend="both")
+    else:
+        norm = None
 
     img = ax.imshow(
         data,
@@ -155,15 +158,16 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
 
     # ColorBar.
 
-    ticks = bounds + [(bounds[i] + bounds[i+1]) / 2 for i in range(len(bounds)-1)]
-
     cbar = fig.colorbar(img, ax=ax, label=value_column_name, extend="both", shrink=0.7)
 
-    cbar.set_ticks(ticks)
+    if not (intervalle_marqueur == [] or intervalle_name == []):
+        ticks = bounds + [(bounds[i] + bounds[i+1]) / 2 for i in range(len(bounds)-1)]
 
-    cbar.set_ticklabels(intervalle_name)
+        cbar.set_ticks(ticks)
 
-    cbar.ax.yaxis.set_label_coords(-1,0.5)
+        cbar.set_ticklabels(intervalle_name)
+
+        cbar.ax.yaxis.set_label_coords(-1,0.5)
 
     # Bordure autour du graphique.
     gdf_mask.boundary.plot(
@@ -218,7 +222,7 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
             [-1.25, -0.75, -0.25, 0.25, 0.75, 1.25]
         )
     elif "hydraulicite" in unit_to_get_graphic:
-        ## TODO mettre les bonnes couleur
+    ## TODO mettre les bonnes couleur
         return (
             "turbo",
             True,
@@ -232,6 +236,20 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
                 "Forte",
             ],
             [0.25, 0.75, 1.25, 1.75]
+        )
+    elif "frequence_non_depassement" in unit_to_get_graphic:
+        return (
+            "turbo",
+            True,
+            [],
+            []
+        )
+    elif "Periode_de_retour" in unit_to_get_graphic:
+        return (
+            "hot",
+            True,
+            [],
+            []
         )
     else:
         return None
