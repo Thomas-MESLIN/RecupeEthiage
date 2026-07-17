@@ -1,15 +1,15 @@
 # Configuration Jekyll pour GitHub Pages avec Just the Docs
-title: "RecupeEthiage"  # Titre du site (utilisé dans l'onglet du navigateur)
+title: "RecupeEthiage"
 name: "Documentation - Outil de Récupération et Visualisation de Données Hydrologiques"
 description: "Documentation complète pour l'outil de récupération, analyse et visualisation de données hydrologiques et météorologiques"
 
 # URL pour GitHub Pages
 url: "https://Thomas-MESLIN.github.io"
-baseurl: "/RecupeEthiage"  # Important : doit commencer par un slash
+baseurl: "/RecupeEthiage"
 
 # Thème
 remote_theme: just-the-docs/just-the-docs
-theme: null  # Désactive le thème local
+theme: null
 
 # Configuration spécifique à Just the Docs
 just_the_docs:
@@ -23,6 +23,8 @@ just_the_docs:
       children:
         - title: Introduction
           url: /usage/
+        - title: Mode Interactif
+          url: /usage/interactive
         - title: CLI
           url: /usage/cli
         - title: Modules
@@ -53,12 +55,11 @@ just_the_docs:
   # Paramètres d'affichage
   color_scheme: light
   search_enabled: true
+  heading_anchors: true
 
-  # Désactive les conteneurs superflus
-  heading_anchors: true  # Active les ancres pour les titres
-  aux_links:  # Liens utiles en haut à droite (ex: "Edit on GitHub")
-    "Éditer sur GitHub":
-      - "https://github.com/Thomas-MESLIN/RecupeEthiage/edit/main/{path}"
+  # Liens utiles en haut à droite
+  aux_links:
+    "Éditer sur GitHub": "https://github.com/Thomas-MESLIN/RecupeEthiage/edit/main/{path}"
 
 # Paramètres Markdown
 markdown: kramdown
@@ -71,7 +72,7 @@ kramdown:
       line_numbers: true
       start_line: 1
 
-# Plugins (GitHub Pages ne supporte que certains plugins)
+# Plugins
 plugins:
   - jekyll-feed
   - jekyll-sitemap
