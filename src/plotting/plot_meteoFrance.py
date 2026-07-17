@@ -218,30 +218,29 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
     logger.info(f"Export de tous les {geographic_scale} terminés.")
 
 def rasterize_meteofrance(gdf: gpd.GeoDataFrame, data_freq:MeteoFranceDataType, geographic_scale: GeographicScaleClip, code_zone: str, chemin_save:Path):
-    # TODO
-    def rasterize_colonne(nom_colonne:str):
+    def rasterize_colonne(nom_colonne:str, unite:str=""):
         rasterize_geodataframe_geographiv_zone(
             gdf,
             nom_colonne,
             geographic_scale,
             code_zone,
             chemin_save.with_stem(f"{chemin_save.stem}-{nom_colonne}").with_suffix(".png"),
-            f"{chemin_save.stem}-{nom_colonne}"
+            f"{chemin_save.stem}-{nom_colonne}{unite}"
         )
 
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT:
             rasterize_colonne("SSWI_10J")
-            rasterize_colonne("EVAP")
-            rasterize_colonne("ETP")
-            rasterize_colonne("PE")
-            rasterize_colonne("PRELIQ")
+            rasterize_colonne("EVAP", "(mm)")
+            rasterize_colonne("ETP", "(mm)")
+            rasterize_colonne("PE", "(mm)")
+            rasterize_colonne("PRELIQ", "(mm)")
         case MeteoFranceDataType.SIM2_MENS:
             rasterize_colonne("SSWI1")
-            rasterize_colonne("EVAP")
-            rasterize_colonne("ETP")
-            rasterize_colonne("PE")
-            rasterize_colonne("PRELIQ")
+            rasterize_colonne("EVAP", "(mm)")
+            rasterize_colonne("ETP", "(mm)")
+            rasterize_colonne("PE", "(mm)")
+            rasterize_colonne("PRELIQ", "(mm)")
             rasterize_colonne("SPI1")
         case MeteoFranceDataType.QUOT:
             pass
