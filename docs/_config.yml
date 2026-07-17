@@ -5,11 +5,12 @@ description: "Documentation complète pour l'outil de récupération, analyse et
 
 # URL pour GitHub Pages
 url: "https://Thomas-MESLIN.github.io"
-baseurl: "/RecupeEthiage"
+baseurl: "/RecupeEthiage"  # Doit commencer par un slash
+domain: Thomas-MESLIN.github.io
 
 # Thème
 remote_theme: just-the-docs/just-the-docs
-theme: null
+theme: null  # Désactive le thème local
 
 # Configuration spécifique à Just the Docs
 just_the_docs:
