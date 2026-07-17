@@ -1,7 +1,7 @@
 # Configuration Jekyll pour GitHub Pages
-# Thème: minima
 
 # Informations du site
+title: "Documentation Hydrologie-Météorologie"
 name: "Documentation - Outil de Récupération et Visualisation de Données Hydrologiques"
 description: "Documentation complète pour l'outil de récupération, analyse et visualisation de données hydrologiques et météorologiques"
 
@@ -13,34 +13,49 @@ baseurl: "/RecupeEthiage"
 title: "Documentation Hydrologie-Météorologie"
 repository: "Thomas-MESLIN/RecupeEthiage"
 
-# Paramètres d'affichage
-logo: "/assets/images/logo.png"
+remote_theme: just-the-docs/just-the-docs
+theme: null  # Désactive le thème local
 
-# Navigation principale
-header_pages:
-  - index.md
-  - getting-started.md
-  - usage/index.md
-  - modules/index.md
-  - concepts/index.md
-  - data/index.md
-  - api/reference.md
 
-# Configuration spécifique à minima
-minima:
-  date_format: "%d %B %Y"
-  skin: light
-  social_links:
-    github: Thomas-MESLIN
+just_the_docs:
+  # Configuration de la navigation
+  navigation:
+    - title: Accueil
+      url: /
+    - title: Pour commencer
+      url: /getting-started
+    - title: Utilisation
+      children:
+        - title: Introduction
+          url: /usage/
+        - title: Modules
+          url: /usage/modules/
+    - title: Concepts
+      url: /concepts/
+    - title: Données
+      url: /data/
+    - title: Référence API
+      url: /api/reference
+    # Fil d'Ariane (breadcrumbs)
+  breadcrumbs:
+    enabled: true
+    separator: "/"
+  # Logo et favicon
+  logo: "/assets/images/logo.png"
+  favicon_ico: "/assets/images/favicon.ico"
+  
+  # Pied de page
+  footer_content: "Copyright &copy; 2026 Thomas Meslin. Distribué sous licence MIT."
 
-# Pied de page
-footer_content: "Copyright &copy; 2026 Thomas Meslin. Distribué sous licence MIT."
+  # Lien vers le dépôt GitHub
+  github_username: Thomas-MESLIN
+  repository: Thomas-MESLIN/RecupeEthiage
 
-# Paramètres de générateur
-generator: true
-generator_label: "Documentation générée avec Jekyll"
+  # Paramètres d'affichage
+  color_scheme: light
+  search_enabled: true
 
-# Paramètres Markdown
+# Paramètres Markdown (compatible avec Just the Docs)
 markdown: kramdown
 kramdown:
   input: GFM
@@ -72,14 +87,6 @@ exclude:
   - vendor/cache/
   - vendor/gems/
   - vendor/ruby/
-
-# Inclusions
-include:
-  - _pages
-
-# Paramètres de construction
-incremental: false
-strict_front_matter: true
 
 # Paramètres de langages
 lang: fr_FR
