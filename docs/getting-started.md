@@ -78,10 +78,21 @@ Vous devriez voir s'afficher un message d'aide avec toutes les options disponibl
 ---
 
 ## 🔧 Configuration initiale
+### Configuration de la liste custom
+Vous pouvez, au lieu d'utiliser des codes de réseau Sandre pour récupérer les données d'hydraulicité et de VCN3, utiliser une liste de station et de sites que vous avez vous-même défini.
 
-### Initialisation du projet
+Vous pouvez retrouver cette liste dans `data/liste_station_custom.csv` et `data/liste_site_custom.csv`. Le programme va aggréger ces deux listes en `output/site_station_custom/liste_site_et_station_custom.csv`.
 
-Avant la première utilisation, l'initialisation se fait automatiquement.
+Vous pouvez ainsi vérifier que les listes de sites/stations se sont bien générés, en cas d'ambiguité sur un site ayant plusieurs stations potentielle, vous pouvez rajouter la station que vous souhaitez dans liste_station_custom, cette station uniquement sera retenue.
+
+Le plus simple étant de renseigner toutes les stations directement.
+
+### Configuration des zones géographiques par défaut
+Les scripts MeteoFrance utilisent les listes de bassin, département, région définis dans `liste_bassin.csv`, `liste_departement.csv`, `liste_region.csv`. Ces listes utilisent des codes SANDRE pour les bassins, départements et régions.
+
+Lorsque vous ferez la commande pour générer les données MétéoFrance des DEPARTEMENT_ADMINISTRATIF par exemple, le fichier `liste_departement.csv` est chargé, et les données pour ces départements sont récupérés et générés.
+
+Le fichier `liste_bassin.csv` ne peut contenir que **1 seul bassin versant**.
 
 ### Configuration du Proxy (si nécessaire)
 
@@ -103,42 +114,17 @@ HTTPS_PROXY="http://votre-proxy.fr:8080"
 
 ---
 
-## 🎯 Prochaines étapes
-
-Une fois l'installation terminée, vous pouvez :
-
-- **[Utiliser le mode interactif](usage/interactive.md)** - Recommandé pour les débutants
-- **[Utiliser le mode CLI](usage/cli.md)** - Pour les utilisateurs avancés
-- **[Explorer les concepts clés](concepts/index.md)** - Comprendre les indicateurs
-
----
-
 ## ❌ Dépannage
 
 ### Problème : "Python n'est pas reconnu"
 
-**Solution 1** : Utilisez la touche **Tab** dans PowerShell : tapez `python` puis appuyez sur Tab pour voir les commandes disponibles.
-
-**Solution 2** : Utilisez le chemin complet vers votre exécutable Python :
-
-```powershell
-C:\Chemin\vers\Python\python.exe -m venv venv
-```
+**Solution** : Utilisez la touche **Tab** dans PowerShell : tapez `python` puis appuyez sur Tab pour voir les commandes disponibles. (habituellement `python.exe` ou `python3-64.exe`)
 
 ### Problème : Erreur lors de l'installation des paquets
 
 **Solution 1** : Vérifiez que vous êtes bien connecté à internet (hors réseau interne).
 
-**Solution 2** : Essayez de réinstaller les paquets un par un :
-
-```powershell
-.\venv\Scripts\pip.exe install cl-hubeau
-.\venv\Scripts\pip.exe install pandas
-.\venv\Scripts\pip.exe install geopandas
-.\venv\Scripts\pip.exe install matplotlib
-```
-
-**Solution 3** : Si un paquet spécifique pose problème :
+**Solution 2** : Si un paquet spécifique pose problème :
 
 ```powershell
 .\venv\Scripts\pip.exe uninstall nom_du_paquet -y
@@ -154,7 +140,7 @@ C:\Chemin\vers\Python\python.exe -m venv venv
 
 ---
 
-## 📚 Voir aussi
+## 📚 Commencer à prendre en main le programme
 
 - [Mode Interactif](usage/interactive.md)
 - [Mode CLI](usage/cli.md)

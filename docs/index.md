@@ -8,7 +8,7 @@ nav_order: 1
 
 # 🌊 Outil de Récupération et Visualisation de Données Hydrologiques et Météorologiques
 
-**Documentation API v1.0.0**
+**Documentation API v0.0.1**
 
 ---
 

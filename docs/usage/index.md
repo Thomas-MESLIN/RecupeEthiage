@@ -35,6 +35,7 @@ Le programme vous posera une série de questions :
    - Carte de VCN3/Périodes de retour (étiage)
    - LES DEUX cartes Hubeau
    - Extraits METEO FRANCE
+   - ...
 
 2. **Sélection de la date** (format AAAA-MM)
    - Exemple : `2026-01` pour janvier 2026
