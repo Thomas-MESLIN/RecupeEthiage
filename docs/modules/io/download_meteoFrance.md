@@ -17,7 +17,7 @@ grand_parent: Modules
 
 ### get_data_in_range
 
-Récupère les données pour une période donnée.
+Récupère les données pour une période donnée et en choisissant la fréquence de la odnnées
 
 ```python
 from src.io.download_meteoFrance import get_data_in_range
@@ -26,8 +26,8 @@ from datetime import datetime
 
 df = get_data_in_range(
     data_freq=MeteoFranceDataType.SIM2_MENS,
-    start_date=datetime(2026, 1, 1),
-    end_date=datetime(2026, 1, 31),
+    date_debut=datetime(2026, 1, 1),
+    date_end=datetime(2026, 1, 31),
     has_index_update=True,
     is_data_update_allowed=True
 )
@@ -72,12 +72,12 @@ Télécharge et extrait les données brutes.
 ```python
 from src.io.download_meteoFrance import download_and_extract
 from src.model.enums import MeteoFranceDataType
-from datetime import datetime
+from pathlib import Path
 
 download_and_extract(
-    data_type=MeteoFranceDataType.QUOT,
-    start_date=datetime(2026, 1, 1),
-    end_date=datetime(2026, 1, 31)
+    id_datagouv="super_id_datagouv",
+    chemin_archive=Path("Chemin/ou/stocker/l_archive.zip"),
+    chemin_final=Path("Chemin/ou/stocker/le_fichier.csv"),
 )
 ```
 

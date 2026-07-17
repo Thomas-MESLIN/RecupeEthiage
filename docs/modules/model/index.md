@@ -62,7 +62,7 @@ if campagne == OndeCampagneType.USUELLE:
 | `MENS` | Données brutes mensuelles | Mensuelle |
 
 **Différence SIM2 vs brute** :
-- **SIM2** : Données **interpolées** sur une grille de 8x8 km (couverture complète du territoire)
+- **SIM2** : Données **ayant subi une analyse de MétéoFrance** sur une grille de 8x8 km (couverture complète du territoire)
 - **Brute** : Données de **stations ponctuelles** (mesures réelles aux points de mesure)
 
 **Utilisation** :
@@ -120,41 +120,6 @@ export_all_format_geojson_range(
 
 ---
 
-## 🎯 Avantages des Énumérations
-
-### 1. **Validation automatique**
-
-```python
-# ✅ Impossible de passer une valeur invalide
-def traiter_donnees(type: MeteoFranceDataType):
-    pass
-
-# ❌ Erreur de type à l'exécution
-# traiter_donnees("invalid_type")  # TypeError
-```
-
-### 2. **Complétion automatique** (IDE)
-
-Les IDE comme PyCharm ou VSCode proposent les valeurs possibles lors de la saisie.
-
-### 3. **Documentation intégrée**
-
-Les énumérations sont auto-documentées avec leurs valeurs possibles.
-
-### 4. **Comparaison sécurisée**
-
-```python
-# ✅ Comparaison sûre
-if data_type == MeteoFranceDataType.SIM2_MENS:
-    print("Données SIM2 mensuelles")
-
-# ❌ Comparaison peu sûre (chaînes de caractères)
-if data_type == "SIM2_MENS":
-    print("Données SIM2 mensuelles")
-```
-
----
-
 ## 📊 Tableau Récapitulatif
 
 | Énumération | Valeurs | Description | Module d'utilisation |
@@ -162,124 +127,6 @@ if data_type == "SIM2_MENS":
 | `OndeCampagneType` | USUELLE, COMPLEMENTAIRE, ALL_CAMPAGNE | Types de campagnes ONDE | `plotting.plot_onde`, `processing.process_onde` |
 | `MeteoFranceDataType` | SIM2_QUOT, SIM2_MENS, QUOT, MENS | Types de données météo | `plotting.plot_meteoFrance`, `io.download_meteoFrance` |
 | `GeographicScaleClip` | NATIONAL, BASSIN, REGION_ADMINISTRATIVE, DEPARTEMENT_ADMINISTRATIF, REGION_BASSIN, DEPARTEMENT_BASSIN | Échelles géographiques | `plotting.plot_meteoFrance`, `plotting.rasterize` |
-
----
-
-## 🎓 Exemples Complets
-
-### Exemple 1 : Utilisation avec des conditions
-
-```python
-from src.model.enums import MeteoFranceDataType, GeographicScaleClip
-
-def configurer_traitement(data_type: MeteoFranceDataType, scale: GeographicScaleClip):
-    """Configure le traitement selon le type et l'échelle."""
-    
-    # Configuration selon le type de données
-    if data_type in [MeteoFranceDataType.SIM2_QUOT, MeteoFranceDataType.SIM2_MENS]:
-        print("Données SIM2 (interpolées)")
-        resolution = "8x8km"
-    else:
-        print("Données brutes (stations)")
-        resolution = "ponctuelle"
-    
-    # Configuration selon l'échelle
-    match scale:
-        case GeographicScaleClip.NATIONAL:
-            print("Traitement pour toute la France")
-        case GeographicScaleClip.BASSIN:
-            print("Traitement par bassin")
-        case GeographicScaleClip.REGION_ADMINISTRATIVE:
-            print("Traitement par région administrative")
-        case _:
-            print(f"Traitement à l'échelle {scale}")
-    
-    return resolution
-
-# Appel
-configurer_traitement(
-    MeteoFranceDataType.SIM2_MENS,
-    GeographicScaleClip.BASSIN
-)
-```
-
-### Exemple 2 : Boucle sur toutes les valeurs
-
-```python
-from src.model.enums import MeteoFranceDataType, GeographicScaleClip
-
-# Traiter tous les types de données météo
-for data_type in MeteoFranceDataType:
-    print(f"Traitement de {data_type.name}...")
-    # Appeler les fonctions de traitement
-
-# Traiter toutes les échelles géographiques
-for scale in GeographicScaleClip:
-    print(f"Traitement à l'échelle {scale.name}...")
-    # Appeler les fonctions de plotting
-```
-
-### Exemple 3 : Conversion vers des chaînes
-
-```python
-from src.model.enums import MeteoFranceDataType, GeographicScaleClip
-
-# Obtenir le nom d'une énumération
-print(MeteoFranceDataType.SIM2_MENS.name)  # "SIM2_MENS"
-print(MeteoFranceDataType.SIM2_MENS.value)  # 2 (valeur numérique)
-
-# Obtenir toutes les valeurs
-print([e.name for e in MeteoFranceDataType])  # ["SIM2_QUOT", "SIM2_MENS", "QUOT", "MENS"]
-print([e.value for e in MeteoFranceDataType])  # [1, 2, 3, 4]
-
-# Vérifier si une valeur existe
-if "SIM2_MENS" in [e.name for e in MeteoFranceDataType]:
-    print("SIM2_MENS est une valeur valide")
-```
-
----
-
-## 💡 Bonnes Pratiques
-
-### 1. Toujours utiliser les énumérations au lieu des chaînes
-
-```python
-# ✅ Bon
-type_donnees = MeteoFranceDataType.SIM2_MENS
-
-# ❌ À éviter
-# type_donnees = "SIM2_MENS"  # Chaîne de caractères non validée
-```
-
-### 2. Importer les énumérations au niveau du module
-
-```python
-# ✅ Bon - Import au niveau du module
-from src.model.enums import MeteoFranceDataType, GeographicScaleClip, OndeCampagneType
-
-# Utilisation dans tout le module
-def ma_fonction(type: MeteoFranceDataType):
-    ...
-
-# ❌ À éviter - Import dans chaque fonction
-# def ma_fonction():
-#     from src.model.enums import MeteoFranceDataType
-```
-
-### 3. Utiliser les énumérations dans les signatures de fonctions
-
-```python
-# ✅ Bon - Typage fort
-def traiter_donnees(
-    data_type: MeteoFranceDataType,
-    scale: GeographicScaleClip = GeographicScaleClip.BASSIN
-) -> None:
-    ...
-
-# ❌ À éviter - Pas de typage
-# def traiter_donnees(data_type, scale="BASSIN"):
-#     ...
-```
 
 ---
 

@@ -49,10 +49,14 @@ Fonctionnalités principales :
 **Utilisation typique** :
 ```python
 from src.io.download_Hubeau import ensure_station_downloaded, ensure_sites_downloaded
+from src.model.enums import GeographicScaleClip
 
 # S'assurer que les stations sont à jour
 ensure_station_downloaded()
 ensure_sites_downloaded()
+
+# Télécharger les données Onde.
+download_hubeau_onde_stations_geographic_zone(GeographicScaleClip.REGION_ADMINISTRATIVE,"84")
 ```
 
 ### 🌦️ [download_meteoFrance.py](download_meteoFrance.md)
@@ -114,25 +118,7 @@ print(departements)  # ['01', '03', '07', '15', '26', '38', '42', '43', '63', '6
 
 ## 🎯 Diagramme des Flux de Données
 
-```
-┌─────────────────┐     ┌─────────────────────┐
-│   API Hub'Eau    │────▶│   download_Hubeau   │
-└─────────────────┘     └──────────┬───────────┘
-                                      │
-                                      ▼
-┌─────────────────┐     ┌─────────────────────┐
-│   API MétéoF    │────▶│ download_meteoFrance│
-└─────────────────┘     └──────────┬───────────┘
-                                      │
-┌─────────────────┐     ┌─────────────────────┐
-│   API INSEE      │────▶│  pynsee_departement │
-└─────────────────┘     └─────────────────────┘
-                                      │
-                                      ▼
-                              ┌─────────────┐
-                              │   output/   │
-                              └─────────────┘
-```
+![Diagramme de flux de données io, on voit les différentes API allant chacune vers sont module puis vers output.](img\flux_de_donnee_io.png)
 
 ---
 
@@ -174,61 +160,7 @@ print("✅ Toutes les données téléchargées !")
 
 ---
 
-## 💡 Bonnes Pratiques
-
-### 1. Toujours vérifier que les données sont à jour
-
-```python
-from src.io.download_Hubeau import ensure_station_downloaded
-
-# ✅ Bon - Vérifie et télécharge si nécessaire
-ensure_station_downloaded()
-
-# ❌ À éviter - Suppose que les données sont déjà là
-# (risque d'utiliser des données obsolètes)
-```
-
-### 2. Utiliser les énumérations pour les types de données
-
-```python
-from src.model.enums import MeteoFranceDataType
-
-# ✅ Bon - Type vérifié
-get_data_in_range(MeteoFranceDataType.SIM2_MENS, ...)
-
-# ❌ À éviter - Chaîne de caractères non vérifiée
-get_data_in_range("SIM2_MENS", ...)  # Risque d'erreur
-```
-
-### 3. Gérer les erreurs de téléchargement
-
-```python
-from src.io.download_meteoFrance import get_data_in_range
-from src.model.enums import MeteoFranceDataType
-
-try:
-    df = get_data_in_range(
-        MeteoFranceDataType.SIM2_MENS,
-        datetime(2026, 1, 1),
-        datetime(2026, 1, 31)
-    )
-    if df.empty:
-        print("Avertissement : Aucune donnée téléchargée")
-except Exception as e:
-    print(f"Erreur lors du téléchargement : {e}")
-```
-
----
-
-## 📚 Voir aussi
-
-- [Module plotting](../plotting/index.md) - Utilisation des données téléchargées
-- [Module processing](../processing/index.md) - Traitement des données
-- [Concepts : Sources de données](../../concepts/index.md)
-
----
-
-## 🔗 Navigation
+## 🔗 Les modules plus en détails
 
 - [download_Hubeau.py](download_Hubeau.md)
 - [download_meteoFrance.py](download_meteoFrance.md)
@@ -236,7 +168,7 @@ except Exception as e:
 
 ---
 
-[Retour aux modules](index.md)
+[Retour au départ](index.md)
 
 
 

@@ -35,7 +35,7 @@ src/
 ├── model/            # Modèles de données
 │   └── enums.py            # Énumérations (OndeCampagneType, MeteoFranceDataType, etc.)
 │
-├── plotting/         # ⭐ MODULE PRINCIPAL - Visualisation *(documentation détaillée)*
+├── plotting/         # Visualisation
 │   ├── plot_grandeur.py         # Visualisation des grandeurs hydrologiques
 │   ├── plot_meteoFrance.py     # Visualisation des données MétéoFrance
 │   ├── plot_onde.py            # Visualisation des données ONDE
@@ -71,7 +71,6 @@ src/
 | [plot_meteoFrance](plotting/plot_meteoFrance.md) | Données météorologiques | `export_all_format_geojson_range`, `plot_bar_dataframe`, `to_lambert2_geodataframe` |
 | [plot_onde](plotting/plot_onde.md) | Données ONDE | `plot_evolution_assecs`, `plot_evolution_ecoulements`, `plot_everything` |
 | [rasterize](plotting/rasterize.md) | Rasterisation | `rasterize_geojson`, `rasterize_geodataframe_geographiv_zone` |
-| [plot_res_validation_clean](plotting/plot_res_validation_clean.md) | Validation | `do_plot_hubeau_hydroportail` |
 | [styles](plotting/styles.md) | Styles et couleurs | `COULEUR_MOYENNE`, `ANNEE_COULEURS` |
 
 ### 📥 **[io](io/index.md)** - Entrées/Sorties
@@ -100,15 +99,15 @@ Définitions des types de données et énumérations.
 
 ---
 
-## 🏆 Module le Plus Important : plotting
+## Module de visualisation : plotting
 
 Le module **`plotting`** est le cœur de la visualisation de votre application. Il permet de :
 
-- ✅ **Générer des cartes GeoJSON** pour QGIS et autres logiciels SIG
-- ✅ **Créer des graphiques statistiques** (histogrammes, courbes, diagrammes)
-- ✅ **Visualiser des indicateurs** (hydraulicité, VCN3, SPI, SSWI)
-- ✅ **Rasteriser des données** pour créer des cartes de chaleur
-- ✅ **Exporter des données par zone géographique** (bassin, région, département)
+- **Générer des cartes GeoJSON** pour QGIS et autres logiciels SIG
+- **Créer des graphiques statistiques** (histogrammes, courbes, diagrammes)
+- **Visualiser des indicateurs** (hydraulicité, VCN3, SPI, SSWI)
+- **Rasteriser des données** pour créer des cartes de chaleur
+- **Exporter des données par zone géographique** (bassin, région, département)
 
 **📖 [Documentation complète du module plotting →](plotting/index.md)**
 
@@ -116,7 +115,7 @@ Le module **`plotting`** est le cœur de la visualisation de votre application. 
 
 ## 📚 Navigation
 
-- [plotting](plotting/index.md) - **Module principal** *(recommandé)*
+- [plotting](plotting/index.md)
 - [config](config/index.md)
 - [io](io/index.md)
 - [processing](processing/index.md)

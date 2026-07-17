@@ -79,13 +79,13 @@ Vous devriez voir s'afficher un message d'aide avec toutes les options disponibl
 
 ## 🔧 Configuration initiale
 ### Configuration de la liste custom
-Vous pouvez, au lieu d'utiliser des codes de réseau Sandre pour récupérer les données d'hydraulicité et de VCN3, utiliser une liste de station et de sites que vous avez vous-même défini.
+Vous pouvez, au lieu d'utiliser des codes de réseau Sandre pour récupérer les données d'hydraulicité et de VCN3, utiliser une liste de station et de sites que vous avez vous-même défini. ('custom')
 
 Vous pouvez retrouver cette liste dans `data/liste_station_custom.csv` et `data/liste_site_custom.csv`. Le programme va aggréger ces deux listes en `output/site_station_custom/liste_site_et_station_custom.csv`.
 
 Vous pouvez ainsi vérifier que les listes de sites/stations se sont bien générés, en cas d'ambiguité sur un site ayant plusieurs stations potentielle, vous pouvez rajouter la station que vous souhaitez dans liste_station_custom, cette station uniquement sera retenue.
 
-Le plus simple étant de renseigner toutes les stations directement.
+Le plus simple étant de renseigner simplement toutes les stations directement (les sites auxquelles les stations appartiennent sont retrouvé automatiquement).
 
 ### Configuration des zones géographiques par défaut
 Les scripts MeteoFrance utilisent les listes de bassin, département, région définis dans `liste_bassin.csv`, `liste_departement.csv`, `liste_region.csv`. Ces listes utilisent des codes SANDRE pour les bassins, départements et régions.

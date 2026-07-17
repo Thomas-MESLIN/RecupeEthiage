@@ -18,15 +18,33 @@ parent: Utilisation
 .\venv\Scripts\python.exe main.py --type [TYPE] [autres options]
 ```
 
+Voir toutes les options : 
+```powershell
+.\venv\Scripts\python.exe main.py --help
+```
+
 ---
 
 ## 📋 Options principales
 
 ### Argument obligatoire
 
-| Option | Choix possibles | Description |
-|--------|----------------|-------------|
+| Option   | Choix possibles | Description |
+|----------|----------------|-------------|
 | `--type` | `hydraulicite`, `vcn3`, `meteo_brut_MENS`, `meteo_sim2_MENS`, `meteo_brut_QUOT`, `meteo_sim2_QUOT`, `stations-sites`, `onde_USUELLE`, `onde_ALL` | Type de données à générer |
+
+
+| Type | Description | Durée |
+|------|-------------|-------|
+| `hydraulicite` | Calcul de l'hydraulicité (débit par rapport à la normale) | 1 mois |
+| `vcn3` | Calcul du VCN3 (période de retour) | 1 mois |
+| `meteo_brut_MENS` | Données météo brutes mensuelles | Intervalle |
+| `meteo_sim2_MENS` | Données météo SIM2 mensuelles | Intervalle |
+| `meteo_brut_QUOT` | Données météo brutes quotidiennes | Intervalle |
+| `meteo_sim2_QUOT` | Données météo SIM2 quotidiennes | Intervalle |
+| `onde_USUELLE` | Données ONDE (campagnes usuelle uniquement) | 1 mois |
+| `onde_ALL` | Données ONDE (toutes campagnes) | 1 mois |
+
 
 ### Arguments de dates
 
@@ -72,6 +90,8 @@ parent: Utilisation
   --vcn3_graphic
 ```
 
+> **Note** : Les graphiques pour le vcn3 sont généré uniquement si les données historiques n'ont pas été encore calculées. En cas de doute, mettez le tout le temps.
+
 **Résultat** :
 - `output/QGIS/frequence_periode_de_retour/periode-de-retour-BSH001-2024-02.geojson`
 - Graphiques : `output/VCN3/plot_stations/`
@@ -84,8 +104,6 @@ parent: Utilisation
   --reseau_sandre BSH001 \
   --vcn3_graphic
 ```
-
-> **Note** : Il n'existe pas d'option "les deux" en CLI. Pour générer les deux, lancez deux commandes séparées.
 
 ---
 
@@ -240,7 +258,7 @@ Utile pour les tests ou lorsque vous travaillez hors ligne.
 
 ## 🔄 Scripts d'automatisation
 
-### Exemple 1 : Générer toutes les données du mois précédent
+### Exemple : Générer toutes les données du mois précédent
 
 ```powershell
 # Récupérer la date du mois précédent
@@ -249,30 +267,6 @@ $month = (Get-Date).AddMonths(-1).ToString("yyyy-MM")
 # Générer hydraulicité et VCN3
 .\venv\Scripts\python.exe main.py --type hydraulicite --start_date $month --reseau_sandre BSH001
 .\venv\Scripts\python.exe main.py --type vcn3 --start_date $month --reseau_sandre BSH001 --vcn3_graphic
-```
-
-### Exemple 2 : Générer les données météo pour toute l'année
-
-```powershell
-# Générer pour chaque mois de l'année 2025
-for $month in @("01","02","03","04","05","06","07","08","09","10","11","12") {
-    .\venv\Scripts\python.exe main.py \
-        --type meteo_sim2_MENS \
-        --start_date "2025-$month" \
-        --end_date "2025-$month"
-}
-```
-
-### Exemple 3 : Mettre à jour toutes les données ONDE pour un bassin
-
-```powershell
-# Pour le bassin Rhône-Méditerranée (06)
-.\venv\Scripts\python.exe main.py \
-  --type onde_ALL \
-  --start_date 2024-01-01 \
-  --end_date 2026-06-30 \
-  --geographic_scale BASSIN \
-  --onde_zone_code 06
 ```
 
 ---
@@ -295,6 +289,9 @@ for $month in @("01","02","03","04","05","06","07","08","09","10","11","12") {
 
 **Solution** : Vérifiez que vous utilisez le bon type de données. Certaines colonnes sont spécifiques à certains types.
 
+
+> **Note** : En cas de problème, vous pouvez ouvrir une issue sur GitHub.
+
 ---
 
 ## 📊 Tableau récapitulatif des commandes
@@ -316,8 +313,8 @@ for $month in @("01","02","03","04","05","06","07","08","09","10","11","12") {
 ## 🎯 Prochaines étapes
 
 - [Mode Interactif](interactive.md) - Pour une approche guidée
-- [Module Plotting](modules/plotting/index.md) - Documentation technique détaillée
-- [Concepts Clés](concepts/index.md) - Comprendre les indicateurs
+- [Module Plotting](../modules/plotting/index.md) - Documentation technique détaillée
+- [Concepts Clés](../concepts/index.md) - Comprendre les indicateurs
 
 
 

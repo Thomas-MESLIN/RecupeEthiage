@@ -86,18 +86,11 @@ Le mode CLI permet de lancer directement une commande avec tous les paramètres.
 .\venv\Scripts\python.exe main.py --type [TYPE] [autres options]
 ```
 
-### Types de données disponibles
+Voir toutes les options : 
 
-| Type | Description | Durée |
-|------|-------------|-------|
-| `hydraulicite` | Calcul de l'hydraulicité (débit par rapport à la normale) | 1 mois |
-| `vcn3` | Calcul du VCN3 (période de retour) | 1 mois |
-| `meteo_brut_MENS` | Données météo brutes mensuelles | Intervalle |
-| `meteo_sim2_MENS` | Données météo SIM2 mensuelles | Intervalle |
-| `meteo_brut_QUOT` | Données météo brutes quotidiennes | Intervalle |
-| `meteo_sim2_QUOT` | Données météo SIM2 quotidiennes | Intervalle |
-| `onde_USUELLE` | Données ONDE (campagnes usuelle uniquement) | 1 mois |
-| `onde_ALL` | Données ONDE (toutes campagnes) | 1 mois |
+```powershell
+.\venv\Scripts\python.exe main.py --help
+```
 
 ### Exemples d'utilisation
 
@@ -143,30 +136,3 @@ output/
 ├── site_station_custom/    # Listes personnalisées
 └── logs/                   # Journaux d'exécution
 ```
-
----
-
-## 📊 Choix du mode
-
-| Critère | Mode Interactif | Mode CLI |
-|---------|----------------|---------|
-| **Facilité** | ⭐⭐⭐⭐⭐ | ⭐⭐ |
-| **Rapidité** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Automatisation** | ⭐ | ⭐⭐⭐⭐⭐ |
-| **Approprié pour** | Débutants, exploration | Scripts, intégration |
-
----
-
-## 🎯 Résumé rapide
-
-| Besoin | Commande |
-|--------|----------|
-| **Hydraulicité du mois dernier** | `main.py --type hydraulicite` |
-| **VCN3 du mois dernier** | `main.py --type vcn3` |
-| **Météo SIM2 quotidienne** | `main.py --type meteo_sim2_QUOT --start_date 2026-07-09 --end_date 2026-07-09` |
-| **Météo SIM2 mensuelle agrégée** | `main.py --type meteo_sim2_MENS --start_date 2026-06-01 --end_date 2026-07-01 --meteo_aggregate` |
-| **Données ONDE** | `main.py --type onde_ALL --start_date 2026-06-01 --geographic_scale BASSIN --onde_zone_code 06` |
-| **Lancer en mode interactif** | `main.py` |
-
-
-

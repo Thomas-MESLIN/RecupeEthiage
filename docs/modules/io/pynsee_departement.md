@@ -25,10 +25,6 @@ from src.io.pynsee_departement import get_departements_from_regions
 # Pour une région
 code_region = "84"  # Auvergne-Rhône-Alpes
 departements = get_departements_from_regions(code_region)
-
-# Pour plusieurs régions
-regions = ["84", "75"]  # Auvergne-Rhône-Alpes, Île-de-France
-departements_multi = get_departements_from_regions(regions)
 ```
 
 **Paramètres**
@@ -56,11 +52,6 @@ from src.io.pynsee_departement import get_departements_from_regions
 # Récupérer les départements de Auvergne-Rhône-Alpes
 departements_ara = get_departements_from_regions("84")
 print(f"Départements ARA : {departements_ara}")
-
-# Récupérer les départements de plusieurs régions
-regions = ["84", "75", "44"]  # ARA, IDF, Pays de la Loire
-departements = get_departements_from_regions(regions)
-print(f"Tous les départements : {departements}")
 ```
 
 ---

@@ -42,35 +42,6 @@ from src.config.styles import COULEUR_MOYENNE
 plt.axhline(y=moyenne, color=COULEUR_MOYENNE, linestyle='--')
 ```
 
----
-
-## 🎯 Palettes par Indicateur
-
-### Hydraulicité
-
-| Plage | Couleur | Code |
-|-------|---------|------|
-| < 40% | Rouge | #8B0000 |
-| 40-70% | Orange | #FF8C00 |
-| 70-100% | Jaune | #FFD700 |
-| 100-130% | Vert clair | #90EE90 |
-| 130-160% | Vert | #008000 |
-| > 160% | Bleu | #0000FF |
-
-### SPI/SSWI
-
-| Plage | Couleur |
-|-------|---------|
-| ≤ -2.0 | Rouge foncé |
-| -1.99 à -1.5 | Rouge |
-| -1.49 à -1.0 | Orange |
-| -0.99 à 0.99 | Jaune |
-| 1.0-1.49 | Vert clair |
-| 1.5-1.99 | Vert |
-| ≥ 2.0 | Vert foncé |
-
----
-
 ## 💡 Utilisation
 
 ```python

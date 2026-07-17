@@ -27,7 +27,9 @@ from src.model.enums import GeographicScaleClip
 # Valeurs disponibles
 GeographicScaleClip.BASSIN        # Bassin versant
 GeographicScaleClip.REGION_ADMINISTRATIVE  # Région administrative
-GeographicScaleClip.DEPARTEMENT  # Département
+GeographicScaleClip.REGION_BASSIN  # Région coupée par le Bassin
+GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF  # Département Administratif
+GeographicScaleClip.DEPARTEMENT_BASSIN  # Département coupé par le Bassin
 ```
 
 ---
@@ -40,8 +42,8 @@ Types de données MétéoFrance.
 from src.model.enums import MeteoFranceDataType
 
 # Valeurs disponibles
-MeteoFranceDataType.SIM2_QUOT   # Données quotidiennes interpolées
-MeteoFranceDataType.SIM2_MENS   # Données mensuelles interpolées
+MeteoFranceDataType.SIM2_QUOT   # Données quotidiennes analysées par MétéoFrance
+MeteoFranceDataType.SIM2_MENS   # Données mensuelles analysées par MétéoFrance
 MeteoFranceDataType.QUOT        # Données quotidiennes brutes
 MeteoFranceDataType.MENS        # Données mensuelles brutes
 ```
@@ -57,23 +59,8 @@ from src.model.enums import OndeCampagneType
 
 # Valeurs disponibles
 OndeCampagneType.ALL_CAMPAGNE    # Toutes les campagnes
-OndeCampagneType.ONE_CAMPAGNE    # Une campagne spécifique
-```
-
----
-
-## 🎯 Utilisation
-
-```python
-from src.model.enums import GeographicScaleClip, MeteoFranceDataType
-
-# Exemple avec plot_meteoFrance
-export_all_format_geojson_range(
-    geo_scale=GeographicScaleClip.BASSIN,
-    data_freq=MeteoFranceDataType.SIM2_MENS,
-    start_date=datetime(2026, 1, 1),
-    end_date=datetime(2026, 1, 31)
-)
+OndeCampagneType.USUELLE         # Les campagnes usuelles uniquement
+OndeCampagneType.COMPLEMENTAIRE  # Les campagnes complémentaires uniquement
 ```
 
 ---

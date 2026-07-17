@@ -17,7 +17,7 @@ grand_parent: Modules
 
 ### ensure_station_downloaded
 
-S'assure que le fichier des stations est téléchargé et à jour.
+S'assure que le fichier contenant toutes les stations est téléchargé et à moins d'un an.
 
 ```python
 from src.io.download_Hubeau import ensure_station_downloaded
@@ -30,7 +30,7 @@ ensure_station_downloaded()
 
 ### ensure_sites_downloaded
 
-S'assure que le fichier des sites est téléchargé.
+S'assure que le fichier contenant tous les sites est téléchargé et à moins d'un an.
 
 ```python
 from src.io.download_Hubeau import ensure_sites_downloaded
@@ -43,7 +43,7 @@ ensure_sites_downloaded()
 
 ### ensure_grandeur_mensuel_downloaded
 
-Télécharge les données mensuelles pour une grandeur donnée.
+S'assure que le fichier contenant cette grandeur mensuel est téléchargé et à moins d'un an.
 
 ```python
 from src.io.download_Hubeau import ensure_grandeur_mensuel_downloaded
