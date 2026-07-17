@@ -1,76 +1,85 @@
-# Welcome to Jekyll!
-#
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely edit after that. If you find
-# yourself editing this file very often, consider using Jekyll's data files
-# feature for the data you need to update frequently.
-#
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
-#
-# If you need help with YAML syntax, here are some quick references for you:
-# https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
-# https://learnxinyminutes.com/docs/yaml/
-#
-# Site settings
-# These are used to personalize your new site. If you look in the HTML files,
-# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
-# You can create any custom variable you would like, and they will be accessible
-# in the templates via {{ site.myvariable }}.
+# Configuration Jekyll pour GitHub Pages
+# Thème: minima
 
-title: RecupeEthiage
-email: thomas.meslin@developpement-durable.gouv.fr
-description:
-  fr: >-
-    Documentation du package python `RecupeEthiage`
-domain: thomas-meslin.github.io  # if you want to force HTTPS, specify the domain without the http at the start, e.g. example.com
-url: https://thomas-meslin.github.io  # the base hostname and protocol for your site, e.g. http://example.com
-baseurl: /RecupeEthiage/      # place folder name if the site is served in a subfolder
-github_username:  thomas-meslin
+# Informations du site
+name: "Documentation - Outil de Récupération et Visualisation de Données Hydrologiques"
+description: "Documentation complète pour l'outil de récupération, analyse et visualisation de données hydrologiques et météorologiques"
 
-permalink: pretty
+# URL pour GitHub Pages (à adapter selon votre dépôt)
+url: "https://Thomas-MESLIN.github.io"
+baseurl: "/RecupeEthiage"
 
-# Build settings
-theme: just-the-docs
+# Paramètres du site
+title: "Documentation Hydrologie-Météorologie"
+repository: "Thomas-MESLIN/RecupeEthiage"
+
+# Paramètres d'affichage
+logo: "/assets/images/logo.png"
+
+# Navigation principale
+header_pages:
+  - index.md
+  - getting-started.md
+  - usage/index.md
+  - modules/index.md
+  - concepts/index.md
+  - data/index.md
+  - api/reference.md
+
+# Configuration spécifique à minima
+minima:
+  date_format: "%d %B %Y"
+  skin: light
+  social_links:
+    github: Thomas-MESLIN
+
+# Pied de page
+footer_content: "Copyright &copy; 2026 Thomas Meslin. Distribué sous licence MIT."
+
+# Paramètres de générateur
+generator: true
+generator_label: "Documentation générée avec Jekyll"
+
+# Paramètres Markdown
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+      start_line: 1
+
+# Plugins
 plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
 
-# Exclude from processing.
-# The following items will not be processed, by default.
-# Any item listed under the `exclude:` key here will be automatically added to
-# the internal "default list".
-#
-# Excluded items can be processed by explicitly listing the directories or
-# their entries' file path in the `include:` list.
-#
-# exclude:
-#   - .sass-cache/
-#   - .jekyll-cache/
-#   - gemfiles/
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules/
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
+# Paramètres SEO
+seo:
+  name: "Documentation Hydrologie-Météorologie"
+  description: "Documentation complète pour l'outil de récupération, analyse et visualisation de données hydrologiques et météorologiques en France"
+  url: "https://Thomas-MESLIN.github.io/RecupeEthiage"
 
-languages: ["fr"]
-default_lang: "fr"
-exclude_from_localization: ["assets/css", "assets/img"]
-parallel_localization: true
+# Exclusions
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
 
-logo: "/assets/img/logo.jpg"
-favicon_ico: "/assets/img/favicon.ico"
-color_scheme: dark
+# Inclusions
+include:
+  - _pages
 
-callouts:
-  warning:
-    title: 💡 Remarque
-    color: blue
-  critical:
-    title: ⚠️ Attention
-    color: red
+# Paramètres de construction
+incremental: false
+strict_front_matter: true
 
-
-sass:
-  sourcemap: never
+# Paramètres de langages
+lang: fr_FR
