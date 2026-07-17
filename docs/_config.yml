@@ -1,24 +1,19 @@
-# Configuration Jekyll pour GitHub Pages
-
-# Informations du site
-title: "RecupeEthiage"
+# Configuration Jekyll pour GitHub Pages avec Just the Docs
+title: "RecupeEthiage"  # Titre du site (utilisé dans l'onglet du navigateur)
 name: "Documentation - Outil de Récupération et Visualisation de Données Hydrologiques"
 description: "Documentation complète pour l'outil de récupération, analyse et visualisation de données hydrologiques et météorologiques"
 
-# URL pour GitHub Pages (à adapter selon votre dépôt)
+# URL pour GitHub Pages
 url: "https://Thomas-MESLIN.github.io"
-baseurl: "/RecupeEthiage"
+baseurl: "/RecupeEthiage"  # Important : doit commencer par un slash
 
-# Paramètres du site
-title: "Documentation Hydrologie-Météorologie"
-repository: "Thomas-MESLIN/RecupeEthiage"
-
+# Thème
 remote_theme: just-the-docs/just-the-docs
 theme: null  # Désactive le thème local
 
-
+# Configuration spécifique à Just the Docs
 just_the_docs:
-  # Configuration de la navigation
+  # Navigation principale
   navigation:
     - title: Accueil
       url: /
@@ -28,6 +23,8 @@ just_the_docs:
       children:
         - title: Introduction
           url: /usage/
+        - title: CLI
+          url: /usage/cli
         - title: Modules
           url: /usage/modules/
     - title: Concepts
@@ -36,14 +33,16 @@ just_the_docs:
       url: /data/
     - title: Référence API
       url: /api/reference
-    # Fil d'Ariane (breadcrumbs)
+
+  # Fil d'Ariane (breadcrumbs)
   breadcrumbs:
     enabled: true
     separator: "/"
+
   # Logo et favicon
   logo: "/assets/images/logo.png"
   favicon_ico: "/assets/images/favicon.ico"
-  
+
   # Pied de page
   footer_content: "Copyright &copy; 2026 Thomas Meslin. Distribué sous licence MIT."
 
@@ -55,7 +54,13 @@ just_the_docs:
   color_scheme: light
   search_enabled: true
 
-# Paramètres Markdown (compatible avec Just the Docs)
+  # Désactive les conteneurs superflus
+  heading_anchors: true  # Active les ancres pour les titres
+  aux_links:  # Liens utiles en haut à droite (ex: "Edit on GitHub")
+    "Éditer sur GitHub":
+      - "https://github.com/Thomas-MESLIN/RecupeEthiage/edit/main/{path}"
+
+# Paramètres Markdown
 markdown: kramdown
 kramdown:
   input: GFM
@@ -66,7 +71,7 @@ kramdown:
       line_numbers: true
       start_line: 1
 
-# Plugins
+# Plugins (GitHub Pages ne supporte que certains plugins)
 plugins:
   - jekyll-feed
   - jekyll-sitemap
@@ -88,5 +93,5 @@ exclude:
   - vendor/gems/
   - vendor/ruby/
 
-# Paramètres de langages
+# Langue
 lang: fr_FR
