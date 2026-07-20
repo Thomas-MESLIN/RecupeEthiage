@@ -366,7 +366,8 @@ def generate_raster_from_hydraulicite_geojson(geojson_path: Path, output_path: P
             geographic_scale,
             code_zone,
             output_path,
-            titre
+            titre,
+            True
         )
         logger.info(f"Raster hydraulicité généré : {output_path}")
     except Exception as e:
@@ -405,7 +406,8 @@ def generate_raster_from_periode_de_retour_geojson(geojson_path: Path, output_pa
             geographic_scale,
             code_zone,
             output_path,
-            titre
+            titre,
+            True
         )
         logger.info(f"Raster periode de retour généré : {output_path}")
     except Exception as e:
@@ -445,6 +447,7 @@ if __name__ == "__main__":
     # create_geojson_from_periode_de_retour("2026-05", "BSH001")
     # create_geojson_from_periode_de_retour("2026-04", "BSH001")
     # create_geojson_from_periode_de_retour("2026-05", "custom")
+    # create_geojson_from_periode_de_retour("2026-04", "BSH001")
     # create_geojson_from_periode_de_retour("2026-04", "custom")
     # create_geojson_from_stations(None, None)
     # create_geojson_from_sites(None)

@@ -29,6 +29,8 @@ def get_geographic_list(geographic_scale: GeographicScaleClip):
             file_to_read = DATA_DIR / Path("liste_region.csv")
         case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
             file_to_read = DATA_DIR / Path("liste_departement.csv")
+        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
+            file_to_read = DATA_DIR / Path("liste_eco_hydro.csv")
         case _:
             raise NotImplementedError
 
