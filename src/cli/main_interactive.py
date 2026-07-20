@@ -143,7 +143,8 @@ def generer_carte_meteo():
         "3": "REGION_ADMINISTRATIVE",
         "4": "DEPARTEMENT_ADMINISTRATIF",
         "5": "REGION_BASSIN",
-        "6": "DEPARTEMENT_BASSIN"
+        "6": "DEPARTEMENT_BASSIN",
+        "7": "ECOREGION_HYDROLOGIQUE"
     }
     choix_geo = demander_avec_choix(
         "Quel échelle géographique souhaitez-vous ?",
@@ -158,7 +159,8 @@ def generer_carte_meteo():
         "3": GeographicScaleClip.REGION_ADMINISTRATIVE,
         "4": GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF,
         "5": GeographicScaleClip.REGION_BASSIN,
-        "6": GeographicScaleClip.DEPARTEMENT_BASSIN
+        "6": GeographicScaleClip.DEPARTEMENT_BASSIN,
+        "7": GeographicScaleClip.ECOREGION_HYDROLOGIQUE
     }
     geographic_scale = geographic_scale_map[choix_geo]
     logger.info(f"Échelle géographique sélectionnée : {geographic_scale}")
@@ -269,7 +271,8 @@ def generer_carte_onde():
         "3": "REGION_ADMINISTRATIVE",
         "4": "DEPARTEMENT_ADMINISTRATIF",
         "5": "REGION_BASSIN",
-        "6": "DEPARTEMENT_BASSIN"
+        "6": "DEPARTEMENT_BASSIN",
+        "7": "ECOREGION_HYDROLOGIQUE"
     }
     choix_geo = demander_avec_choix(
         "Quel échelle géographique souhaitez-vous ?",
@@ -284,7 +287,8 @@ def generer_carte_onde():
         "3": GeographicScaleClip.REGION_ADMINISTRATIVE,
         "4": GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF,
         "5": GeographicScaleClip.REGION_BASSIN,
-        "6": GeographicScaleClip.DEPARTEMENT_BASSIN
+        "6": GeographicScaleClip.DEPARTEMENT_BASSIN,
+        "7": GeographicScaleClip.ECOREGION_HYDROLOGIQUE
     }
     geographic_scale = geographic_scale_map[choix_geo]
     logger.info(f"Échelle géographique sélectionnée : {geographic_scale}")
