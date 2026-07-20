@@ -89,7 +89,8 @@ def setup_parser():
             GeographicScaleClip.REGION_ADMINISTRATIVE,
             GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF,
             GeographicScaleClip.REGION_BASSIN,
-            GeographicScaleClip.DEPARTEMENT_BASSIN
+            GeographicScaleClip.DEPARTEMENT_BASSIN,
+            GeographicScaleClip.ECOREGION_HYDROLOGIQUE
         ],
         help="[météo/onde] Échelle géographique (défaut : BASSIN)",
         default=GeographicScaleClip.BASSIN

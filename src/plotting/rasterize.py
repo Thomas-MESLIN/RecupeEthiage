@@ -345,6 +345,9 @@ def rasterize_geodataframe_geographiv_zone(
         case GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF | GeographicScaleClip.DEPARTEMENT_BASSIN:
             mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
             mask_column_name = "code"
+        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
+            mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/Climato_hydro_region.geojson"
+            mask_column_name = "code"
         case _:
             logger.error(f"Échelle géographique non prise en charge : {geographic_zone}")
             raise ValueError(f"Échelle géographique non prise en charge : {geographic_zone}")

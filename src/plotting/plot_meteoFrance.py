@@ -125,6 +125,11 @@ def get_chemin_sauvegarde_geographie(geographic_scale:GeographicScaleClip, chemi
         case GeographicScaleClip.NATIONAL:
             suffix_letter = ""
             dossier = ""
+        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
+            suffix_letter = "E"
+            dossier = "ecoregion_hydrologique"
+        case _:
+            raise NotImplementedError
     nouveau_chemin = nouveau_chemin.with_stem(f"{chemin_sauvegarde_original.stem}-{suffix_letter}{code_geographique}")
     nouveau_chemin = nouveau_chemin.parent / dossier / nouveau_chemin.name
     return nouveau_chemin
@@ -424,6 +429,10 @@ def get_all_geographic_geodf(geographic_scale:GeographicScaleClip):
             chemin_archive = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis_archive" / "bassin-hydrographique.geojson.zip"
             chemin = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis" / "BassinHydrographique_FXX.geojson"
             id_data_gouv = "b0761a88-b59f-466f-a3cc-b97f237fd732"
+        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
+            chemin_archive = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis_archive" / "Climato_hydro_region.geojson.zip"
+            chemin = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis" / "Climato_hydro_region.geojson"
+            id_data_gouv = "bf4e654b-9aa9-49fd-b745-12219953268b"
         case _:
             raise NotImplementedError
 
@@ -440,6 +449,8 @@ def get_geographic_element(geographic_scale:GeographicScaleClip, code:str):
         case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
             nom_colonne = "code"
         case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
+            nom_colonne = "code"
+        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
             nom_colonne = "code"
         case _:
             raise NotImplementedError
