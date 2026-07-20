@@ -16,6 +16,8 @@ Avec cet outil, vous pouvez :
    - **SSWI** : Indice Standardisé d'Humidité des Sols
 ✅ **Générer des cartes** au format GeoJSON, compatibles avec QGIS et autres logiciels SIG
 
+> **Info** : Documentation en ligne ici : https://thomas-meslin.github.io/RecupeEthiage.
+
 ---
 
 ## 🔧 Prérequis
@@ -463,3 +465,6 @@ N'hésitez pas à :
 | **Lancer en mode interactif** | `.\venv\Scripts\python.exe main.py` |
 
 ---
+
+## Documentation en ligne
+Toute une documentation plus précise en ligne est disponible ici : https://thomas-meslin.github.io/RecupeEthiage.
