@@ -41,16 +41,16 @@ def generer_carte_hubeau(type_carte: str):
     
     date_selectionnee = demander_date(
         "Choisissez le mois pour lequel générer les données",
-        "AAAA-MM",
+        "AAAAMM",
         debut_mois_precedent
     )
-    date_annee_mois = date_selectionnee.strftime("%Y-%m")
+    date_annee_mois = date_selectionnee.strftime("%Y%m")
     logger.info(f"Mois sélectionné : {date_annee_mois}")
     
     # 2. Sélection du réseau SANDRE
     options_reseau = {
-        "1": "BSH001 (par défaut)",
-        "2": "custom (utiliser la liste personnalisée)"
+        "1": "BSH001 - par défaut",
+        "2": "custom - utiliser la liste personnalisée"
     }
     choix_reseau = demander_avec_choix(
         "Choisissez un réseau SANDRE",
@@ -65,7 +65,7 @@ def generer_carte_hubeau(type_carte: str):
     if type_carte in ["vcn3", "les_deux"]:
         generer_graphiques = demander_ou_non(
             "Souhaitez-vous générer les graphiques individuels pour chaque station "
-            "(pour le calcul des périodes de retour)?"
+            "- pour le calcul des périodes de retour?"
         )
     
     logger.info("Génération en cours...")
@@ -113,7 +113,7 @@ def generer_carte_meteo():
     # 1. Sélection de l'échelle temporelle
     options_echelle = {
         "1": "MENSUELLE",
-        "2": "QUOTIDIENNE (par défaut)"
+        "2": "QUOTIDIENNE - par défaut"
     }
     choix_echelle = demander_avec_choix(
         "Quel échelle temporelle souhaitez-vous ?",
@@ -125,8 +125,8 @@ def generer_carte_meteo():
     
     # 2. Sélection du type de données
     options_donnees = {
-        "1": "Données brutes (sans pré-calcul)",
-        "2": "SIM2 (par défaut - données interpolées sur grille 8x8km)"
+        "1": "Données brutes - sans pré-calcul",
+        "2": "SIM2 - par défaut - données interpolées sur grille 8x8km"
     }
     choix_donnees = demander_avec_choix(
         "Quel type de données souhaitez-vous ?",
@@ -139,7 +139,7 @@ def generer_carte_meteo():
     # 3. Sélection de l'échelle géographique
     options_geo = {
         "1": "NATIONAL",
-        "2": "BASSIN (par défaut)",
+        "2": "BASSIN - par défaut",
         "3": "REGION_ADMINISTRATIVE",
         "4": "DEPARTEMENT_ADMINISTRATIF",
         "5": "REGION_BASSIN",
@@ -180,7 +180,7 @@ def generer_carte_meteo():
     # Date de fin par défaut : dernier jour du mois précédent
     fin_defaut = debut_defaut.replace(day=calendar.monthrange(debut_defaut.year, debut_defaut.month)[1])
     date_fin = demander_date(
-        f"Quelle date de fin souhaitez-vous (inclus) ?",
+        f"Quelle date de fin souhaitez-vous - inclus ?",
         format_date,
         fin_defaut
     )
@@ -188,7 +188,7 @@ def generer_carte_meteo():
     # 5. Agrégation des données
     aggreger_donnees = demander_ou_non(
         "Souhaitez-vous agréger les données dans cet intervalle ? "
-        "(Si Non, des graphiques jour par jour seront générés en plus)",
+        "- Si Non, des graphiques jour par jour seront générés en plus",
         valeur_par_defaut=True
     )
     
@@ -253,7 +253,7 @@ def generer_carte_onde():
     # 1. Sélection du type de campagne
     options_campagne = {
         "1": "Campagnes USUELLES uniquement",
-        "2": "Toutes les campagnes (USUELLE + COMPLEMENTAIRE) (par défaut)"
+        "2": "Toutes les campagnes - USUELLE + COMPLEMENTAIRE - par défaut",
     }
     choix_campagne = demander_avec_choix(
         "Quel type de campagne ONDE souhaitez-vous ?",
@@ -267,7 +267,7 @@ def generer_carte_onde():
     # 2. Sélection de l'échelle géographique
     options_geo = {
         "1": "NATIONAL",
-        "2": "BASSIN (par défaut)",
+        "2": "BASSIN - par défaut",
         "3": "REGION_ADMINISTRATIVE",
         "4": "DEPARTEMENT_ADMINISTRATIF",
         "5": "REGION_BASSIN",
@@ -295,7 +295,7 @@ def generer_carte_onde():
     
     # 3. Sélection du code de zone géographique
     # Afficher les codes utiles mentionnés dans le README
-    logger.info("\nCodes géographiques utiles (Bassin) :")
+    logger.info("\nCodes géographiques utiles - Bassin :")
     logger.info("  01 : Artois-Picardie")
     logger.info("  02 : Meuse")
     logger.info("  03 : Moselle")
@@ -308,7 +308,7 @@ def generer_carte_onde():
     logger.info("  10 : Seine-Normandie")
     logger.info("\nPour les régions et départements, voir les fichiers dans output/meteoFrance/downloaded_data/delimitation_qgis/")
     
-    zone_code = input("Entrez le code de la zone géographique (ex: '06' pour bassin Rhône-Méditerranée) : ")
+    zone_code = input("Entrez le code de la zone géographique - ex: '06' pour bassin Rhône-Méditerranée : ")
     if not zone_code:
         zone_code = "01"  # Valeur par défaut
     logger.info(f"Code de zone sélectionné : {zone_code}")
@@ -319,11 +319,11 @@ def generer_carte_onde():
     
     date_selectionnee = demander_date(
         "Choisissez le mois pour lequel générer les données ONDE",
-        "AAAA-MM",
+        "AAAAMM",
         debut_mois_precedent
     )
     
-    logger.info(f"Mois sélectionné : {date_selectionnee.strftime('%Y-%m')}")
+    logger.info(f"Mois sélectionné : {date_selectionnee.strftime('%Y%m')}")
     logger.info("Génération en cours...")
     
     # Générer les données ONDE
@@ -351,8 +351,8 @@ def generer_stations_sites():
     
     # 1. Sélection du réseau SANDRE
     options_reseau = {
-        "1": "BSH001 (par défaut)",
-        "2": "custom (utiliser la liste personnalisée)"
+        "1": "BSH001 - par défaut",
+        "2": "custom - utiliser la liste personnalisée"
     }
     choix_reseau = demander_avec_choix(
         "Choisissez un réseau SANDRE",
@@ -367,11 +367,11 @@ def generer_stations_sites():
     debut_mois_precedent = aujourdhui - timedelta(days=aujourdhui.day)
     
     date_selectionnee = demander_date(
-        "Choisissez le mois pour filtrer les stations (optionnel, laissez vide pour toutes les stations)",
-        "AAAA-MM",
+        "Choisissez le mois pour filtrer les stations - optionnel - laissez vide pour toutes les stations",
+        "AAAAMM",
         debut_mois_precedent
     )
-    date_annee_mois = date_selectionnee.strftime("%Y-%m")
+    date_annee_mois = date_selectionnee.strftime("%Y%m")
     
     logger.info("Génération en cours...")
     
@@ -411,12 +411,12 @@ def mode_interactif():
     
     # Sélection du type de carte à générer
     options_principales = {
-        "1": "Générer une carte d'HYDRAULICITE (niveaux d'eau)",
-        "2": "Générer une carte de VCN3/Périodes de retour (étiage)",
-        "3": "Générer LES DEUX cartes Hubeau (plus long au premier lancement)",
-        "4": "Générer des extraits METEO FRANCE (option par défaut)",
-        "5": "Générer des extraits ONDE (écoulements des cours d'eau)",
-        "6": "Générer les stations et sites (liste de référence)"
+        "1": "Générer une carte d'HYDRAULICITE - niveaux d'eau",
+        "2": "Générer une carte de VCN3/Périodes de retour - étiage",
+        "3": "Générer LES DEUX cartes Hubeau - plus long au premier lancement",
+        "4": "Générer des extraits METEO FRANCE - option par défaut",
+    "5": "Générer des extraits ONDE - écoulements des cours d'eau",
+        "6": "Générer les stations et sites - liste de référence"
     }
     
     choix = demander_avec_choix(
