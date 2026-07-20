@@ -414,7 +414,7 @@ def mode_interactif():
         "1": "Générer une carte d'HYDRAULICITE (niveaux d'eau)",
         "2": "Générer une carte de VCN3/Périodes de retour (étiage)",
         "3": "Générer LES DEUX cartes Hubeau (plus long au premier lancement)",
-        "4": "Générer des extraits METEO FRANCE",
+        "4": "Générer des extraits METEO FRANCE (option par défaut)",
         "5": "Générer des extraits ONDE (écoulements des cours d'eau)",
         "6": "Générer les stations et sites (liste de référence)"
     }
