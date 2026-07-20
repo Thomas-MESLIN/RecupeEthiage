@@ -19,9 +19,21 @@ logger = setup_logger(name="rasterize")
 
 def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, gdf_mask:gpd.GeoDataFrame, titre_graphique:str,
                       color_palette:str, is_invert_palette:bool, intervalle_name:list[str], intervalle_marqueur:list[float],
-                      output_path:Path, geojson_to_draw:gpd.GeoDataFrame=None):
+                      output_path:Path, geojson_to_draw:gpd.GeoDataFrame=None, no_interpolation:bool=False):
     """
     Créer un raster du geodataframe passé en paramètre. Les systèmes de coordonnées entre le masque et le geodataframe doivent être identiques.
+    
+    :param gdf_to_rasterize: GeoDataFrame contenant les points à rasteriser
+    :param value_column_name: Nom de la colonne contenant les valeurs à visualiser
+    :param gdf_mask: GeoDataFrame du masque géographique
+    :param titre_graphique: Titre du graphique
+    :param color_palette: Palette de couleurs à utiliser
+    :param is_invert_palette: Si True, inverse la palette de couleurs
+    :param intervalle_name: Liste des noms des intervalles pour la colorbar
+    :param intervalle_marqueur: Liste des valeurs des marqueurs pour la colorbar
+    :param output_path: Chemin de sortie pour l'image
+    :param geojson_to_draw: GeoDataFrame supplémentaire à dessiner sur la carte (optionnel)
+    :param no_interpolation: Si True, crée une carte de points sans interpolation (défaut: False)
     """
     GRID_SIZE = 1500
 
@@ -38,6 +50,85 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
     x = points.geometry.x.to_numpy()
     y = points.geometry.y.to_numpy()
     z = points[value_column_name].to_numpy()
+
+    # =========================
+    # Si on ne veut pas d'interpolation, on crée une carte de points
+    # =========================
+    if no_interpolation:
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.set_title(titre_graphique)
+        
+        if is_invert_palette:
+            cmap = mpl.colormaps[color_palette].reversed()
+        else:
+            cmap = mpl.colormaps[color_palette]
+
+        if intervalle_marqueur != []:
+            bounds = intervalle_marqueur
+            norm = mpl.colors.BoundaryNorm(bounds, cmap.N, extend="both")
+        else:
+            norm = None
+
+        # Bordure autour du graphique.
+        gdf_mask.plot(
+            ax=ax,
+            color="white",
+            linewidth=1
+        )
+
+        gdf_mask.boundary.plot(
+            ax=ax,
+            color="black",
+            linewidth=1
+        )
+
+        # Créer un scatter plot avec la palette de couleurs
+        scatter = ax.scatter(
+            x, y, 
+            c=z, 
+            cmap=cmap, 
+            norm=norm,
+            s=200,  # Taille des points
+            alpha=0.8,  # Transparence
+            edgecolors='black',  # Bordure noire
+            linewidths=0.3  # Épaisseur de la bordure
+        )
+
+        # ColorBar
+        cbar = fig.colorbar(scatter, ax=ax, label=value_column_name, extend="both", shrink=0.7)
+
+        if not (intervalle_marqueur == [] or intervalle_name == []):
+            ticks = bounds + [(bounds[i] + bounds[i+1]) / 2 for i in range(len(bounds)-1)]
+
+            cbar.set_ticks(ticks)
+
+            cbar.set_ticklabels(intervalle_name)
+
+            cbar.ax.yaxis.set_label_coords(-1,0.5)
+
+        if geojson_to_draw is not None:
+            geojson_to_draw.boundary.plot(
+                ax=ax,
+                color="black",
+                linewidth=0.5
+            )
+
+        # Définir les limites de l'axe en fonction du masque
+        xmin, ymin, xmax, ymax = gdf_mask.total_bounds
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
+        
+        ax.axis("off")
+        plt.tight_layout()
+
+        plt.savefig(
+            output_path,
+            dpi=300,
+            transparent=True,
+        )
+
+        logger.info(f"Carte de points générée : {output_path}")
+        return
 
     # =========================
     # GRID
@@ -198,7 +289,7 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
 
 def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str], list[float]]|None:
     """
-    Récupère les paramètre pour cette unité souhaité
+    Récupère les paramètre pour cette unité souhaitée
     :param unit_to_get_graphic: L'unité dont il faut récupérer les paramètre.
     :return: Renvoie un triplet (palette_de_couleur, is_palette_inverse labels_colorBar, TickColorBar)
     """
@@ -248,7 +339,7 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
                 "10",
                 "20",
                 "30",
-                "50 - Sècheresse Extrême",
+                "50 - Sécheresse Extrême",
                 "",
                 "",
                 "",
@@ -306,7 +397,8 @@ def rasterize_geodataframe_geographiv_zone(
     geographic_zone: GeographicScaleClip,
     code_zone: str,
     output_path: Path,
-    titre_graphique:str
+    titre_graphique:str,
+    no_interpolation:bool=False
 ) -> None:
     """
     Rasterise un GeoDataFrame pour une zone géographique spécifique et une unité de mesure donnée.
@@ -319,6 +411,7 @@ def rasterize_geodataframe_geographiv_zone(
         code_zone (str): Le code identifiant la zone (ex: "06" pour un bassin, "84" pour une région).
         output_path (Path): Chemin de sortie pour l'image générée.
         titre_graphique (str): Le titre du graphique.
+        no_interpolation (bool): Si True, crée une carte de points sans interpolation (défaut: False).
         geojson_to_draw (gpd.GeoDataFrame, optional): GeoDataFrame supplémentaire à dessiner sur la carte (ex: limites de départements).
     """
     logger.info(f"Rasterisation commencée pour {unit_to_rasterize} dans la zone {code_zone} ({geographic_zone}).")
@@ -380,6 +473,7 @@ def rasterize_geodataframe_geographiv_zone(
         intervalle_marqueur=tick_pos,
         output_path=output_path,
         geojson_to_draw=geojson_to_draw,
+        no_interpolation=no_interpolation
     )
 
     logger.info(f"Rasterisation terminée pour {unit_to_rasterize} dans la zone {code_zone} ({geographic_zone}).")
@@ -439,4 +533,3 @@ if __name__ == "__main__":
         OUTPUT_DIR / "test/test_region_administrative_fonction.png",
         "SSWI_10J au 1er du mois de juin 2026 de la région 27."
     )
-
