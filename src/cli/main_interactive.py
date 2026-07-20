@@ -301,7 +301,7 @@ def generer_carte_onde():
     logger.info("  03 : Moselle")
     logger.info("  04 : Rhin")
     logger.info("  05 : Loire-Bretagne")
-    logger.info("  06 : Rhône-Méditerranée")
+    logger.info("  06 : Rhône-Méditerranée - choix par défaut")
     logger.info("  07 : Adour-Garonne")
     logger.info("  08 : Garonne")
     logger.info("  09 : Charente")
@@ -310,7 +310,7 @@ def generer_carte_onde():
     
     zone_code = input("Entrez le code de la zone géographique - ex: '06' pour bassin Rhône-Méditerranée : ")
     if not zone_code:
-        zone_code = "01"  # Valeur par défaut
+        zone_code = "06"  # Valeur par défaut
     logger.info(f"Code de zone sélectionné : {zone_code}")
     
     # 4. Sélection de la date
