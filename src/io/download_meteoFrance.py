@@ -19,7 +19,6 @@ from src.config.logging_config import setup_logger
 # Initialiser le logger
 logger = setup_logger(name="download_meteoFrance")
 
-
 def get_geographic_list(geographic_scale: GeographicScaleClip):
     match geographic_scale:
         case GeographicScaleClip.NATIONAL:
