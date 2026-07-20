@@ -69,13 +69,26 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
         else:
             norm = None
 
+        # Bordure autour du graphique.
+        gdf_mask.plot(
+            ax=ax,
+            color="white",
+            linewidth=1
+        )
+
+        gdf_mask.boundary.plot(
+            ax=ax,
+            color="black",
+            linewidth=1
+        )
+
         # Créer un scatter plot avec la palette de couleurs
         scatter = ax.scatter(
             x, y, 
             c=z, 
             cmap=cmap, 
             norm=norm,
-            s=100,  # Taille des points
+            s=200,  # Taille des points
             alpha=0.8,  # Transparence
             edgecolors='black',  # Bordure noire
             linewidths=0.3  # Épaisseur de la bordure
@@ -92,13 +105,6 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
             cbar.set_ticklabels(intervalle_name)
 
             cbar.ax.yaxis.set_label_coords(-1,0.5)
-
-        # Bordure autour du graphique.
-        gdf_mask.boundary.plot(
-            ax=ax,
-            color="black",
-            linewidth=1
-        )
 
         if geojson_to_draw is not None:
             geojson_to_draw.boundary.plot(
