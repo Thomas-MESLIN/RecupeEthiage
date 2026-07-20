@@ -339,7 +339,8 @@ def create_geojson_from_periode_de_retour(annee_mois:str, code_sandre:str, is_re
 
 
 def generate_raster_from_hydraulicite_geojson(geojson_path: Path, output_path: Path, value_column: str,
-                                              geographic_scale: GeographicScaleClip, code_zone: str, titre: str):
+                                              geographic_scale: GeographicScaleClip, code_zone: str, titre: str,
+                                              no_interpolation: bool = False):
     """
     Génère un raster à partir d'un fichier GeoJSON d'hydraulicité existant.
 
@@ -349,6 +350,7 @@ def generate_raster_from_hydraulicite_geojson(geojson_path: Path, output_path: P
     :param geographic_scale: L'échelle géographique
     :param code_zone: Le code de la zone géographique
     :param titre: Titre du graphique raster
+    :param no_interpolation: Si True, crée une carte de points sans interpolation (défaut: False)
     :return: Rien
     """
     try:
@@ -366,7 +368,8 @@ def generate_raster_from_hydraulicite_geojson(geojson_path: Path, output_path: P
             geographic_scale,
             code_zone,
             output_path,
-            titre
+            titre,
+            no_interpolation
         )
         logger.info(f"Raster hydraulicité généré : {output_path}")
     except Exception as e:
@@ -375,7 +378,8 @@ def generate_raster_from_hydraulicite_geojson(geojson_path: Path, output_path: P
 
 
 def generate_raster_from_periode_de_retour_geojson(geojson_path: Path, output_path: Path, value_column: str,
-                                              geographic_scale: GeographicScaleClip, code_zone: str, titre: str):
+                                              geographic_scale: GeographicScaleClip, code_zone: str, titre: str,
+                                              no_interpolation: bool = False):
     """
     Génère un raster à partir d'un fichier GeoJSON de période de retour existant
 
@@ -385,6 +389,7 @@ def generate_raster_from_periode_de_retour_geojson(geojson_path: Path, output_pa
     :param geographic_scale: L'échelle géographique
     :param code_zone: Le code de la zone géographique
     :param titre: Titre du graphique raster
+    :param no_interpolation: Si True, crée une carte de points sans interpolation (défaut: False)
     :return: Rien
     """
     try:
@@ -405,7 +410,8 @@ def generate_raster_from_periode_de_retour_geojson(geojson_path: Path, output_pa
             geographic_scale,
             code_zone,
             output_path,
-            titre
+            titre,
+            no_interpolation
         )
         logger.info(f"Raster periode de retour généré : {output_path}")
     except Exception as e:
@@ -445,6 +451,7 @@ if __name__ == "__main__":
     # create_geojson_from_periode_de_retour("2026-05", "BSH001")
     # create_geojson_from_periode_de_retour("2026-04", "BSH001")
     # create_geojson_from_periode_de_retour("2026-05", "custom")
+    # create_geojson_from_periode_de_retour("2026-04", "BSH001")
     # create_geojson_from_periode_de_retour("2026-04", "custom")
     # create_geojson_from_stations(None, None)
     # create_geojson_from_sites(None)

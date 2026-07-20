@@ -217,7 +217,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
 
     logger.info(f"Export de tous les {geographic_scale} terminés.")
 
-def rasterize_meteofrance(gdf: gpd.GeoDataFrame, data_freq:MeteoFranceDataType, geographic_scale: GeographicScaleClip, code_zone: str, chemin_save:Path):
+def rasterize_meteofrance(gdf: gpd.GeoDataFrame, data_freq:MeteoFranceDataType, geographic_scale: GeographicScaleClip, code_zone: str, chemin_save:Path, no_interpolation: bool = False):
     def rasterize_colonne(nom_colonne:str, unite:str=""):
         rasterize_geodataframe_geographiv_zone(
             gdf,
@@ -225,7 +225,8 @@ def rasterize_meteofrance(gdf: gpd.GeoDataFrame, data_freq:MeteoFranceDataType, 
             geographic_scale,
             code_zone,
             chemin_save.with_stem(f"{chemin_save.stem}-{nom_colonne}").with_suffix(".png"),
-            f"{chemin_save.stem}-{nom_colonne}{unite}"
+            f"{chemin_save.stem}-{nom_colonne}{unite}",
+            no_interpolation
         )
 
     match data_freq:
