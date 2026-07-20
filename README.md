@@ -1,35 +1,35 @@
-# Outil de Récupération et Visualisation de Données Hydrologiques et Météorologiques
+# Outil de Récupération et Visualisation de Données Hydrologiques et Météo
 
 Ce programme permet de **récupérer, analyser et visualiser** des données sur l'eau et la météo en France. Il est conçu pour les professionnels de l'hydrologie, les gestionnaires de bassin versant ou toute personne ayant besoin d'analyser des données environnementales.
 
-## 📋 À quoi sert ce programme ?
+## \ud83d\udccb À quoi sert ce programme ?
 
 Avec cet outil, vous pouvez :
 
-✅ **Récupérer des données hydrologiques** : niveaux d'eau, débits des rivières via l'API Hub'Eau
-✅ **Analyser les écoulements** : données ONDE (Observatoire National des Établissements) pour les cours d'eau
-✅ **Obtenir des données météo** : précipitations, indices de sécheresse via MétéoFrance
-✅ **Calculer des indicateurs** :
+\u2705 **Récupérer des données hydrologiques** : niveaux d'eau, débits des rivières via l'API Hub'Eau
+\u2705 **Analyser les écoulements** : données ONDE (Observatoire National des Établissements) pour les cours d'eau
+\u2705 **Obtenir des données météo** : précipitations, indices de sécheresse via MétéoFrance
+\u2705 **Calculer des indicateurs** :
    - **Hydraulicité** : mesure du débit d'eau par rapport à la normale
    - **VCN3** : Volume Current Non-dépassé sur 3 mois (période de retour et fréquence de non-dépassement)
    - **SPI** : Indice de Précipitation Standardisé (sécheresse météorologiques)
    - **SSWI** : Indice Standardisé d'Humidité des Sols
-✅ **Générer des cartes** au format GeoJSON, compatibles avec QGIS et autres logiciels SIG
+\u2705 **Générer des cartes** au format GeoJSON, compatibles avec QGIS et autres logiciels SIG
 
 ---
 
-## 🔧 Prérequis
+## \ud83d\udd27 Prérequis
 
 Pour utiliser ce programme, vous avez besoin de :
 - Un ordinateur sous **Windows** (le programme a été testé sur Windows)
 - **Python 3.11 ou supérieur** installé
 - Une connexion internet (pour télécharger les données et les paquets nécessaires)
 
-> ⚠️ **Important** : Si vous êtes sur le réseau interne de votre organisation, vous devrez peut-être configurer un proxy (voir section dédiée plus bas).
+> \u26a0\ufe0f **Important** : Si vous êtes sur le réseau interne de votre organisation, vous devrez peut-être configurer un proxy (voir section dédiée plus bas).
 
 ---
 
-## 📥 Installation
+## \ud83d\udce5 Installation
 
 Suivez ces étapes **dans l'ordre** :
 
@@ -52,7 +52,7 @@ Deux options :
 2. **Cliquez droit** dans un espace vide du dossier (sans sélectionner de fichier)
 3. Sélectionnez **"Ouvrir dans le terminal"** ou **"Ouvrir PowerShell ici"**
 
-> 💡 Si vous ne voyez pas cette option, maintenez la touche **Maj (Shift)** enfoncée, faites un clic droit dans le dossier, puis choisissez **"Ouvrir une fenêtre PowerShell ici"**.
+> \ud83d\udca1 Si vous ne voyez pas cette option, maintenez la touche **Maj (Shift)** enfoncée, faites un clic droit dans le dossier, puis choisissez **"Ouvrir une fenêtre PowerShell ici"**.
 
 ### 3. Créer l'environnement Python
 
@@ -62,7 +62,7 @@ Dans le terminal qui s'est ouvert, tapez la commande suivante pour créer un "en
 python -m venv venv
 ```
 
-> ⚠️ Si vous avez plusieurs versions de Python, utilisez `python3-64.exe` à la place de `python`.
+> \u26a0\ufe0f Si vous avez plusieurs versions de Python, utilisez `python3-64.exe` à la place de `python`.
 
 ### 4. Installer les paquets nécessaires
 
@@ -72,7 +72,7 @@ Tapez cette commande pour installer tous les outils dont le programme a besoin :
 .\venv\Scripts\pip.exe install -r .\requirements.txt
 ```
 
-> ⚠️ **Attention** : Cette étape peut prendre plusieurs minutes et nécessite une connexion internet **hors du réseau interne** de votre organisation.
+> \u26a0\ufe0f **Attention** : Cette étape peut prendre plusieurs minutes et nécessite une connexion internet **hors du réseau interne** de votre organisation.
 
 ### 5. Vérifier que tout est installé correctement
 
@@ -82,15 +82,15 @@ Pour vérifier que l'installation a fonctionné, tapez :
 .\venv\Scripts\python.exe main.py -h
 ```
 
-Vous devriez voir s'afficher un message d'aide avec toutes les options disponibles. Si c'est le cas, **bravo, l'installation est terminée !** 🎉
+Vous devriez voir s'afficher un message d'aide avec toutes les options disponibles. Si c'est le cas, **bravo, l'installation est terminée !** \ud83c\udf89
 
 ---
 
-## 🚀 Utilisation du Programme
+## \ud83d\ude80 Utilisation du Programme
 
 Il existe **deux manières** d'utiliser ce programme :
 
-### 🔹 Option 1 : Mode Interactif (recommandé pour les débutants)
+### \ud83d\udd39 Option 1 : Mode Interactif (recommandé pour les débutants)
 
 Le mode interactif vous guide pas à pas en vous posant des questions. C'est la méthode la plus simple.
 
@@ -121,11 +121,11 @@ Format AAAA-MM, (mois précédent : 2026-06 par défaut)
  -> 2026-01
 
 Mois sélectionné : 2026-01-01 00:00:00
-Choisissez un réseau SANDRE : BSH001 (par défaut)
-Rentrez 'custom' pour utiliser la liste custom.
+Choisissez un réseau : BSH001 (par défaut)
+Rentrez 'custom' pour utiliser une liste personnalisée.
  -> 
 
-Réseau Sandre sélectionné : BSH001
+Réseau sélectionné : BSH001
 Génération en cours...
 Génération terminée.
 ```
@@ -136,12 +136,14 @@ Génération terminée.
 |----------|---------------|---------|
 | Que souhaitez-vous faire ? | Choisissez le type de carte à générer | `1` pour l'hydraulicité |
 | Choisissez la date | Entrez la date au format AAAA-MM (année-mois) | `2026-01` pour janvier 2026 |
-| Choisissez un réseau SANDRE | Entrez le code du réseau ou `custom` | `BSH001` ou `custom` |
+| Choisissez un réseau | Entrez le code du réseau ou `custom` | `BSH001` ou `custom` |
 | Souhaitez-vous générer les graphiques ? | Répondez `o` pour oui ou `n` pour non | `o` |
+
+> \u26a0\ufe0f **Astuce** : Vous pouvez **interrompre une commande à tout moment** en appuyant sur **Ctrl+C** dans le terminal.
 
 ---
 
-### 🔹 Option 2 : Mode CLI (Ligne de Commande) - Pour les utilisateurs avancés
+### \ud83d\udd39 Option 2 : Mode CLI (Ligne de Commande) - Pour les utilisateurs avancés
 
 Le mode CLI (Command Line Interface) permet de lancer directement une commande avec tous les paramètres. C'est plus rapide une fois que vous maîtrisez les options.
 
@@ -164,15 +166,17 @@ Le mode CLI (Command Line Interface) permet de lancer directement une commande a
 | `onde_USUELLE` | Données ONDE (campagnes usuelle uniquement) | 1 mois |
 | `onde_ALL` | Données ONDE (toutes campagnes) | 1 mois |
 
-> ℹ️ Toutes les sorties sont générées au format **GeoJSON** pour une utilisation directe dans QGIS ou d'autres logiciels SIG.
+> \u2139\ufe0f Toutes les sorties sont générées au format **GeoJSON** pour une utilisation directe dans QGIS ou d'autres logiciels SIG.
 
-#### 📌 Exemples concrets d'utilisation en CLI
+> \u26a0\ufe0f **Astuce** : Vous pouvez **interrompre une commande à tout moment** en appuyant sur **Ctrl+C** dans le terminal.
+
+#### \ud83d\udccc Exemples concrets d'utilisation en CLI
 
 **Exemple 1 : Générer une carte d'hydraulicité pour janvier 2026**
 ```bash
 .\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-01 --reseau_sandre BSH001
 ```
-> ➡️ Cela génère une carte montrant l'hydraulicité (niveau d'eau par rapport à la normale) pour toutes les stations du réseau BSH001 au mois de janvier 2026.
+> \u27a1\ufe0f Cela génère une carte montrant l'hydraulicité (niveau d'eau par rapport à la normale) pour toutes les stations du réseau **BSH001** (code Sandre) au mois de janvier 2026.
 
 ---
 
@@ -180,7 +184,7 @@ Le mode CLI (Command Line Interface) permet de lancer directement une commande a
 ```bash
 .\venv\Scripts\python.exe main.py --type vcn3 --start_date 2024-02 --reseau_sandre BSH001 --vcn3_graphic
 ```
-> ➡️ Le flag `--vcn3_graphic` génère en plus des graphiques détaillés pour chaque station.
+> \u27a1\ufe0f Le flag `--vcn3_graphic` génère en plus des graphiques détaillés pour chaque station.
 
 ---
 
@@ -188,7 +192,7 @@ Le mode CLI (Command Line Interface) permet de lancer directement une commande a
 ```bash
 .\venv\Scripts\python.exe main.py --type meteo_sim2_QUOT --start_date 2023-07-01 --end_date 2023-07-31
 ```
-> ➡️ Récupère les données météo SIM2 (indice de sécheresse, précipitations) pour tout le mois de juillet 2023, jour par jour.
+> \u27a1\ufe0f Récupère les données météo SIM2 (indice de sécheresse, précipitations) pour tout le mois de juillet 2023, jour par jour.
 
 ---
 
@@ -196,7 +200,7 @@ Le mode CLI (Command Line Interface) permet de lancer directement une commande a
 ```bash
 .\venv\Scripts\python.exe main.py --type meteo_sim2_MENS --start_date 2025-09-01 --end_date 2026-07-01 --meteo_aggregate
 ```
-> ➡️ Le flag `--meteo_aggregate` permet d'agréger (sommer) les données sur toute la période pour avoir une vue d'ensemble.
+> \u27a1\ufe0f Le flag `--meteo_aggregate` permet d'agréger (sommer) les données sur toute la période pour avoir une vue d'ensemble.
 
 ---
 
@@ -204,7 +208,7 @@ Le mode CLI (Command Line Interface) permet de lancer directement une commande a
 ```bash
 .\venv\Scripts\python.exe main.py --type onde_ALL --start_date 2026-06-01 --geographic_scale BASSIN --onde_zone_code 06
 ```
-> ➡️ Récupère toutes les données ONDE (usuelle + complémentaire) pour le bassin versant 06 (Rhône-Méditerranée) pour juin 2026.
+> \u27a1\ufe0f Récupère toutes les données ONDE (usuelle + complémentaire) pour le bassin versant **06** (code INSEE) pour juin 2026.
 
 ---
 
@@ -212,26 +216,26 @@ Le mode CLI (Command Line Interface) permet de lancer directement une commande a
 ```bash
 .\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-01 --reseau_sandre custom
 ```
-> ➡️ Utilise les stations définies dans vos fichiers personnalisés (`liste_site_custom.csv` et `liste_station_custom.csv`).
+> \u27a1\ufe0f Utilise les stations définies dans vos fichiers personnalisés (`liste_site_custom.csv` et `liste_station_custom.csv`). **Vous n'êtes pas obligé de créer ces fichiers** : une liste par défaut existe déjà et sera utilisée si vous ne spécifiez pas `custom`.
 
 ---
 
-#### 📋 Options disponibles pour tous les types :
+#### \ud83d\udccb Options disponibles pour tous les types :
 
 | Option | Description | Valeur par défaut | Exemple |
 |--------|-------------|-------------------|---------|
 | `--start_date` | Date de début (format : AAAA-MM ou AAAA-MM-JJ) | Début du mois précédent | `--start_date 2026-01` |
 | `--end_date` | Date de fin (format : AAAA-MM ou AAAA-MM-JJ) | Fin du mois précédent | `--end_date 2026-01-31` |
-| `--reseau_sandre` | Réseau SANDRE à utiliser | `BSH001` | `--reseau_sandre custom` |
+| `--reseau_sandre` | Réseau à utiliser (code **Sandre** pour les réseaux hydrologiques) | `BSH001` | `--reseau_sandre custom` |
 | `--vcn3_graphic` | Générer des graphiques pour le VCN3 | Non | Ajoutez le flag pour activer |
 | `--geographic_scale` | Échelle géographique pour météo/onde | `BASSIN` | `BASSIN`, `REGION_ADMINISTRATIVE`, `DEPARTEMENT_BASSIN` |
-| `--onde_zone_code` | Code de la zone géographique pour ONDE | `01` | `--onde_zone_code 06` |
+| `--onde_zone_code` | Code de la zone géographique pour ONDE (code **INSEE**) | `01` | `--onde_zone_code 06` |
 | `--meteo_aggregate` | Agrégé les données météo sur la période | Non | Ajoutez le flag pour activer |
 | `--meteo_no_update` | Désactiver la mise à jour des données météo | Non | Ajoutez le flag pour désactiver |
 
 ---
 
-## 🗂️ Fichiers de Configuration et Données Personnalisées
+## \ud83d\uddc2\ufe0f Fichiers de Configuration et Données Personnalisées
 
 ### Utiliser vos propres listes de stations/sites
 
@@ -241,11 +245,12 @@ Le programme permet d'utiliser vos propres listes de stations et sites hydrologi
 2. **`liste_station_custom.csv`** : Liste des stations spécifiques
 
 **Comment faire ?**
-- Créez ces fichiers dans le dossier principal du programme
-- Pour chaque site, le programme récupère automatiquement les stations correspondantes
-- Si un site a plusieurs stations et que vous voulez n'en garder qu'une, ajoutez-la dans `liste_station_custom.csv`
+- Créez ces fichiers dans le dossier principal du programme **si vous souhaitez personnaliser les listes**. 
+- **Sinon, une liste par défaut est déjà disponible** et sera utilisée automatiquement.
+- Pour chaque site, le programme récupère automatiquement les stations correspondantes.
+- Si un site a plusieurs stations et que vous voulez n'en garder qu'une, ajoutez-la dans `liste_station_custom.csv`.
 
-> ℹ️ Le fichier de sortie résumant les stations et sites utilisés sera généré dans : `output/site_station_custom/liste_site_et_station_custom.csv`
+> \u2139\ufe0f Le fichier de sortie résumant les stations et sites utilisés sera généré dans : `output/site_station_custom/liste_site_et_station_custom.csv`
 
 ---
 
@@ -264,11 +269,13 @@ Le programme permet d'utiliser vos propres listes de stations et sites hydrologi
 | **Bassin** | `09` | Charente |
 | **Bassin** | `10` | Seine-Normandie |
 
-> 💡 Vous pouvez trouver tous les codes dans les fichiers générés dans `output/meteoFrance/downloaded_data/delimitation_qgis/*.geojson` (ouvrez-les avec un éditeur de texte et cherchez "CdBH" ou "code").
+> \ud83d\udca1 Vous pouvez trouver tous les codes dans les fichiers générés dans `output/meteoFrance/downloaded_data/delimitation_qgis/*.geojson` (ouvrez-les avec un éditeur de texte et cherchez "CdBH" ou "code").
+
+> \u26a0\ufe0f **Note** : Les codes pour les bassins sont des codes **Sandre**, tandis que les codes pour les départements et régions sont des codes **INSEE**.
 
 ---
 
-## 📁 Où trouver les résultats ?
+## \ud83d\udcc1 Où trouver les résultats ?
 
 Tous les fichiers générés par le programme sont stockés dans le dossier **`output`** à la racine du projet. Les résultats sont au format **GeoJSON** pour une utilisation directe dans QGIS ou d'autres logiciels SIG.
 
@@ -293,7 +300,7 @@ output/
 
 Les résultats ONDE se trouvent tous dans le dossier output/onde.
 
-Ils sont rangé par date, puis, on trie en fonction de la zone géographique choisie : 
+Ils sont rangés par date, puis, on trie en fonction de la zone géographique choisie : 
 - D Département
 - R Région
 - B bassin
@@ -316,7 +323,7 @@ Dans le dossier HISTORIC_DATA, vous retrouverez TOUTES les observations enrichie
 
 ---
 
-## 🌐 Utiliser un Proxy (pour les réseaux internes)
+## \ud83c\udf10 Utiliser un Proxy (pour les réseaux internes)
 
 Si vous êtes sur le réseau interne de votre organisation et que vous avez des restrictions d'accès internet, vous devez configurer un proxy.
 
@@ -334,13 +341,13 @@ HTTPS_PROXY="http://votre-proxy.fr:8080"
 
 4. Sauvegardez le fichier
 
-> ⚠️ **Important** : Le fichier `.env` ne doit pas être partagé publiquement (il contient des informations sensibles sur votre réseau).
+> \u26a0\ufe0f **Important** : Le fichier `.env` ne doit pas être partagé publiquement (il contient des informations sensibles sur votre réseau).
 
 ---
 
-## 🛠️ Dépannage
+## \ud83d\udee0\ufe0f Dépannage
 
-### ❌ Problème : "Python n'est pas reconnu"
+### \u274c Problème : "Python n'est pas reconnu"
 
 **Solution :** Vérifiez que Python est bien installé et ajouté au PATH. Vous pouvez aussi utiliser le chemin complet :
 ```bash
@@ -349,7 +356,7 @@ C:\Chemin\vers\Python\python.exe -m venv venv
 
 ---
 
-### ❌ Problème : Erreur lors de l'installation des paquets
+### \u274c Problème : Erreur lors de l'installation des paquets
 
 **Solution 1 :** Vérifiez que vous êtes bien connecté à internet (hors réseau interne).
 
@@ -368,7 +375,7 @@ C:\Chemin\vers\Python\python.exe -m venv venv
 
 ---
 
-### ❌ Problème : Le programme plante avec une erreur obscure
+### \u274c Problème : Le programme plante avec une erreur obscure
 
 **Solution :**
 1. Supprimez le dossier `venv`
@@ -377,13 +384,13 @@ C:\Chemin\vers\Python\python.exe -m venv venv
 
 ---
 
-### ❌ Problème : Les données ne se mettent pas à jour
+### \u274c Problème : Les données ne se mettent pas à jour
 
 **Solution :** Utilisez les flags de mise à jour pour forcer la synchronisation. Par défaut, les données météo quotidiennes brutes se mettent à jour automatiquement.
 
 ---
 
-## 📚 Comprendre les Concepts Clés
+## \ud83d\udcda Comprendre les Concepts Clés
 
 ### Qu'est-ce que l'Hydraulicité ?
 
@@ -426,16 +433,16 @@ Il existe deux types de campagnes :
 
 ---
 
-### Qu'est-ce que le réseau SANDRE ?
+### Qu'est-ce que le réseau Sandre ?
 
-Le **SANDRE** (Service d'Administration Nationale des Données et Référentiels sur l'Eau) est un système d'information sur l'eau en France. Chaque **réseau SANDRE** correspond à un ensemble de stations de mesure hydrologiques.
+Le **SANDRE** (Service d'Administration Nationale des Données et Référentiels sur l'Eau) est un système d'information sur l'eau en France. Chaque **réseau Sandre** correspond à un ensemble de stations de mesure hydrologiques.
 
 - **BSH001** : Réseau par défaut (bassin Artois-Picardie)
-- **custom** : Utilise vos propres listes de stations/sites
+- **custom** : Utilise vos propres listes de stations/sites (ou la liste par défaut si vous ne fournissez pas de fichier personnalisé)
 
 ---
 
-## 📞 Support et Contribution
+## \ud83d\udcde Support et Contribution
 
 ### Vous avez trouvé un bug ou vous avez une suggestion ?
 
@@ -446,7 +453,7 @@ N'hésitez pas à :
 
 ---
 
-## 🎯 Résumé rapide des commandes les plus utilisées
+## \ud83c\udfaf Résumé rapide des commandes les plus utilisées
 
 | Besoin | Commande |
 |--------|----------|

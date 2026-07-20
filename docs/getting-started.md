@@ -8,13 +8,13 @@ parent: ""
 
 [Retour à l'accueil](index.md)
 
-# 🚀 Guide de Démarrage
+# \ud83d\ude80 Guide de Démarrage
 
 Ce guide vous explique comment installer et configurer l'outil pour commencer à récupérer et visualiser des données hydrologiques et météorologiques.
 
 ---
 
-## 📋 Prérequis
+## \ud83d\udccb Prérequis
 
 Pour utiliser ce programme, vous avez besoin de :
 
@@ -25,11 +25,11 @@ Pour utiliser ce programme, vous avez besoin de :
 | **Git** | Optionnel | Recommandé pour le téléchargement |
 | **Connexion Internet** | Obligatoire | Pour télécharger les données et dépendances |
 
-> ⚠️ **Important** : Si vous êtes sur le réseau interne de votre organisation, vous devrez peut-être configurer un proxy (voir section [Proxy](#-utiliser-un-proxy)).
+> \u26a0\ufe0f **Important** : Si vous êtes sur le réseau interne de votre organisation, vous devrez peut-être configurer un proxy (voir section [Proxy](#-utiliser-un-proxy)).
 
 ---
 
-## 📥 Installation
+## \ud83d\udce5 Installation
 
 Suivez ces étapes **dans l'ordre** :
 
@@ -55,7 +55,7 @@ Ouvrez un PowerShell dans le dossier du projet et exécutez :
 python -m venv venv
 ```
 
-> ⚠️ **Astuce** : Si vous avez plusieurs versions de Python ou que la commande `python` n'est pas reconnue, tapez `python` puis appuyez sur la touche **Tab** plusieurs fois dans PowerShell. Cela affichera toutes les versions de Python disponibles (ex: `python.exe`, `python3-64.exe`, `python3.11.exe`). Sélectionnez celle qui correspond à Python 3.11 ou supérieur.
+> \u26a0\ufe0f **Astuce** : Si vous avez plusieurs versions de Python ou que la commande `python` n'est pas reconnue, tapez `python` puis appuyez sur la touche **Tab** plusieurs fois dans PowerShell. Cela affichera toutes les versions de Python disponibles (ex: `python.exe`, `python3-64.exe`, `python3.11.exe`). Sélectionnez celle qui correspond à Python 3.11 ou supérieur.
 
 ### 3. Installer les dépendances
 
@@ -63,7 +63,7 @@ python -m venv venv
 .\venv\Scripts\pip.exe install -r .\requirements.txt
 ```
 
-> ⚠️ **Attention** : Cette étape peut prendre plusieurs minutes et nécessite une connexion internet **hors du réseau interne** de votre organisation.
+> \u26a0\ufe0f **Attention** : Cette étape peut prendre plusieurs minutes et nécessite une connexion internet **hors du réseau interne** de votre organisation.
 
 ### 4. Vérifier l'installation
 
@@ -73,26 +73,41 @@ Pour vérifier que tout fonctionne correctement :
 .\venv\Scripts\python.exe main.py -h
 ```
 
-Vous devriez voir s'afficher un message d'aide avec toutes les options disponibles. Si c'est le cas, **bravo, l'installation est terminée !** 🎉
+Vous devriez voir s'afficher un message d'aide avec toutes les options disponibles. Si c'est le cas, **bravo, l'installation est terminée !** \ud83c\udf89
 
 ---
 
-## 🔧 Configuration initiale
+## \ud83d\udd27 Configuration initiale
+
 ### Configuration de la liste custom
-Vous pouvez, au lieu d'utiliser des codes de réseau Sandre pour récupérer les données d'hydraulicité et de VCN3, utiliser une liste de station et de sites que vous avez vous-même défini. ('custom')
+Vous pouvez, au lieu d'utiliser des codes de réseau **Sandre** pour récupérer les données d'hydraulicité et de VCN3, utiliser une liste de stations et de sites que vous avez vous-même définie (`custom`).
 
-Vous pouvez retrouver cette liste dans `data/liste_station_custom.csv` et `data/liste_site_custom.csv`. Le programme va aggréger ces deux listes en `output/site_station_custom/liste_site_et_station_custom.csv`.
+**Il n'est pas nécessaire de créer ces fichiers** : une liste par défaut existe déjà et sera utilisée automatiquement si vous ne spécifiez pas `custom`.
 
-Vous pouvez ainsi vérifier que les listes de sites/stations se sont bien générés, en cas d'ambiguité sur un site ayant plusieurs stations potentielle, vous pouvez rajouter la station que vous souhaitez dans liste_station_custom, cette station uniquement sera retenue.
+Vous pouvez retrouver ou modifier ces listes dans :
+- `data/liste_station_custom.csv` (liste des stations)
+- `data/liste_site_custom.csv` (liste des sites)
 
-Le plus simple étant de renseigner simplement toutes les stations directement (les sites auxquelles les stations appartiennent sont retrouvé automatiquement).
+Le programme va agréger ces deux listes en `output/site_station_custom/liste_site_et_station_custom.csv`.
+
+Vous pouvez ainsi vérifier que les listes de sites/stations se sont bien générés. En cas d'ambiguïté sur un site ayant plusieurs stations potentielles, vous pouvez ajouter la station que vous souhaitez dans `liste_station_custom.csv` : cette station uniquement sera retenue.
+
+Le plus simple étant de renseigner simplement toutes les stations directement (les sites auxquels les stations appartiennent sont retrouvés automatiquement).
+
+> \u26a0\ufe0f **Astuce** : Vous pouvez **interrompre une commande à tout moment** en appuyant sur **Ctrl+C** dans le terminal.
 
 ### Configuration des zones géographiques par défaut
-Les scripts MeteoFrance utilisent les listes de bassin, département, région définis dans `liste_bassin.csv`, `liste_departement.csv`, `liste_region.csv`. Ces listes utilisent des codes SANDRE pour les bassins, départements et régions.
 
-Lorsque vous ferez la commande pour générer les données MétéoFrance des DEPARTEMENT_ADMINISTRATIF par exemple, le fichier `liste_departement.csv` est chargé, et les données pour ces départements sont récupérés et générés.
+Les scripts MétéoFrance utilisent les listes de bassin, département, région définis dans :
+- `liste_bassin.csv` (codes **Sandre** pour les bassins)
+- `liste_departement.csv` (codes **INSEE** pour les départements)
+- `liste_region.csv` (codes **INSEE** pour les régions)
+
+Lorsque vous ferez la commande pour générer les données MétéoFrance des `DEPARTEMENT_ADMINISTRATIF` par exemple, le fichier `liste_departement.csv` est chargé, et les données pour ces départements sont récupérées et générées.
 
 Le fichier `liste_bassin.csv` ne peut contenir que **1 seul bassin versant**.
+
+> \u26a0\ufe0f **Note** : Les codes pour les bassins sont des codes **Sandre**, tandis que les codes pour les départements et régions sont des codes **INSEE**.
 
 ### Configuration du Proxy (si nécessaire)
 
@@ -110,11 +125,11 @@ HTTPS_PROXY="http://votre-proxy.fr:8080"
 
 4. Sauvegardez le fichier
 
-> ⚠️ **Important** : Le fichier `.env` ne doit pas être partagé publiquement.
+> \u26a0\ufe0f **Important** : Le fichier `.env` ne doit pas être partagé publiquement.
 
 ---
 
-## ❌ Dépannage
+## \u274c Dépannage
 
 ### Problème : "Python n'est pas reconnu"
 
@@ -140,11 +155,10 @@ HTTPS_PROXY="http://votre-proxy.fr:8080"
 
 ---
 
-## 📚 Commencer à prendre en main le programme
+## \ud83d\udcda Commencer à prendre en main le programme
 
 - [Mode Interactif](usage/interactive.md)
 - [Mode CLI](usage/cli.md)
 - [Concepts Clés](concepts/index.md)
-
 
 
