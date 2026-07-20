@@ -391,6 +391,18 @@ def get_departement_to_draw_from_region(code_zone: str) -> gpd.GeoDataFrame:
         geo_departement_mask["code"].isin(get_departements_from_regions(code_zone))]
     return geo_departement_mask
 
+def get_bassin_mask(bassin_code: str) -> gpd.GeoDataFrame:
+    """
+    Charge et retourne le masque du bassin versant spécifié.
+    
+    :param basin_code: Code du bassin (ex: "06" pour Rhône-Méditerranée)
+    :return: GeoDataFrame du masque du bassin
+    """
+    mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/BassinHydrographique_FXX.geojson"
+    geo_mask = gpd.read_file(mask_file_path).to_crs(2154)
+    geo_mask = geo_mask[geo_mask["CdBH"] == basin_code]
+    return geo_mask
+
 def rasterize_geodataframe_geographiv_zone(
     geodataframe: gpd.GeoDataFrame,
     unit_to_rasterize: str,
@@ -427,17 +439,31 @@ def rasterize_geodataframe_geographiv_zone(
     mask_file_path = Path()
     mask_column_name = None
     geojson_to_draw = None
+    
+    # Pour REGION_BASSIN et DEPARTEMENT_BASSIN, on a besoin de clipper à la fois
+    # par la zone géographique ET par le bassin
+    is_bassin_clip_required = False
+    
     match geographic_zone:
         case GeographicScaleClip.BASSIN:
             mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/BassinHydrographique_FXX.geojson"
             mask_column_name = "CdBH"
-        case GeographicScaleClip.REGION_ADMINISTRATIVE | GeographicScaleClip.REGION_BASSIN:
+        case GeographicScaleClip.REGION_ADMINISTRATIVE:
             mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/regions-100m.geojson"
             mask_column_name = "code"
             geojson_to_draw = get_departement_to_draw_from_region(code_zone)
-        case GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF | GeographicScaleClip.DEPARTEMENT_BASSIN:
+        case GeographicScaleClip.REGION_BASSIN:
+            mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/regions-100m.geojson"
+            mask_column_name = "code"
+            geojson_to_draw = get_departement_to_draw_from_region(code_zone)
+            is_bassin_clip_required = True
+        case GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
             mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
             mask_column_name = "code"
+        case GeographicScaleClip.DEPARTEMENT_BASSIN:
+            mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
+            mask_column_name = "code"
+            is_bassin_clip_required = True
         case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
             mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/Climato_hydro_region.geojson"
             mask_column_name = "code"
@@ -452,6 +478,34 @@ def rasterize_geodataframe_geographiv_zone(
     if geo_mask.empty:
         logger.error(f"Aucune zone trouvée avec le code {code_zone} dans {mask_file_path}.")
         raise ValueError(f"Aucune zone trouvée avec le code {code_zone} dans {mask_file_path}.")
+
+    # Pour REGION_BASSIN et DEPARTEMENT_BASSIN, on doit clipper le masque avec le bassin
+    if is_bassin_clip_required:
+        # On récupère tous les bassins disponibles
+        from src.io.download_meteoFrance import get_geographic_list
+        basin_codes = get_geographic_list(GeographicScaleClip.BASSIN)
+        
+        # On crée un masque combiné : intersection de la zone géographique et de tous les bassins
+        basin_masks = []
+        for basin_code in basin_codes:
+            basin_mask = get_bassin_mask(bassin_code)
+            basin_masks.append(bassin_mask)
+        
+        # On combine tous les bassins en un seul masque
+        combined_bassin_mask = gpd.GeoDataFrame(
+            geometry=gpd.GeoSeries(bassin_masks).unary_union,
+            crs=geo_mask.crs
+        )
+        
+        # On crée le masque final comme l'intersection de la zone géographique et des bassins
+        final_mask = gpd.overlay(geo_mask, combined_bassin_mask, how='intersection')
+        
+        if final_mask.empty:
+            logger.error(f"Aucune intersection trouvée entre la zone {code_zone} et les bassins.")
+            raise ValueError(f"Aucune intersection trouvée entre la zone {code_zone} et les bassins.")
+        
+        # On utilise le masque final
+        geo_mask = final_mask
 
     # Récupérer les paramètres graphiques pour l'unité
     graphic_params = get_graphic_parameter(unit_to_rasterize)
