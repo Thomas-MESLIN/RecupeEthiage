@@ -81,7 +81,7 @@ def demander_date(message: str, format_exemple: str, valeur_par_defaut: datetime
     Returns:
         L'objet datetime correspondant
     """
-    logger.info(f"{message} (format: {format_exemple}, défaut: {valeur_par_defaut.strftime(format_exemple)})")
+    logger.info(f"{message} (format: {format_exemple}, dfaut: {valeur_par_defaut.strftime("%Y%m%d" if len(format_exemple) == 8 else "%Y%m")})")
     reponse = input(" -> ")
     
     if not reponse:
@@ -89,7 +89,13 @@ def demander_date(message: str, format_exemple: str, valeur_par_defaut: datetime
         return valeur_par_defaut
     
     try:
-        if len(reponse) == 7:  # Format AAAA-MM
+        # Essayer d'abord les formats sans tirets
+        if len(reponse) == 6:  # Format AAAAMM
+            return datetime.strptime(reponse, "%Y%m")
+        elif len(reponse) == 8:  # Format AAAAMMJJ
+            return datetime.strptime(reponse, "%Y%m%d")
+        # Puis les formats avec tirets (pour la rétrocompatibilité)
+        elif len(reponse) == 7:  # Format AAAA-MM
             return datetime.strptime(reponse, "%Y-%m")
         elif len(reponse) == 10:  # Format AAAA-MM-JJ
             return datetime.strptime(reponse, "%Y-%m-%d")

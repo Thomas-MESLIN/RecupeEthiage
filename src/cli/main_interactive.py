@@ -41,10 +41,10 @@ def generer_carte_hubeau(type_carte: str):
     
     date_selectionnee = demander_date(
         "Choisissez le mois pour lequel générer les données",
-        "AAAA-MM",
+        "AAAAMM",
         debut_mois_precedent
     )
-    date_annee_mois = date_selectionnee.strftime("%Y-%m")
+    date_annee_mois = date_selectionnee.strftime("%Y%m")
     logger.info(f"Mois sélectionné : {date_annee_mois}")
     
     # 2. Sélection du réseau SANDRE
@@ -319,11 +319,11 @@ def generer_carte_onde():
     
     date_selectionnee = demander_date(
         "Choisissez le mois pour lequel générer les données ONDE",
-        "AAAA-MM",
+        "AAAAMM",
         debut_mois_precedent
     )
     
-    logger.info(f"Mois sélectionné : {date_selectionnee.strftime('%Y-%m')}")
+    logger.info(f"Mois sélectionné : {date_selectionnee.strftime('%Y%m')}")
     logger.info("Génération en cours...")
     
     # Générer les données ONDE
@@ -368,10 +368,10 @@ def generer_stations_sites():
     
     date_selectionnee = demander_date(
         "Choisissez le mois pour filtrer les stations - optionnel - laissez vide pour toutes les stations",
-        "AAAA-MM",
+        "AAAAMM",
         debut_mois_precedent
     )
-    date_annee_mois = date_selectionnee.strftime("%Y-%m")
+    date_annee_mois = date_selectionnee.strftime("%Y%m")
     
     logger.info("Génération en cours...")
     
