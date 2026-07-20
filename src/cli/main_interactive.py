@@ -253,15 +253,22 @@ def generer_carte_onde():
     # 1. Sélection du type de campagne
     options_campagne = {
         "1": "Campagnes USUELLES uniquement",
-        "2": "Toutes les campagnes (USUELLE + COMPLEMENTAIRE) (par défaut)"
+        "2": "Campagnes COMPLEMENTAIRES uniquement",
+        "3": "Toutes les campagnes (USUELLE + COMPLEMENTAIRE) (par défaut)"
     }
     choix_campagne = demander_avec_choix(
         "Quel type de campagne ONDE souhaitez-vous ?",
         options_campagne,
-        "2"
+        "3"
     )
     
-    campagne_type = OndeCampagneType.USUELLE if choix_campagne == "1" else OndeCampagneType.ALL_CAMPAGNE
+    # Mapper le choix au type de campagne
+    campagne_type_map = {
+        "1": OndeCampagneType.USUELLE,
+        "2": OndeCampagneType.COMPLEMENTAIRE,
+        "3": OndeCampagneType.ALL_CAMPAGNE
+    }
+    campagne_type = campagne_type_map[choix_campagne]
     logger.info(f"Type de campagne sélectionné : {campagne_type}")
     
     # 2. Sélection de l'échelle géographique
