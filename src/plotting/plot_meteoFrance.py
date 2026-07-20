@@ -3,7 +3,6 @@ from src.model.enums import GeographicScaleClip,MeteoFranceDataType
 import src.io.download_meteoFrance as DMeteo
 from datetime import datetime
 from pathlib import Path
-import calendar
 import pandas as pd
 import geopandas as gpd
 import src.processing.meteoFrance_aggregation_donnee as MeteoAgg
@@ -12,7 +11,8 @@ import matplotlib.pyplot as plt
 from src.config.logging_config import setup_logger
 from src.config.paths import OUTPUT_DIR
 from src.plotting.rasterize import rasterize_geodataframe_geographiv_zone
-from src.plotting.utils import get_bassin_versant, get_geographic_element, get_geographic_list
+from src.plotting.utils import get_bassin_versant, get_geographic_element
+from src.io.download_meteoFrance import get_geographic_list
 
 # Initialiser le logger
 logger = setup_logger(name="plot_meteoFrance")

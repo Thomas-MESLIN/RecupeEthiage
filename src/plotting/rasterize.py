@@ -12,7 +12,8 @@ from src.model.enums import GeographicScaleClip
 from src.config.paths import OUTPUT_DIR
 from src.config.logging_config import setup_logger
 from src.io.pynsee_departement import get_departements_from_regions
-from src.plotting.utils import get_bassin_versant, get_geographic_list,get_geographic_element
+from src.plotting.utils import get_bassin_versant, get_geographic_element
+from src.io.download_meteoFrance import get_geographic_list
 
 # Initialiser le logger
 logger = setup_logger(name="rasterize")

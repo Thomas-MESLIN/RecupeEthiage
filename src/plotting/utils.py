@@ -34,30 +34,6 @@ def get_all_geographic_geodf(geographic_scale:GeographicScaleClip):
     return df_tout_departement
 
 
-def get_geographic_list(geographic_scale: GeographicScaleClip):
-    match geographic_scale:
-        case GeographicScaleClip.NATIONAL:
-            return []
-        case GeographicScaleClip.BASSIN:
-            file_to_read = DATA_DIR / Path("liste_bassin.csv")
-        case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
-            file_to_read = DATA_DIR / Path("liste_region.csv")
-        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
-            file_to_read = DATA_DIR / Path("liste_departement.csv")
-        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
-            file_to_read = DATA_DIR / Path("liste_eco_hydro.csv")
-        case _:
-            raise NotImplementedError
-
-    if file_to_read.exists():
-        df_liste = pd.read_csv(file_to_read, dtype={"code":str})
-        liste = df_liste[df_liste.columns[0]].to_list()
-    else:
-        raise FileNotFoundError(f"Le fichier {file_to_read} n'existe pas !")
-
-    return liste
-
-
 def get_geographic_element(geographic_scale:GeographicScaleClip, code:str):
     df = get_all_geographic_geodf(geographic_scale)
     match geographic_scale:
