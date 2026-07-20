@@ -19,28 +19,6 @@ from src.config.logging_config import setup_logger
 # Initialiser le logger
 logger = setup_logger(name="download_meteoFrance")
 
-def get_geographic_list(geographic_scale: GeographicScaleClip):
-    match geographic_scale:
-        case GeographicScaleClip.NATIONAL:
-            return []
-        case GeographicScaleClip.BASSIN:
-            file_to_read = DATA_DIR / Path("liste_bassin.csv")
-        case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
-            file_to_read = DATA_DIR / Path("liste_region.csv")
-        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
-            file_to_read = DATA_DIR / Path("liste_departement.csv")
-        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
-            file_to_read = DATA_DIR / Path("liste_eco_hydro.csv")
-        case _:
-            raise NotImplementedError
-
-    if file_to_read.exists():
-        df_liste = pd.read_csv(file_to_read, dtype={"code":str})
-        liste = df_liste[df_liste.columns[0]].to_list()
-    else:
-        raise FileNotFoundError(f"Le fichier {file_to_read} n'existe pas !")
-
-    return liste
 
 def convert_chaine_to_date(chaine:str, is_start:bool) -> datetime:
     """

@@ -12,6 +12,7 @@ from src.model.enums import GeographicScaleClip
 from src.config.paths import OUTPUT_DIR
 from src.config.logging_config import setup_logger
 from src.io.pynsee_departement import get_departements_from_regions
+from src.plotting.utils import get_bassin_versant, get_geographic_list,get_geographic_element
 
 # Initialiser le logger
 logger = setup_logger(name="rasterize")
@@ -22,7 +23,7 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
                       output_path:Path, geojson_to_draw:gpd.GeoDataFrame=None, no_interpolation:bool=False):
     """
     Créer un raster du geodataframe passé en paramètre. Les systèmes de coordonnées entre le masque et le geodataframe doivent être identiques.
-    
+
     :param gdf_to_rasterize: GeoDataFrame contenant les points à rasteriser
     :param value_column_name: Nom de la colonne contenant les valeurs à visualiser
     :param gdf_mask: GeoDataFrame du masque géographique
@@ -35,6 +36,12 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
     :param geojson_to_draw: GeoDataFrame supplémentaire à dessiner sur la carte (optionnel)
     :param no_interpolation: Si True, crée une carte de points sans interpolation (défaut: False)
     """
+    if gdf_to_rasterize.crs != gdf_mask.crs:
+        raise ValueError("CRS différent entre le masque et les données")
+
+    if (not geojson_to_draw.empty) and geojson_to_draw.crs != gdf_mask.crs:
+        raise ValueError("CRS différent entre les bordures à dessiner et le masque")
+
     GRID_SIZE = 1500
 
     INTERPOLATION = "linear"
@@ -57,7 +64,7 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
     if no_interpolation:
         fig, ax = plt.subplots(figsize=(10, 10))
         ax.set_title(titre_graphique)
-        
+
         if is_invert_palette:
             cmap = mpl.colormaps[color_palette].reversed()
         else:
@@ -84,9 +91,9 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
 
         # Créer un scatter plot avec la palette de couleurs
         scatter = ax.scatter(
-            x, y, 
-            c=z, 
-            cmap=cmap, 
+            x, y,
+            c=z,
+            cmap=cmap,
             norm=norm,
             s=200,  # Taille des points
             alpha=0.8,  # Transparence
@@ -98,13 +105,13 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
         cbar = fig.colorbar(scatter, ax=ax, label=value_column_name, extend="both", shrink=0.7)
 
         if not (intervalle_marqueur == [] or intervalle_name == []):
-            ticks = bounds + [(bounds[i] + bounds[i+1]) / 2 for i in range(len(bounds)-1)]
+            ticks = bounds + [(bounds[i] + bounds[i + 1]) / 2 for i in range(len(bounds) - 1)]
 
             cbar.set_ticks(ticks)
 
             cbar.set_ticklabels(intervalle_name)
 
-            cbar.ax.yaxis.set_label_coords(-1,0.5)
+            cbar.ax.yaxis.set_label_coords(-1, 0.5)
 
         if geojson_to_draw is not None:
             geojson_to_draw.boundary.plot(
@@ -117,7 +124,7 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
         xmin, ymin, xmax, ymax = gdf_mask.total_bounds
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
-        
+
         ax.axis("off")
         plt.tight_layout()
 
@@ -195,7 +202,6 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
                 crs=points.crs,
                 transform=transform,
             ) as dataset:
-
                 dataset.write(grid_z, 1)
 
                 clipped, clipped_transform = mask(
@@ -252,13 +258,13 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
     cbar = fig.colorbar(img, ax=ax, label=value_column_name, extend="both", shrink=0.7)
 
     if not (intervalle_marqueur == [] or intervalle_name == []):
-        ticks = bounds + [(bounds[i] + bounds[i+1]) / 2 for i in range(len(bounds)-1)]
+        ticks = bounds + [(bounds[i] + bounds[i + 1]) / 2 for i in range(len(bounds) - 1)]
 
         cbar.set_ticks(ticks)
 
         cbar.set_ticklabels(intervalle_name)
 
-        cbar.ax.yaxis.set_label_coords(-1,0.5)
+        cbar.ax.yaxis.set_label_coords(-1, 0.5)
 
     # Bordure autour du graphique.
     gdf_mask.boundary.plot(
@@ -283,11 +289,10 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
         transparent=True,
     )
 
-
     logger.info(f"PNG généré : {output_path}")
 
 
-def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str], list[float]]|None:
+def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str], list[float]] | None:
     """
     Récupère les paramètre pour cette unité souhaitée
     :param unit_to_get_graphic: L'unité dont il faut récupérer les paramètre.
@@ -349,10 +354,10 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
                 "",
                 "",
             ],
-            [-50, -30, -20,-10,0,10,20,30,50]
+            [-50, -30, -20, -10, 0, 10, 20, 30, 50]
         )
     elif "hydraulicite" in unit_to_get_graphic:
-    ## TODO mettre les bonnes couleur
+        ## TODO mettre les bonnes couleur
         return (
             "turbo",
             True,
@@ -384,6 +389,7 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
     else:
         return None
 
+
 def get_departement_to_draw_from_region(code_zone: str) -> gpd.GeoDataFrame:
     DEPARTEMENT = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
     geo_departement_mask = gpd.read_file(DEPARTEMENT).to_crs(2154)
@@ -391,17 +397,6 @@ def get_departement_to_draw_from_region(code_zone: str) -> gpd.GeoDataFrame:
         geo_departement_mask["code"].isin(get_departements_from_regions(code_zone))]
     return geo_departement_mask
 
-def get_bassin_mask(bassin_code: str) -> gpd.GeoDataFrame:
-    """
-    Charge et retourne le masque du bassin versant spécifié.
-    
-    :param basin_code: Code du bassin (ex: "06" pour Rhône-Méditerranée)
-    :return: GeoDataFrame du masque du bassin
-    """
-    mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/BassinHydrographique_FXX.geojson"
-    geo_mask = gpd.read_file(mask_file_path).to_crs(2154)
-    geo_mask = geo_mask[geo_mask["CdBH"] == basin_code]
-    return geo_mask
 
 def rasterize_geodataframe_geographiv_zone(
     geodataframe: gpd.GeoDataFrame,
@@ -409,8 +404,8 @@ def rasterize_geodataframe_geographiv_zone(
     geographic_zone: GeographicScaleClip,
     code_zone: str,
     output_path: Path,
-    titre_graphique:str,
-    no_interpolation:bool=False
+    titre_graphique: str,
+    no_interpolation: bool = False
 ) -> None:
     """
     Rasterise un GeoDataFrame pour une zone géographique spécifique et une unité de mesure donnée.
@@ -439,11 +434,11 @@ def rasterize_geodataframe_geographiv_zone(
     mask_file_path = Path()
     mask_column_name = None
     geojson_to_draw = None
-    
+
     # Pour REGION_BASSIN et DEPARTEMENT_BASSIN, on a besoin de clipper à la fois
     # par la zone géographique ET par le bassin
     is_bassin_clip_required = False
-    
+
     match geographic_zone:
         case GeographicScaleClip.BASSIN:
             mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/BassinHydrographique_FXX.geojson"
@@ -464,6 +459,7 @@ def rasterize_geodataframe_geographiv_zone(
             mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/departements-50m.geojson"
             mask_column_name = "code"
             is_bassin_clip_required = True
+            geojson_to_draw = get_geographic_element(GeographicScaleClip.DEPARTEMENT_BASSIN,code_zone).to_crs(2154)
         case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
             mask_file_path = OUTPUT_DIR / "meteoFrance/downloaded_data/delimitation_qgis/Climato_hydro_region.geojson"
             mask_column_name = "code"
@@ -481,29 +477,17 @@ def rasterize_geodataframe_geographiv_zone(
 
     # Pour REGION_BASSIN et DEPARTEMENT_BASSIN, on doit clipper le masque avec le bassin
     if is_bassin_clip_required:
-        # On récupère tous les bassins disponibles
-        from src.io.download_meteoFrance import get_geographic_list
-        basin_codes = get_geographic_list(GeographicScaleClip.BASSIN)
-        
-        # On crée un masque combiné : intersection de la zone géographique et de tous les bassins
-        basin_masks = []
-        for basin_code in basin_codes:
-            basin_mask = get_bassin_mask(bassin_code)
-            basin_masks.append(bassin_mask)
-        
-        # On combine tous les bassins en un seul masque
-        combined_bassin_mask = gpd.GeoDataFrame(
-            geometry=gpd.GeoSeries(bassin_masks).unary_union,
-            crs=geo_mask.crs
-        )
-        
+        # On récupère le masque du bassin versant
+        basin_mask = get_bassin_versant(get_geographic_list(GeographicScaleClip.BASSIN)[0])
+        basin_mask = basin_mask.to_crs(2154)
+
         # On crée le masque final comme l'intersection de la zone géographique et des bassins
-        final_mask = gpd.overlay(geo_mask, combined_bassin_mask, how='intersection')
-        
+        final_mask = gpd.overlay(geo_mask, basin_mask, how='intersection')
+
         if final_mask.empty:
             logger.error(f"Aucune intersection trouvée entre la zone {code_zone} et les bassins.")
             raise ValueError(f"Aucune intersection trouvée entre la zone {code_zone} et les bassins.")
-        
+
         # On utilise le masque final
         geo_mask = final_mask
 
@@ -531,6 +515,7 @@ def rasterize_geodataframe_geographiv_zone(
     )
 
     logger.info(f"Rasterisation terminée pour {unit_to_rasterize} dans la zone {code_zone} ({geographic_zone}).")
+
 
 if __name__ == "__main__":
     POINTS_FILE = OUTPUT_DIR / "QGIS/meteoFrance/MENS-SIM2-202606/bassin/MENS-SIM2-202606-B06.geojson"
@@ -565,13 +550,12 @@ if __name__ == "__main__":
     geo_departement_mask = geo_departement_mask[
         geo_departement_mask["code"].isin(["03", "01", "74", "63", "42", "69", "73", "38", "26", "07", "43", "15"])]
 
-    palette, is_palette_inverse,  intervalle_name, tick_pos = get_graphic_parameter("SSWI1")
+    palette, is_palette_inverse, intervalle_name, tick_pos = get_graphic_parameter("SSWI1")
 
     rasterize_geojson(point_dataframe, "SSWI1", geo_mask, "SSWI1 du mois de Juin 2026 en Auvergne-Rhône-Alpes",
                       palette, is_palette_inverse, intervalle_name, tick_pos, OUTPUT_PNG, geo_departement_mask)
 
     # AUTRE TEST ENCORE
-
 
     POINTS_FILE = OUTPUT_DIR / "QGIS/meteoFrance/QUOT-SIM2-20260601/region_administrative/QUOT-SIM2-20260601-R27.geojson"
 
