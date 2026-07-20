@@ -3,16 +3,16 @@ from src.model.enums import GeographicScaleClip,MeteoFranceDataType
 import src.io.download_meteoFrance as DMeteo
 from datetime import datetime
 from pathlib import Path
-import calendar
 import pandas as pd
 import geopandas as gpd
 import src.processing.meteoFrance_aggregation_donnee as MeteoAgg
 from src.processing.meteoFrance_aggregation_donnee import GroupByMethod
-from functools import cache
 import matplotlib.pyplot as plt
 from src.config.logging_config import setup_logger
 from src.config.paths import OUTPUT_DIR
 from src.plotting.rasterize import rasterize_geodataframe_geographiv_zone
+from src.plotting.utils import get_bassin_versant, get_geographic_element
+from src.io.download_meteoFrance import get_geographic_list
 
 # Initialiser le logger
 logger = setup_logger(name="plot_meteoFrance")
@@ -163,7 +163,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
         case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.REGION_BASSIN:
             is_bassin_clip_required = True
 
-    element_list = DMeteo.get_geographic_list(geographic_scale)
+    element_list = get_geographic_list(geographic_scale)
     if "DATE_DATETIME" in gdf.columns:
         start_date = gdf["DATE_DATETIME"].min()
         end_date = gdf["DATE_DATETIME"].max()
@@ -176,7 +176,7 @@ def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographi
     chemin_zone_geographique = chemin_save_plot / geographic_scale
     logger.info("Récupération Mask bassin versant")
     # Récupération du bassin versant (on prend le premier bassin versant de la liste des bassin versant.
-    code_bassin_decoupe = DMeteo.get_geographic_list(GeographicScaleClip.BASSIN)[0]
+    code_bassin_decoupe = get_geographic_list(GeographicScaleClip.BASSIN)[0]
     gdf_bassin_mask = get_bassin_versant(code_bassin_decoupe)
     for code in tqdm(element_list):
         logger.debug(f"code : {code}")
@@ -391,78 +391,6 @@ def export_all_format_geojson_range(geo_scale:GeographicScaleClip, data_freq:Met
         is_single_data = True
 
     export_to_every_geographic_element(data_freq, geo_scale, df_intervalle, chemin_sauvegarde, is_data_aggregated, is_single_data)
-
-def export_geojson_month(data_freq:MeteoFranceDataType, month_date:datetime):
-    """
-    Plot un mois entier de données, les données ne sont pas aggrégés.
-    Si vous souhaitez les données QUOT aggrégé sur le mois, utilisez les données MENS directement.
-    :param data_freq: Si le data_freq est sur MENS, prend le mois de la datetime, sinon prend tous les jours de l'années
-    :param month_date: La date correspondant au mois choisi.
-    :return: Rien
-    """
-    start_date = datetime(month_date.year, month_date.month, 1)
-    end_date = datetime(month_date.year, month_date.month, calendar.monthrange(month_date.year, month_date.month)[1])
-    export_all_format_geojson_range(data_freq, start_date, end_date, False)
-
-def export_geojson_day(data_freq:MeteoFranceDataType, day_date:datetime):
-    """
-    Plot un unique jour de données.
-    :param data_freq:
-    :param day_date: La date correspondant au jour choisi.
-    :return: Rien
-    """
-    start_date = datetime(day_date.year, day_date.month, day_date.day)
-    end_date = datetime(day_date.year, day_date.month, day_date.day)
-    export_all_format_geojson_range(data_freq, start_date, end_date, False)
-
-@cache
-def get_all_geographic_geodf(geographic_scale:GeographicScaleClip):
-    match geographic_scale:
-        case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
-            chemin_archive = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis_archive" / "regions-100m.geojson.gz"
-            chemin = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis" / "regions-100m.geojson"
-            id_data_gouv = "aa76860a-51af-4744-a593-4c19af2570b8"
-        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
-            chemin_archive = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis_archive" / "departements-50m.geojson.gz"
-            chemin = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis" / "departements-50m.geojson"
-            id_data_gouv = "93a2ba8f-e30f-4916-a73b-0c4d87247ace"
-        case GeographicScaleClip.BASSIN:
-            chemin_archive = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis_archive" / "bassin-hydrographique.geojson.zip"
-            chemin = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis" / "BassinHydrographique_FXX.geojson"
-            id_data_gouv = "b0761a88-b59f-466f-a3cc-b97f237fd732"
-        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
-            chemin_archive = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis_archive" / "Climato_hydro_region.geojson.zip"
-            chemin = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis" / "Climato_hydro_region.geojson"
-            id_data_gouv = "bf4e654b-9aa9-49fd-b745-12219953268b"
-        case _:
-            raise NotImplementedError
-
-    if not chemin.exists():
-        DMeteo.download_and_extract(id_data_gouv, chemin_archive, chemin)
-    df_tout_departement = gpd.read_file(chemin).to_crs(crs="EPSG:27572")
-    return df_tout_departement
-
-def get_geographic_element(geographic_scale:GeographicScaleClip, code:str):
-    df = get_all_geographic_geodf(geographic_scale)
-    match geographic_scale:
-        case GeographicScaleClip.BASSIN:
-            nom_colonne = "CdBH"
-        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
-            nom_colonne = "code"
-        case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
-            nom_colonne = "code"
-        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
-            nom_colonne = "code"
-        case _:
-            raise NotImplementedError
-
-    df_departement = df[df[nom_colonne] == code]
-    return df_departement
-
-def get_bassin_versant(code:str):
-    df = get_all_geographic_geodf(GeographicScaleClip.BASSIN)
-    df_bassin = df[df["CdBH"] == code]
-    return df_bassin
 
 def plot_bar_dataframe(
     series_to_plot: pd.Series,
