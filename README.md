@@ -121,11 +121,11 @@ Format AAAA-MM, (mois précédent : 2026-06 par défaut)
  -> 2026-01
 
 Mois sélectionné : 2026-01-01 00:00:00
-Choisissez un réseau SANDRE : BSH001 (par défaut)
-Rentrez 'custom' pour utiliser la liste custom.
+Choisissez un réseau : BSH001 (par défaut)
+Rentrez 'custom' pour utiliser une liste personnalisée.
  -> 
 
-Réseau Sandre sélectionné : BSH001
+Réseau sélectionné : BSH001
 Génération en cours...
 Génération terminée.
 ```
@@ -136,8 +136,10 @@ Génération terminée.
 |----------|---------------|---------|
 | Que souhaitez-vous faire ? | Choisissez le type de carte à générer | `1` pour l'hydraulicité |
 | Choisissez la date | Entrez la date au format AAAA-MM (année-mois) | `2026-01` pour janvier 2026 |
-| Choisissez un réseau SANDRE | Entrez le code du réseau ou `custom` | `BSH001` ou `custom` |
+| Choisissez un réseau | Entrez le code du réseau ou `custom` | `BSH001` ou `custom` |
 | Souhaitez-vous générer les graphiques ? | Répondez `o` pour oui ou `n` pour non | `o` |
+
+> **Astuce** : Vous pouvez **interrompre une commande à tout moment** en appuyant sur **Ctrl+C** dans le terminal.
 
 ---
 
@@ -165,6 +167,8 @@ Le mode CLI (Command Line Interface) permet de lancer directement une commande a
 | `onde_ALL` | Données ONDE (toutes campagnes) | 1 mois |
 
 > ℹ️ Toutes les sorties sont générées au format **GeoJSON** pour une utilisation directe dans QGIS ou d'autres logiciels SIG.
+
+> **Astuce** : Vous pouvez **interrompre une commande à tout moment** en appuyant sur **Ctrl+C** dans le terminal.
 
 #### 📌 Exemples concrets d'utilisation en CLI
 
@@ -212,7 +216,7 @@ Le mode CLI (Command Line Interface) permet de lancer directement une commande a
 ```bash
 .\venv\Scripts\python.exe main.py --type hydraulicite --start_date 2026-01 --reseau_sandre custom
 ```
-> ➡️ Utilise les stations définies dans vos fichiers personnalisés (`liste_site_custom.csv` et `liste_station_custom.csv`).
+> ➡️ Utilise les stations définies dans vos fichiers personnalisés (`liste_site_custom.csv` et `liste_station_custom.csv`). **Vous n'êtes pas obligé de créer ces fichiers** : une liste par défaut existe déjà et sera utilisée si vous ne spécifiez pas `custom`.
 
 ---
 
@@ -241,9 +245,10 @@ Le programme permet d'utiliser vos propres listes de stations et sites hydrologi
 2. **`liste_station_custom.csv`** : Liste des stations spécifiques
 
 **Comment faire ?**
-- Créez ces fichiers dans le dossier principal du programme
-- Pour chaque site, le programme récupère automatiquement les stations correspondantes
-- Si un site a plusieurs stations et que vous voulez n'en garder qu'une, ajoutez-la dans `liste_station_custom.csv`
+- Créez ces fichiers dans le dossier principal du programme **si vous souhaitez personnaliser les listes**. 
+- **Sinon, une liste par défaut est déjà disponible** et sera utilisée automatiquement.
+- Pour chaque site, le programme récupère automatiquement les stations correspondantes.
+- Si un site a plusieurs stations et que vous voulez n'en garder qu'une, ajoutez-la dans `liste_station_custom.csv`.
 
 > ℹ️ Le fichier de sortie résumant les stations et sites utilisés sera généré dans : `output/site_station_custom/liste_site_et_station_custom.csv`
 
@@ -266,6 +271,7 @@ Le programme permet d'utiliser vos propres listes de stations et sites hydrologi
 
 > 💡 Vous pouvez trouver tous les codes dans les fichiers générés dans `output/meteoFrance/downloaded_data/delimitation_qgis/*.geojson` (ouvrez-les avec un éditeur de texte et cherchez "CdBH" ou "code").
 
+> **Note** : Les codes pour les bassins sont des codes **Sandre**, tandis que les codes pour les départements et régions sont des codes **INSEE**.
 ---
 
 ## 📁 Où trouver les résultats ?
@@ -431,8 +437,7 @@ Il existe deux types de campagnes :
 Le **SANDRE** (Service d'Administration Nationale des Données et Référentiels sur l'Eau) est un système d'information sur l'eau en France. Chaque **réseau SANDRE** correspond à un ensemble de stations de mesure hydrologiques.
 
 - **BSH001** : Réseau par défaut (bassin Artois-Picardie)
-- **custom** : Utilise vos propres listes de stations/sites
-
+- **custom** : Utilise vos propres listes de stations/sites (ou la liste par défaut si vous ne fournissez pas de fichier personnalisé)
 ---
 
 ## 📞 Support et Contribution
