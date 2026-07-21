@@ -6,6 +6,8 @@ from functools import cache
 import logging
 from src.config.paths import OUTPUT_DIR
 from src.model.enums import GeographicScaleClip
+from src.model.enums import MeteoFranceDataType
+from src.model.utils import meteofrance_data_type_to_str
 
 loc = locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
 
@@ -142,3 +144,14 @@ def get_path_stations_onde(onde_zone:GeographicScaleClip, code_associe:str) -> P
     lettre_zone = f"{onde_zone[0]}{code_associe}"
 
     return OUTPUT_DIR / Path(f"hubeau/downloaded_data/onde/stations_onde_{lettre_zone}.csv")
+
+def get_path_meteofrance_historic_mean(data_freq: MeteoFranceDataType, start_date:datetime, end_date:datetime) -> Path:
+    return OUTPUT_DIR / "QGIS" / "meteoFrance" / f"{meteofrance_data_type_to_str(data_freq)}-HISTORIC-MEAN-{start_date.strftime('%Y%m%d')}-{end_date.strftime('%Y%m%d')}.csv"
+
+def get_chemin_sauvegarde_meteofrance(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool) -> Path:
+    datafreq_str = meteofrance_data_type_to_str(data_freq)
+    if is_data_aggregated:
+        chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"{datafreq_str}-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}" / f"{datafreq_str}-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson"
+    else:
+        chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"{datafreq_str}-{start_date:%Y%m%d}-{end_date:%Y%m%d}" / f"{datafreq_str}-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson"
+    return chemin_sauvegarde

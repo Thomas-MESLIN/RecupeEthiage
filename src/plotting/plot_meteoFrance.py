@@ -13,6 +13,7 @@ from src.config.paths import OUTPUT_DIR
 from src.plotting.rasterize import rasterize_geodataframe_geographiv_zone
 from src.plotting.utils import get_bassin_versant, get_geographic_element
 from src.io.download_meteoFrance import get_geographic_list
+from src.utils.utils import get_chemin_sauvegarde_meteofrance
 
 # Initialiser le logger
 logger = setup_logger(name="plot_meteoFrance")
@@ -46,7 +47,7 @@ def clip_with_distance(gdf_to_clip : gpd.GeoDataFrame, clip_mask:gpd.GeoDataFram
 
 def plot_geojson_from_lambert2(output_path:Path, gdf_ready: gpd.GeoDataFrame):
     """
-    Enregistre le Dataframe sous forme de Geojson dans l'output_path.
+    Enregistre le Dataframe sous forme de Geojson et de csv dans l'output_path.
     Si le gdf_ready est vide, ne fais rien.
     :param output_path: Endroit où le fichier va être sauvegardé.
     :param gdf_ready: Le DataFrame à plot.
@@ -58,44 +59,6 @@ def plot_geojson_from_lambert2(output_path:Path, gdf_ready: gpd.GeoDataFrame):
         gdf_ready.to_csv(output_path.with_suffix(".csv"), mode="w", index=False)
     else:
         logger.warning("gdf empty ! " + str(output_path))
-
-def get_chemin_sauvegarde(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool) -> Path:
-    match data_freq:
-        # SIM2_QUOT
-        case MeteoFranceDataType.SIM2_QUOT if start_date.date() != end_date.date():
-            if is_data_aggregated:
-                chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"QUOT-SIM2-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}" / f"QUOT-SIM2-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson"
-            else:
-                chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"QUOT-SIM2-{start_date:%Y%m%d}-{end_date:%Y%m%d}" / f"QUOT-SIM2-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson"
-        case MeteoFranceDataType.SIM2_QUOT:
-            chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"QUOT-SIM2-{start_date:%Y%m%d}" / f"QUOT-SIM2-{start_date:%Y%m%d}.geojson"
-        # SIM2_MENS
-        case MeteoFranceDataType.SIM2_MENS if start_date.strftime("%Y%m") != end_date.strftime("%Y%m"):
-            if is_data_aggregated:
-                chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"MENS-SIM2-aggregated-{start_date:%Y%m}-{end_date:%Y%m}" / f"MENS-SIM2-aggregated-{start_date:%Y%m}-{end_date:%Y%m}.geojson"
-            else:
-                chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"MENS-SIM2-{start_date:%Y%m}-{end_date:%Y%m}" / f"MENS-SIM2-{start_date:%Y%m}-{end_date:%Y%m}.geojson"
-        case MeteoFranceDataType.SIM2_MENS:
-            chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"MENS-SIM2-{start_date:%Y%m}" / f"MENS-SIM2-{start_date:%Y%m}.geojson"
-        # QUOT
-        case MeteoFranceDataType.QUOT if start_date.strftime("%Y%m%d") != end_date.strftime("%Y%m%d"):
-            if is_data_aggregated:
-                chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"QUOT-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}" / f"QUOT-aggregated-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson"
-            else:
-                chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"QUOT-{start_date:%Y%m%d}-{end_date:%Y%m%d}" / f"QUOT-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson"
-        case MeteoFranceDataType.QUOT:
-            chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"QUOT-{start_date:%Y%m%d}" / f"QUOT-{start_date:%Y%m%d}.geojson"
-        # MENS
-        case MeteoFranceDataType.MENS if start_date.strftime("%Y%m") != end_date.strftime("%Y%m"):
-            if is_data_aggregated:
-                chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"MENS-aggregated-{start_date:%Y%m}-{end_date:%Y%m}" / f"MENS-aggregated-{start_date:%Y%m}-{end_date:%Y%m}.geojson"
-            else:
-                chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"MENS-{start_date:%Y%m}-{end_date:%Y%m}" / f"MENS-{start_date:%Y%m}-{end_date:%Y%m}.geojson"
-        case MeteoFranceDataType.MENS:
-            chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"MENS-{start_date:%Y%m}" / f"MENS-{start_date:%Y%m}.geojson"
-        case _:
-            raise NotImplementedError
-    return chemin_sauvegarde
 
 def get_chemin_sauvegarde_geographie(geographic_scale:GeographicScaleClip, chemin_sauvegarde_original:Path, code_geographique:str|None="")->Path:
     """
@@ -109,29 +72,22 @@ def get_chemin_sauvegarde_geographie(geographic_scale:GeographicScaleClip, chemi
     match geographic_scale:
         case GeographicScaleClip.BASSIN:
             suffix_letter = "B"
-            dossier = "bassin"
         case GeographicScaleClip.DEPARTEMENT_BASSIN:
             suffix_letter = "Db"
-            dossier = "departement_bassin"
         case GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
             suffix_letter = "D"
-            dossier = "departement_administratif"
         case GeographicScaleClip.REGION_BASSIN:
             suffix_letter = "Rb"
-            dossier = "region_bassin"
         case GeographicScaleClip.REGION_ADMINISTRATIVE:
             suffix_letter = "R"
-            dossier = "region_administrative"
         case GeographicScaleClip.NATIONAL:
-            suffix_letter = ""
-            dossier = ""
+            suffix_letter = "N"
         case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
             suffix_letter = "E"
-            dossier = "ecoregion_hydrologique"
         case _:
             raise NotImplementedError
     nouveau_chemin = nouveau_chemin.with_stem(f"{chemin_sauvegarde_original.stem}-{suffix_letter}{code_geographique}")
-    nouveau_chemin = nouveau_chemin.parent / dossier / nouveau_chemin.name
+    nouveau_chemin = nouveau_chemin.parent / geographic_scale / nouveau_chemin.name
     return nouveau_chemin
 
 def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographic_scale:GeographicScaleClip, df:pd.DataFrame, chemin_save_original:Path, is_data_aggregated:bool, is_single_data:bool):
@@ -380,7 +336,7 @@ def export_all_format_geojson_range(geo_scale:GeographicScaleClip, data_freq:Met
 
     df_intervalle = df_range_processed(data_freq, start_date, end_date, is_data_aggregated, has_index_update, is_data_update_allowed)
 
-    chemin_sauvegarde = get_chemin_sauvegarde(data_freq, start_date, end_date, is_data_aggregated)
+    chemin_sauvegarde = get_chemin_sauvegarde_meteofrance(data_freq, start_date, end_date, is_data_aggregated)
     chemin_sauvegarde.parent.mkdir(exist_ok=True)
 
     is_single_data = False

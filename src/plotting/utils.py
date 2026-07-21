@@ -24,7 +24,7 @@ def get_all_geographic_geodf(geographic_scale:GeographicScaleClip):
         case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
             chemin_archive = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis_archive" / "Climato_hydro_region.geojson.zip"
             chemin = OUTPUT_DIR / "meteoFrance" / "downloaded_data" / "delimitation_qgis" / "Climato_hydro_region.geojson"
-            id_data_gouv = "bf4e654b-9aa9-49fd-b745-12219953268b"
+            id_data_gouv = ""
         case _:
             raise NotImplementedError
 

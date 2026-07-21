@@ -30,7 +30,7 @@ Ce script calcule les normales climatiques à partir des données historiques M�
 ## 📁 Exemple de Code
 
 ```python
-from src.processing.bricolage_normale import calculate_normale_ratio
+from src.processing.meteofrance_normale import calculate_normale_ratio
 from datetime import datetime
 from src.model.enums import GeographicScaleClip, MeteoFranceDataType
 

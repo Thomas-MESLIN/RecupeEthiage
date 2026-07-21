@@ -43,6 +43,7 @@ def save_and_close_plot(output_path:Path|None):
     plt.close()
     logger.info("Plot Sauvegardé à " + str(output_path))
 
+# TODO faire en sorte de décider ce qu'on veut plotter les assecs
 def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datetime, annee_actuelle:int, campagne_type:OndeCampagneType, output_path:Path=None):
     df = df.copy()
 
