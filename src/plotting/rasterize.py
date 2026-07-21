@@ -40,7 +40,7 @@ def rasterize_geojson(gdf_to_rasterize:gpd.GeoDataFrame, value_column_name:str, 
     if gdf_to_rasterize.crs != gdf_mask.crs:
         raise ValueError("CRS différent entre le masque et les données")
 
-    if (not geojson_to_draw.empty) and geojson_to_draw.crs != gdf_mask.crs:
+    if (geojson_to_draw is not None and not geojson_to_draw.empty) and geojson_to_draw.crs != gdf_mask.crs:
         raise ValueError("CRS différent entre les bordures à dessiner et le masque")
 
     GRID_SIZE = 1500
@@ -372,6 +372,21 @@ def get_graphic_parameter(unit_to_get_graphic: str) -> tuple[str, bool, list[str
                 "Forte",
             ],
             [0.25, 0.75, 1.25, 1.75]
+        )
+    elif "SPI" in unit_to_get_graphic:
+        return (
+            "turbo",
+            True,
+            [
+                "-2.0 - Extrêmement Sec",
+                "-1.0",
+                "1.0",
+                "2.0 - Extrêmement Humide",
+                "Sec",
+                "Proche de la normale",
+                "Humide",
+            ],
+            [-2.0, -1.0, 1.0, 2.0]
         )
     elif "frequence_non_depassement" in unit_to_get_graphic:
         return (

@@ -1,6 +1,5 @@
 from tqdm import tqdm
 from src.model.enums import GeographicScaleClip,MeteoFranceDataType
-import src.io.download_meteoFrance as DMeteo
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
@@ -13,7 +12,8 @@ from src.config.paths import OUTPUT_DIR
 from src.plotting.rasterize import rasterize_geodataframe_geographiv_zone
 from src.plotting.utils import get_bassin_versant, get_geographic_element
 from src.io.download_meteoFrance import get_geographic_list
-from src.utils.utils import get_chemin_sauvegarde_meteofrance
+from src.utils.utils import get_chemin_sauvegarde_meteofrance, get_chemin_sauvegarde_geographie
+import src.processing.meteofrance_normale as MeteoNormale
 
 # Initialiser le logger
 logger = setup_logger(name="plot_meteoFrance")
@@ -60,35 +60,6 @@ def plot_geojson_from_lambert2(output_path:Path, gdf_ready: gpd.GeoDataFrame):
     else:
         logger.warning("gdf empty ! " + str(output_path))
 
-def get_chemin_sauvegarde_geographie(geographic_scale:GeographicScaleClip, chemin_sauvegarde_original:Path, code_geographique:str|None="")->Path:
-    """
-    Renvoie le chemin de sauvegarde pour chaque niveau geographique en se basant sur le dossier de sauvegarde actuel.
-    :param geographic_scale: Le niveau géographique souhaité
-    :param chemin_sauvegarde_original: Le chemin de sauvegarde de l'enregistrement
-    :param code_geographique: Le code de département/région/bassin
-    :return:
-    """
-    nouveau_chemin = chemin_sauvegarde_original
-    match geographic_scale:
-        case GeographicScaleClip.BASSIN:
-            suffix_letter = "B"
-        case GeographicScaleClip.DEPARTEMENT_BASSIN:
-            suffix_letter = "Db"
-        case GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
-            suffix_letter = "D"
-        case GeographicScaleClip.REGION_BASSIN:
-            suffix_letter = "Rb"
-        case GeographicScaleClip.REGION_ADMINISTRATIVE:
-            suffix_letter = "R"
-        case GeographicScaleClip.NATIONAL:
-            suffix_letter = "N"
-        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
-            suffix_letter = "E"
-        case _:
-            raise NotImplementedError
-    nouveau_chemin = nouveau_chemin.with_stem(f"{chemin_sauvegarde_original.stem}-{suffix_letter}{code_geographique}")
-    nouveau_chemin = nouveau_chemin.parent / geographic_scale / nouveau_chemin.name
-    return nouveau_chemin
 
 def export_to_every_geographic_element(data_freq: MeteoFranceDataType, geographic_scale:GeographicScaleClip, df:pd.DataFrame, chemin_save_original:Path, is_data_aggregated:bool, is_single_data:bool):
     """
@@ -293,27 +264,7 @@ def create_all_plot_for_unique_scale(df_aggregated:pd.DataFrame, nom_echelle:str
                            }
                            )
 
-def df_range_processed(data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool,
-                                    has_index_update:bool=True, is_data_update_allowed:bool=True) -> pd.DataFrame:
-    """
-    Renvoie un Dataframe avec toutes les données allant de start_date à end_date, en aggrégeant les données si demandé.
-    :param data_freq:Le type de données souhaité
-    :param start_date:La date de début des données
-    :param end_date:La date de fin des données
-    :param is_data_aggregated:Si a vrai, on aggrège les données sur la période.
-    :param has_index_update:On autorise l'index de correspondance données -> id_datagouv à se mettre à jour
-    :param is_data_update_allowed: On autorise les fichiers à se re-télécharger pour être à jour.
-    :return: Le Dataframe contenant toute les données de start_date à end_date.
-    """
-    df_intervalle = DMeteo.get_data_in_range(data_freq, start_date, end_date, has_index_update, is_data_update_allowed)
-    if df_intervalle.empty:
-        logger.warning(f"L'intervalle de données ({start_date} - {end_date}) est vide. Abandon.")
-        return df_intervalle
 
-    if is_data_aggregated:
-        df_intervalle = MeteoAgg.aggregate_range(data_freq, df_intervalle, GroupByMethod.BY_POSITION)
-
-    return df_intervalle
 
 def export_all_format_geojson_range(geo_scale:GeographicScaleClip, data_freq:MeteoFranceDataType, start_date:datetime, end_date:datetime, is_data_aggregated:bool,
                                     has_index_update:bool=True, is_data_update_allowed:bool=True) -> None:
@@ -334,7 +285,9 @@ def export_all_format_geojson_range(geo_scale:GeographicScaleClip, data_freq:Met
     if not is_data_update_allowed:
         has_index_update = False
 
-    df_intervalle = df_range_processed(data_freq, start_date, end_date, is_data_aggregated, has_index_update, is_data_update_allowed)
+    df_intervalle = MeteoNormale.df_range_processed(data_freq, start_date, end_date, is_data_aggregated, has_index_update, is_data_update_allowed)
+
+    df_rapport_normale = MeteoNormale.get_rapport_normale(data_freq, df_intervalle, start_date, end_date)
 
     chemin_sauvegarde = get_chemin_sauvegarde_meteofrance(data_freq, start_date, end_date, is_data_aggregated)
     chemin_sauvegarde.parent.mkdir(exist_ok=True)
@@ -346,7 +299,7 @@ def export_all_format_geojson_range(geo_scale:GeographicScaleClip, data_freq:Met
     if start_date.strftime("%Y%m") == end_date.strftime("%Y%m") and (data_freq == MeteoFranceDataType.SIM2_MENS or data_freq == MeteoFranceDataType.MENS):
         is_single_data = True
 
-    export_to_every_geographic_element(data_freq, geo_scale, df_intervalle, chemin_sauvegarde, is_data_aggregated, is_single_data)
+    export_to_every_geographic_element(data_freq, geo_scale, df_rapport_normale, chemin_sauvegarde, is_data_aggregated, is_single_data)
 
 def plot_bar_dataframe(
     series_to_plot: pd.Series,
@@ -457,5 +410,5 @@ if __name__ == "__main__":
 
     #export_all_format_geojson_range(MeteoFranceDataType.QUOT, datetime(2026, 6, 10), today, True)
     #export_all_format_geojson_range(MeteoFranceDataType.QUOT, datetime(2026, 6, 10), today, False)
-    for annee in range(1990,2021):
-        export_all_format_geojson_range(MeteoFranceDataType.SIM2_QUOT, datetime(annee, 6, 1), datetime(annee, 6, 30), True)
+    annee = 2026
+    export_all_format_geojson_range(GeographicScaleClip.REGION_BASSIN, MeteoFranceDataType.SIM2_MENS, datetime(annee, 6, 1), datetime(annee, 6, 30), True)

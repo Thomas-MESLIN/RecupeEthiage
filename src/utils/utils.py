@@ -155,3 +155,33 @@ def get_chemin_sauvegarde_meteofrance(data_freq:MeteoFranceDataType, start_date:
     else:
         chemin_sauvegarde = OUTPUT_DIR / "QGIS" / "meteoFrance" / f"{datafreq_str}-{start_date:%Y%m%d}-{end_date:%Y%m%d}" / f"{datafreq_str}-{start_date:%Y%m%d}-{end_date:%Y%m%d}.geojson"
     return chemin_sauvegarde
+
+def get_chemin_sauvegarde_geographie(geographic_scale:GeographicScaleClip, chemin_sauvegarde_original:Path, code_geographique:str|None="")->Path:
+    """
+    Renvoie le chemin de sauvegarde pour chaque niveau geographique en se basant sur le dossier de sauvegarde actuel.
+    :param geographic_scale: Le niveau géographique souhaité
+    :param chemin_sauvegarde_original: Le chemin de sauvegarde de l'enregistrement
+    :param code_geographique: Le code de département/région/bassin
+    :return:
+    """
+    nouveau_chemin = chemin_sauvegarde_original
+    match geographic_scale:
+        case GeographicScaleClip.BASSIN:
+            suffix_letter = "B"
+        case GeographicScaleClip.DEPARTEMENT_BASSIN:
+            suffix_letter = "Db"
+        case GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
+            suffix_letter = "D"
+        case GeographicScaleClip.REGION_BASSIN:
+            suffix_letter = "Rb"
+        case GeographicScaleClip.REGION_ADMINISTRATIVE:
+            suffix_letter = "R"
+        case GeographicScaleClip.NATIONAL:
+            suffix_letter = "N"
+        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
+            suffix_letter = "E"
+        case _:
+            raise NotImplementedError
+    nouveau_chemin = nouveau_chemin.with_stem(f"{chemin_sauvegarde_original.stem}-{suffix_letter}{code_geographique}")
+    nouveau_chemin = nouveau_chemin.parent / geographic_scale / nouveau_chemin.name
+    return nouveau_chemin
