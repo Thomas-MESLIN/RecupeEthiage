@@ -11,3 +11,4 @@ python-dotenv
 numpy
 scipy
 rasterio
+dotenv

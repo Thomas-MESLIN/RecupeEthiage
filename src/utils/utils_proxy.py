@@ -51,8 +51,8 @@ def set_up_working_proxy():
         return
 
     logger.info("Test en supprimant HTTP_PROXY et HTTPS_PROXY")
-    os.unsetenv("HTTP_PROXY")
-    os.unsetenv("HTTPS_PROXY")
+    os.environ["HTTP_PROXY"] = ""
+    os.environ["HTTPS_PROXY"] = ""
     if test_connection(TEST_URL):
         logger.info("Connexion Direct OK - CONNECTE")
         return
