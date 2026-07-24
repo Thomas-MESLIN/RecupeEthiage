@@ -78,7 +78,6 @@ def save_observations_campagnes_export(df_to_save:pd.DataFrame, df_campagne_dern
     annee_mois_str = annee_mois.strftime('%Y-%m')
     dossier_csv = OUTPUT_DIR / "onde" / f"BSH_{annee_mois_str}" / f"{geographic_scale[0]}{zone_code}" / "csv"
     dossier_csv.mkdir(parents=True, exist_ok=True)
-    output_path_campagne_all_historic_csv: Path = OUTPUT_DIR / "onde" / "HISTORIC_DATA" / "observations_et_campagnes_all_historic.csv"
     output_path_campagne_all_csv: Path = dossier_csv / Path(
         f"observations_et_campagnes_all_{annee_mois_str}.csv")
     output_path_campagne_usuelles_csv: Path = dossier_csv / Path(
@@ -91,7 +90,6 @@ def save_observations_campagnes_export(df_to_save:pd.DataFrame, df_campagne_dern
 
     dossier_geojson = OUTPUT_DIR / "onde" / f"BSH_{annee_mois_str}" / f"{geographic_scale[0]}{zone_code}" / "geojson"
     dossier_geojson.mkdir(parents=True, exist_ok=True)
-    output_path_campagne_all_historic_geojson: Path = OUTPUT_DIR / "onde" / "HISTORIC_DATA" / "observations_et_campagnes_all_historic.geojson"
     output_path_campagne_all_geojson: Path = dossier_geojson / Path(
         f"observations_et_campagnes_all_{annee_mois_str}.geojson")
     output_path_campagne_usuelles_geojson: Path = dossier_geojson / Path(
@@ -102,12 +100,7 @@ def save_observations_campagnes_export(df_to_save:pd.DataFrame, df_campagne_dern
     output_path_campagne_no_duplicated_geojson: Path = dossier_geojson / Path(
         f"observations_et_campagnes_latest_{annee_mois_str}_{onde_campagne_type}_{geographic_scale[0]}{zone_code}.geojson")
 
-
     save_df_onde(df_to_save, output_path_campagne_all_csv, output_path_campagne_all_geojson, annee_mois)
-
-    # Sauvegarde des données historiques
-    save_df_onde(df_to_save, output_path_campagne_all_historic_csv, output_path_campagne_all_historic_geojson,
-                 None)
 
     # On filtre avec que les campagnes usuelles
     df_to_save_campagne_usuelle = df_to_save[df_to_save["code_type_campagne"] == 1]

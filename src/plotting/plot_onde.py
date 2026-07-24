@@ -17,11 +17,18 @@ logger = setup_logger(name="plot_onde")
 
 ## Traduction du numéro en nom de mois
 MOIS = {
+    1: "janvier",
+    2: "février",
+    3: "mars",
+    4: "avril",
     5: "mai",
     6: "juin",
     7: "juillet",
     8: "août",
-    9: "septembre"
+    9: "septembre",
+    10: "octobre",
+    11: "novembre",
+    12: "décembre",
 }
 
 ## Les mois souhaité.
@@ -43,7 +50,6 @@ def save_and_close_plot(output_path:Path|None):
     plt.close()
     logger.info("Plot Sauvegardé à " + str(output_path))
 
-# TODO faire en sorte de décider ce qu'on veut plotter les assecs
 def plot_evolution_assecs(df: pd.DataFrame, date_depart:datetime, date_fin:datetime, annee_actuelle:int, campagne_type:OndeCampagneType, output_path:Path=None):
     df = df.copy()
 
@@ -151,6 +157,10 @@ def plot_evolution_ecoulements(df:pd.DataFrame, campagne_type:OndeCampagneType, 
     df = df.copy()
 
     df = df[df["mois"] == mois_souhaite]
+
+    if df.empty:
+        logger.error(f"DataFrame vide. Pas de données ONDE pour le mois{mois_souhaite}")
+        return
 
     # Nombre total de stations (si non fourni)
     if nb_mesures is None:
@@ -260,7 +270,7 @@ def plot_everything(campagne_type:OndeCampagneType, annee_mois:datetime, geograp
 
     plot_evolution_ecoulements(df_complet,
                                campagne_type,
-                               6,nb_mesures=385,
+                               annee_mois.month,nb_mesures=385,
                                output_path=dossier_chemin / f"onde_evolution-ecoulement_{annee_mois.strftime('%Y-%m')}_{campagne_type}.png")
     logger.info("Données générées avec succès dans : " + str(dossier_chemin))
 
