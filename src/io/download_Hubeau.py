@@ -140,6 +140,7 @@ def download_hubeau_1991_2020(grandeur_souhaite):
     else:
         ensure_grandeur_historique_downloaded("QmnJ")
 
+@cache
 def download_hubeau_onde_campagnes() -> pd.DataFrame:
     """
     Télécharge les observations de 1991 à 2020 de la grandeur souhaite et de toute la france
@@ -149,10 +150,12 @@ def download_hubeau_onde_campagnes() -> pd.DataFrame:
     utils_proxy.set_up_working_proxy()
     gdf = watercourses_flow.get_all_campaigns()
     chemin_campagne_onde = utils.get_path_campagne_onde()
+    gdf["date_campagne"] = pd.to_datetime(gdf["date_campagne"])
     gdf.to_csv(chemin_campagne_onde, index=False)
     logger.info(f"Données campagne ONDE téléchargés à : {chemin_campagne_onde}")
     return gdf
 
+@cache
 def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:GeographicScaleClip, code_zone:str):
     """
     Télécharge les observations de 1991 à 2020 de la grandeur souhaite et de toute la france
@@ -183,10 +186,12 @@ def download_hubeau_onde_observations_geographic_zone(date_debut_obs:datetime, d
         return
 
     chemin_observations_onde = utils.get_path_observation_onde(date_debut_obs, date_fin_obs, zone_geographic, code_zone)
+    df["date_observation"] = pd.to_datetime(df["date_observation"])
     df.to_csv(chemin_observations_onde, index=False)
     logger.info(f"Données observations ONDE téléchargés à : {chemin_observations_onde}")
     return df
 
+@cache
 def download_hubeau_onde_stations_geographic_zone(zone_geographic:GeographicScaleClip, code_zone:str):
     logger.info("Téléchargement des stations ONDE")
     utils_proxy.set_up_working_proxy()
@@ -210,30 +215,6 @@ def download_hubeau_onde_stations_geographic_zone(zone_geographic:GeographicScal
     chemin_observations_onde = utils.get_path_stations_onde(zone_geographic, code_zone)
     df.to_csv(chemin_observations_onde, index=False)
     logger.info(f"Données stations ONDE téléchargés à : {chemin_observations_onde}")
-    return df
-
-@cache
-def get_df_all_campagne() -> gpd.GeoDataFrame:
-    """
-    Renvoie un DataFrame contenant toutes les campagnes onde.
-    :return: Le DataFrame contenant toutes les campagnes Onde.
-    """
-    df = download_hubeau_onde_campagnes()
-    df["date_campagne"] = pd.to_datetime(df["date_campagne"])
-    return df
-
-@cache
-def get_df_observations_geographic_zone(date_debut_obs:datetime, date_fin_obs:datetime, zone_geographic:GeographicScaleClip, code_zone:str) -> gpd.GeoDataFrame:
-    """
-    Renvoie un DataFrame allant de date_debut_obs à date_fin_obs, de la zone géographique souhaité et son code correspondant.
-    :param date_debut_obs: Date de début des observations souhaitées
-    :param date_fin_obs: Date de fin des observations souhaitées
-    :param zone_geographic: Zone géographique souhaitée
-    :param code_zone: Code de la zone géographique correspondant
-    :return: Renvoie un Dataframe correspondant aux observations faites sur cet intervalle.
-    """
-    df = download_hubeau_onde_observations_geographic_zone(date_debut_obs, date_fin_obs, zone_geographic, code_zone)
-    df["date_observation"] = pd.to_datetime(df["date_observation"])
     return df
 
 # TELECHARGEMENT DONNEES STATIONS ET SITES

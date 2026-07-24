@@ -295,22 +295,42 @@ def generer_carte_onde():
     
     # 3. Sélection du code de zone géographique
     # Afficher les codes utiles mentionnés dans le README
-    logger.info("\nCodes géographiques utiles - Bassin :")
-    logger.info("  01 : Artois-Picardie")
-    logger.info("  02 : Meuse")
-    logger.info("  03 : Moselle")
-    logger.info("  04 : Rhin")
-    logger.info("  05 : Loire-Bretagne")
-    logger.info("  06 : Rhône-Méditerranée - choix par défaut")
-    logger.info("  07 : Adour-Garonne")
-    logger.info("  08 : Garonne")
-    logger.info("  09 : Charente")
-    logger.info("  10 : Seine-Normandie")
-    logger.info("\nPour les régions et départements, voir les fichiers dans output/meteoFrance/downloaded_data/delimitation_qgis/")
-    
-    zone_code = input("Entrez le code de la zone géographique - ex: '06' pour bassin Rhône-Méditerranée : ")
+    skip_input = False
+    default_zone_code = ""
+    match geographic_scale:
+        case GeographicScaleClip.NATIONAL:
+            default_zone_code = ""
+            skip_input = True
+        case GeographicScaleClip.BASSIN:
+            logger.info("\nCodes géographiques utiles - Bassin :")
+            logger.info("  06 : Rhône-Méditerranée - choix par défaut")
+            logger.info("  ...")
+            default_zone_code = "06"
+        case GeographicScaleClip.REGION_BASSIN | GeographicScaleClip.REGION_ADMINISTRATIVE:
+            logger.info("\nCodes géographiques utiles - Région :")
+            logger.info("  27 : Bourgogne-Franche-Comté")
+            logger.info("  44 : Grand Est")
+            logger.info("  76 : Limousin")
+            logger.info("  84 : Auvergne-Rhône-Alpes - choix par défaut")
+            logger.info("  93 : Provence-Alpes-Côte d’Azur")
+            logger.info("  ...")
+            default_zone_code = "84"
+        case GeographicScaleClip.DEPARTEMENT_BASSIN | GeographicScaleClip.DEPARTEMENT_ADMINISTRATIF:
+            logger.info("\nCodes géographiques utiles - Région :")
+            logger.info("  69 - Rhône - choix par défaut")
+            logger.info("  ...")
+            default_zone_code = "69"
+        case GeographicScaleClip.ECOREGION_HYDROLOGIQUE:
+            logger.info("Pas de suggestions... - défaut '1'")
+            default_zone_code = "1"
+        case _:
+            raise NotImplementedError("Zone géographique non prise en charge.")
+
+    zone_code = None
+    if not skip_input:
+        zone_code = input("Entrez le code de la zone géographique - ex: '06' pour bassin Rhône-Méditerranée : ")
     if not zone_code:
-        zone_code = "06"  # Valeur par défaut
+        zone_code = default_zone_code  # Valeur par défaut
     logger.info(f"Code de zone sélectionné : {zone_code}")
     
     # 4. Sélection de la date

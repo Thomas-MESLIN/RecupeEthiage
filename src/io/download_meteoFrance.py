@@ -75,7 +75,9 @@ def fetch_and_update_decennie_ressource_id(data_freq:MeteoFranceDataType):
     :return: Rien.
     """
     logger.info("MISE A JOUR DE L'INDEX (date-debut,dete-fin -> id-datagouv)")
-    logger.info("Cela peut prendre beaucoup de temps pour les données classique...")
+    if data_freq in [MeteoFranceDataType.MENS, MeteoFranceDataType.QUOT]:
+        logger.info("La mise à jour de l'index de données peut prendre beaucoup de temps, le faire une fois par jour est utile, mais pas plus."
+                    "Utilisez --meteo_no_index_update pour interdire la mise à jour de l'index de données.")
     # On met en place les expression régulière pour reconnaitre uniquement les données du bon format.
     match data_freq:
         case MeteoFranceDataType.SIM2_QUOT:
@@ -244,6 +246,7 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
     :param is_data_update_allowed: Si à False, les mises à jour des fihciers existant ne sont pas téléchargés.
     :return: Un dataframe contenant toutes les données mensuelles de SIM2 entre date_debut et date_fin inclus.
     """
+    logger.info("Loading files...")
     if date_end < date_debut:
         raise ValueError("La date de fin est plut tot que la date de début !")
 
@@ -271,7 +274,6 @@ def get_data_in_range(data_freq: MeteoFranceDataType, date_debut: datetime, date
         return pd.DataFrame()
 
     logger.debug(file_to_gather)
-    logger.info("Loading files...")
     all_df = []
     for date_debut_fichier, date_fin_fichier, id_datagouv in file_to_gather:
         all_df.append(get_df_decennie(data_freq, date_debut_fichier, date_fin_fichier, id_datagouv, is_data_update_allowed))

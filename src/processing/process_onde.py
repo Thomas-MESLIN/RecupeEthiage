@@ -40,7 +40,7 @@ def get_df_observations_data(geographic_scale:GeographicScaleClip, zone_code:str
     :param zone_code: Le code de la zone géographique à récupérer
     :return: Un DataFrame contenant toutes les données d'observations de 2012 à aujourd'hui.
     """
-    df_observations = download_Hubeau.get_df_observations_geographic_zone(
+    df_observations = download_Hubeau.download_hubeau_onde_observations_geographic_zone(
         datetime(2012, 1, 1),
         datetime.today(),
         geographic_scale,
@@ -55,7 +55,7 @@ def get_df_campagnes_data() -> pd.DataFrame:
     Récupère les modalités des campagnes de toute la France depuis 2012 jusqu'à aujourd'hui.
     :return: Un DataFrame contenant toutes les campagnes Onde.
     """
-    df_campagnes = download_Hubeau.get_df_all_campagne()
+    df_campagnes = download_Hubeau.download_hubeau_onde_campagnes()
     # On ne garde quie les colonnes utiles et on enlève les doublons. Les campgnes osnt enregistré pour chaque départements.
     # On a besoin uniquement des modalités, donc on ne garde qu'un seul code.
     df_campagne_reduit = df_campagnes[["code_campagne", "date_campagne", "nombre_modalite_ecoulement",
