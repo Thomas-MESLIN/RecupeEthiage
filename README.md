@@ -6,20 +6,20 @@ Ce programme permet de **récupérer, analyser et visualiser** des données sur 
 
 Avec cet outil, vous pouvez :
 
-✅ **Récupérer des données hydrologiques** : niveaux d'eau, débits des rivières via l'API Hub'Eau
-✅ **Analyser les écoulements** : données ONDE (Observatoire National des Établissements) pour les cours d'eau
-✅ **Obtenir des données météo** : précipitations, indices de sécheresse via MétéoFrance
-✅ **Calculer des indicateurs** :
+- ✅ **Récupérer des données hydrologiques** : Récupération des hauteurs des cours d'eaux, débits des rivières via l'API Hub'Eau
+- ✅ **Analyser les écoulements** : données ONDE (Observatoire National des Établissements) pour les cours d'eau
+- ✅ **Obtenir des données météo** : précipitations, indices de sécheresse via MétéoFrance
+- ✅ **Calculer des indicateurs** :
    - **Hydraulicité** : mesure du débit d'eau par rapport à la normale
    - **VCN3** : Volume Current Non-dépassé sur 3 mois (période de retour et fréquence de non-dépassement)
    - **SPI** : Indice de Précipitation Standardisé (sécheresse météorologiques)
    - **SSWI** : Indice Standardisé d'Humidité des Sols
-✅ **Générer des cartes** au format GeoJSON, compatibles avec QGIS et autres logiciels SIG
+- ✅ **Générer des cartes** au format GeoJSON, compatibles avec QGIS et autres logiciels SIG
 
 > **Info** : Documentation en ligne ici : https://thomas-meslin.github.io/RecupeEthiage.
 
 ---
-
+n
 ## 🔧 Prérequis
 
 Pour utiliser ce programme, vous avez besoin de :
@@ -61,7 +61,7 @@ Deux options :
 Dans le terminal qui s'est ouvert, tapez la commande suivante pour créer un "environnement virtuel" (un espace isolé pour installer les outils nécessaires) :
 
 ```bash
-python -m venv venv
+py -3.11 -m venv venv
 ```
 
 > ⚠️ Si vous avez plusieurs versions de Python, utilisez `python3-64.exe` à la place de `python`.
@@ -75,6 +75,8 @@ Tapez cette commande pour installer tous les outils dont le programme a besoin :
 ```
 
 > ⚠️ **Attention** : Cette étape peut prendre plusieurs minutes et nécessite une connexion internet **hors du réseau interne** de votre organisation.
+
+> ⚠️ **Attention** : En cas de problème lors de l'installation des paquets, cela peut-être du à la longueur des chemins maximum Windows étant dépassé, essayez de rapprocher les scripts de la racine de l'ordinateur. (plus proche du disque pur)
 
 ### 5. Vérifier que tout est installé correctement
 
