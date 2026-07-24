@@ -81,11 +81,11 @@ def demander_date(message: str, format_exemple: str, valeur_par_defaut: datetime
     Returns:
         L'objet datetime correspondant
     """
-    logger.info(f"{message} (format: {format_exemple}, dfaut: {valeur_par_defaut.strftime("%Y%m%d" if len(format_exemple) == 8 else "%Y%m")})")
+    logger.info(f"{message} (format: {format_exemple}, dfaut: {valeur_par_defaut.strftime('%Y-%m-%d' if len(format_exemple) == 10 else '%Y-%m')})")
     reponse = input(" -> ")
     
     if not reponse:
-        logger.info(f"Date par défaut utilisée : {valeur_par_defaut}")
+        logger.info(f"Date par défaut utilisée : {valeur_par_defaut.strftime('%Y-%m-%d')}")
         return valeur_par_defaut
     
     try:
